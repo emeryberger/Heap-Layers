@@ -109,6 +109,8 @@ namespace HL {};
 
 // Hiding machine dependencies.
 
+#include "mallocinfo.h"
+
 #include "cpuinfo.h"
 #include "timer.h"			// allows high-resolution timing across a wide range of platforms
 #include "guard.h"
