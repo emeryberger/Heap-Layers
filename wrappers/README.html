@@ -1,0 +1,46 @@
+<h2><a href="http://www.heaplayers.org">Heap Layers: An Extensible Memory Allocation Infrastructure</a></h2>
+
+<p>Copyright (C) 2000 - 2012 by <a href="http://www.cs.umass.edu/~emery">Emery Berger</a></p>
+
+<p>Please read <a href="COPYING">COPYING</a> for licensing information.</p>
+
+<p>Heap Layers is distributed under the terms of the GNU General Public License.  </p>
+
+<p><strong>Commercial licenses are also available.</strong></p>
+
+<p>Please contact Emery Berger (emery@cs.umass.edu) for more details.</p>
+
+<h2>Introduction</h2>
+
+<p>Heap Layers provides a flexible infrastructure for composing
+high-performance memory allocators out of C++ <em>layers</em>. Heap Layers
+makes it easy to write high-quality custom and general-purpose
+memory allocators. Heap Layers has been used successfully to build
+a number of high-performance allocators, including <a href="http://www.hoard.org">Hoard</a> and <a href="http://www.diehard-software.org/">DieHard</a>.</p>
+
+<h2>Using Heap Layers</h2>
+
+<p>For an introduction to Heap Layers, read the article <a href="http://www.drdobbs.com/184402039">Policy-Based
+Memory Allocation</a>, by Andrei
+Alexandrescu and Emery Berger. It's a good overview.</p>
+
+<p>Heap Layers contains a number of ready-made heap components that can
+be plugged together with minimal effort, and the result is often
+faster than hand-built allocators. The PLDI 2001 paper <a href="http://www.cs.umass.edu/~emery/pubs/berger-pldi2001.pdf">Composing
+High-Performance Memory
+Allocators</a>
+has plenty of examples.</p>
+
+<h2>Performance</h2>
+
+<p>Heap Layers can substantially outperform its only real competitor,
+the Vmalloc package from AT&amp;T. The OOPSLA 2002 paper <a href="http://www.cs.umass.edu/~emery/pubs/berger-oopsla2002.pdf">Reconsidering
+Custom Memory
+Allocation</a>
+paper has more details.</p>
+
+<p>Not only is Heap Layers much higher level and simpler to use, but
+its use of templates also improves performance. Heap Layers both
+eliminates the function call overhead imposed by Vmalloc layers and
+yields higher quality code by exposing more optimization
+opportunities.</p>
