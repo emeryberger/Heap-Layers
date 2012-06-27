@@ -65,7 +65,14 @@ extern "C" {
   static void * (*old_realloc_hook)(void *ptr, size_t size, const void *caller);
   static void * (*old_memalign_hook)(size_t alignment, size_t size, const void *caller);
 
-  void (* __malloc_initialize_hook) (void) = my_init_hook;
+// From GNU libc 2.14 this macro is defined, to declare
+// hook variables as volatile. Define it as empty for
+// older glibc versions
+#ifndef __MALLOC_HOOK_VOLATILE
+ #define __MALLOC_HOOK_VOLATILE
+#endif
+
+  void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook) (void) = my_init_hook;
 
   static void my_init_hook (void) {
     // Store the old hooks.
