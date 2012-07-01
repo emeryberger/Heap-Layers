@@ -137,7 +137,7 @@ namespace HL {
   };
 
 
-  class MmapHeap : public PrivateMmapHeap {
+  class MmapHeap : private PrivateMmapHeap {
 #if !defined(_WIN32)
 
   private:
