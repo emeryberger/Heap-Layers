@@ -93,6 +93,9 @@ public:
   CPUInfo (void)
   {}
 
+  // Good for practically all platforms.
+  enum { PageSize = 4096 };
+
   inline static int getNumProcessors (void) {
     static int _numProcessors = computeNumProcessors();
     return _numProcessors;
