@@ -91,10 +91,12 @@ namespace HL {
     }
   
     static inline void free (void * ptr, size_t) {
+      // No need to keep track of sizes in Windows.
       VirtualFree (ptr, 0, MEM_RELEASE);
     }
 
     static inline void free (void * ptr) {
+      // No need to keep track of sizes in Windows.
       VirtualFree (ptr, 0, MEM_RELEASE);
     }
   
@@ -105,8 +107,6 @@ namespace HL {
     }
 
 #else
-
-    virtual ~PrivateMmapHeap (void) {}
 
     static inline void * malloc (size_t sz) {
 #if defined(MAP_ALIGN) && defined(MAP_ANON)
@@ -124,19 +124,6 @@ namespace HL {
       return ptr;
     }
     
-#if 0
-    inline void free (void * ptr) {
-      abort();
-      munmap (reinterpret_cast<char *>(ptr), getSize(ptr));
-    }
-
-    inline size_t getSize (void * ptr) {
-      ptr = ptr;
-      abort();
-      return Alignment; // Obviously broken. Such is life.
-    }
-#endif
-
     static void free (void * ptr, size_t sz)
     {
       if ((long) sz < 0) {
