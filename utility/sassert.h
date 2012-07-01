@@ -21,6 +21,7 @@ namespace HL {
     class sassert;
 
   template<> class sassert<true> {
+  public:
     enum { VALUE = true };
   };
 
