@@ -142,8 +142,9 @@ namespace HL {
 
   private:
 
-    // FIX ME: 16 = size of ZoneHeap header.
-    class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<ZoneHeap<PrivateMmapHeap, 16384 - 16> > > {
+    // Note: we never reclaim memory obtained for MyHeap, even when
+    // this heap is destroyed.
+    class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<BumpAlloc<16384, PrivateMmapHeap> > > {
     };
 
     typedef MyHashMap<void *, size_t, MyHeap> mapType;
