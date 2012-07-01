@@ -71,7 +71,7 @@ namespace HL {
       }
       if (_currentArena != NULL)
 	//printf ("deleting %x\n", _currentArena);
-	SuperHeap::free (_currentArena);
+	SuperHeap::free ((void *) _currentArena);
     }
 
     inline void * malloc (size_t sz) {
