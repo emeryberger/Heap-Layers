@@ -20,7 +20,9 @@ namespace HL {
   template <bool assertion>
     class sassert;
 
-  template<> class sassert<true> { };
+  template<> class sassert<true> {
+    enum { VALUE = true };
+  };
 
 }
 
