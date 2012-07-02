@@ -180,7 +180,7 @@ extern "C" {
   // This is here because, for some reason, the GNU hooks don't
   // necessarily replace all memory operations as they should.
 
-  int posix_memalign (void **memptr, size_t alignment, size_t size)
+  int posix_memalign (void **memptr, size_t alignment, size_t size) throw()
   {
     if (!initialized) {
       my_init_hook();
@@ -200,7 +200,7 @@ extern "C" {
     }
   }
 
-  size_t malloc_usable_size (void * ptr) {
+  size_t malloc_usable_size (void * ptr) throw() {
     return xxmalloc_usable_size (ptr);
   }
 
