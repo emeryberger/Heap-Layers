@@ -29,9 +29,10 @@
 
 #include <dlfcn.h>
 
-#include "wrappers/ansiwrapper.h"
 #include "heaps/objectrep/sizeheap.h"
 #include "heaps/top/staticheap.h"
+#include "wrappers/ansiwrapper.h"
+#include "wrappers/mallocinfo.h"
 
 #if defined(__SVR4)
 extern "C" size_t malloc_usable_size (void *);
@@ -53,6 +54,8 @@ namespace HL {
 
   class LocalMallocHeap {
   public:
+
+    enum { Alignment = HL::MallocInfo::Alignment };
 
     LocalMallocHeap (void)
       : freefn (NULL),
