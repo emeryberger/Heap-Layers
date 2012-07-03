@@ -28,7 +28,6 @@
 #define HL_EXCEPTIONHEAP_H
 
 #include <new>
-#include <new.h>
 
 class std::bad_alloc;
 

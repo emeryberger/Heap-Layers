@@ -29,9 +29,9 @@
 
 #include <dlfcn.h>
 
-#include "ansiwrapper.h"
-#include "sizeheap.h"
-#include "staticheap.h"
+#include "wrappers/ansiwrapper.h"
+#include "heaps/objectrep/sizeheap.h"
+#include "heaps/top/staticheap.h"
 
 extern "C" {
   size_t malloc_usable_size (void *);
