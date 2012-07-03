@@ -95,7 +95,7 @@ namespace HL {
 	mallocfn = (mallocFunction *)
 	  ((unsigned long) dlsym (RTLD_NEXT, "malloc"));
 	
-	if (!(freefn && msizefn && && mallocfn)) {
+	if (!(freefn && msizefn && mallocfn)) {
 	  fprintf (stderr, "Serious problem!\n");
 	  abort();
 	}
