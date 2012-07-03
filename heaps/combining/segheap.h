@@ -242,7 +242,7 @@ namespace HL {
 
   };
 
-};
+}
 
 
 #endif

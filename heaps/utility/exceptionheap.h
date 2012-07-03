@@ -29,7 +29,7 @@
 
 #include <new>
 
-class std::bad_alloc;
+//class std::bad_alloc;
 
 namespace HL {
 

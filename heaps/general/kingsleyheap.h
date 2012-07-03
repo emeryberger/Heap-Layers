@@ -120,6 +120,6 @@ template <class PerClassHeap, class BigHeap>
 			PerClassHeap,
 			BigHeap> {};
 
-};
+}
 
 #endif

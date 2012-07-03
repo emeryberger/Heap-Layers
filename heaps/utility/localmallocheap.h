@@ -56,10 +56,10 @@ namespace HL {
 
     LocalMallocHeap (void)
       : freefn (NULL),
-      msizefn (NULL),
-      mallocfn (NULL),
-      firsttime (true)
-      {}
+	msizefn (NULL),
+	mallocfn (NULL),
+	firsttime (true)
+    {}
 
     inline void * malloc (size_t sz) {
       if (firsttime) {
@@ -124,13 +124,13 @@ namespace HL {
 
   private:
 
-    bool firsttime;   /// True iff we haven't initialized the shim functions.
-
     // Shim functions below.
 
     freeFunction *   freefn;
     msizeFunction *  msizefn;
     mallocFunction * mallocfn;
+
+    bool firsttime;   /// True iff we haven't initialized the shim functions.
 
     /// The local heap (for use while we are in dlsym, installing the
     /// shim functions). Hopefully 64K is enough...

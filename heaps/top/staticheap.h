@@ -75,6 +75,6 @@ namespace HL {
     size_t remaining;
   };
 
-};
+}
 
 #endif
