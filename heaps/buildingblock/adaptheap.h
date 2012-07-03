@@ -28,6 +28,8 @@
 #ifndef HL_ADAPTHEAP_H
 #define HL_ADAPTHEAP_H
 
+#include <stdlib.h>
+
 /**
  * @class AdaptHeap
  * @brief Maintains dictionary entries through freed objects.
