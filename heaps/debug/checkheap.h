@@ -1,12 +1,14 @@
 // -*- C++ -*-
 
-#ifndef HL_CHECKHEAP_H_
-#define HL_CHECKHEAP_H_
+#ifndef HL_CHECKHEAP_H
+#define HL_CHECKHEAP_H
 
 #include <cstring>
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 /**
  * @class CheckHeap
  * @brief Performs simple checks on memory allocations.

@@ -95,8 +95,8 @@ namespace HL {
   class StatsHeap : public SuperHeap {
   public:
     ~StatsHeap (void) {
-      printf ("In use = %d, allocated = %d\n", getInUse(), getAllocated());
-      printf ("Max in use = %d, max allocated = %d\n", getMaxInUse(), getMaxAllocated());
+      printf ("In use = %d, allocated = %d\n", SuperHeap::getInUse(), SuperHeap::getAllocated());
+      printf ("Max in use = %d, max allocated = %d\n", SuperHeap::getMaxInUse(), SuperHeap::getMaxAllocated());
     }
   };
 
