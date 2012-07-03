@@ -26,8 +26,8 @@
 
 // An "Obstack".
 
-#ifndef HL_OBSTACK_H
-#define HL_OBSTACK_H
+#ifndef HL_OBSTACKHEAP_H
+#define HL_OBSTACKHEAP_H
 
 #include <assert.h>
 #include <new>

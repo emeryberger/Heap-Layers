@@ -285,12 +285,12 @@ namespace HL {
 
   };
 
-#endif // __cplusplus
-
+#if 0
   // The C version of the above (just large enough to hold all of the data structures).
   struct obstack {
     void * _dummy[3];
   };
+#endif
 
 }
 
