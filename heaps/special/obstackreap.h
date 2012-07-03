@@ -1,7 +1,7 @@
 // -*- C++ -*-
 
-#ifndef _OBSTACKREAP_H_
-#define _OBSTACKREAP_H_
+#ifndef HL_OBSTACKREAP_H
+#define HL_OBSTACKREAP_H
 
 #include <assert.h>
 

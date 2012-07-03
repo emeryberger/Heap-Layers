@@ -34,8 +34,8 @@
 #include <assert.h>
 #include <new>
 
-#include "align.h"
-#include "mallocinfo.h"
+#include "utility/align.h"
+#include "wrappers/mallocinfo.h"
 
 /**
  * @class ObstackHeap
