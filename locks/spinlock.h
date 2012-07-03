@@ -43,7 +43,7 @@
 #include <libkern/OSAtomic.h>
 #endif
 
-#include "cpuinfo.h"
+#include "threads/cpuinfo.h"
 
 #if defined(_MSC_VER)
 

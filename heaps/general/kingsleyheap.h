@@ -24,10 +24,10 @@
 
 */
 
-#ifndef _KINGSLEYHEAP_H_
-#define _KINGSLEYHEAP_H_
+#ifndef HL_KINGSLEYHEAP_H
+#define HL_KINGSLEYHEAP_H
 
-#include "strictsegheap.h"
+#include "heaps/combining/strictsegheap.h"
 
 /**
  * @file kingsleyheap.h

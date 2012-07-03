@@ -27,9 +27,7 @@
 #ifndef HL_WINLOCK_H
 #define HL_WINLOCK_H
 
-#if !defined(_WIN32)
-#error "This file is for Windows only."
-#endif
+#if defined(_WIN32)
 
 #include <windows.h>
 #include <winnt.h>
@@ -84,5 +82,7 @@ namespace HL {
   };
 
 }
+
+#endif
 
 #endif

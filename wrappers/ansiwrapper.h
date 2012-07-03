@@ -6,9 +6,9 @@
 #include <assert.h>
 #include <string.h>
 
-#include "gcd.h"
-#include "istrue.h"
-#include "sassert.h"
+#include "utility/gcd.h"
+#include "utility/istrue.h"
+#include "utility/sassert.h"
 #include "mallocinfo.h"
 
 

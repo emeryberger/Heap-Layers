@@ -40,9 +40,9 @@
 
 #include <assert.h>
 
-#include "align.h"
-#include "mallocinfo.h"
-#include "sassert.h"
+#include "utility/align.h"
+#include "wrappers/mallocinfo.h"
+#include "utility/sassert.h"
 
 namespace HL {
 

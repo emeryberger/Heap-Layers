@@ -27,9 +27,7 @@
 #ifndef HL_MACLOCK_H
 #define HL_MACLOCK_H
 
-#if !defined(__APPLE__)
-#error "This file is for Mac only."
-#endif
+#if defined(__APPLE__)
 
 #include <libkern/OSAtomic.h>
 
@@ -67,5 +65,7 @@ namespace HL {
   };
 
 }
+
+#endif
 
 #endif

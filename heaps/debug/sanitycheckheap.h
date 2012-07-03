@@ -12,10 +12,10 @@
 
 #include <map>
 
-#include "mallocheap.h"
-#include "zoneheap.h"
-#include "stlallocator.h"
-#include "mmapheap.h"
+#include "heaps/top/mallocheap.h"
+#include "heaps/special/zoneheap.h"
+#include "wrappers/stlallocator.h"
+#include "heaps/top/mmapheap.h"
 
 namespace HL {
 

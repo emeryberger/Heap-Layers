@@ -34,9 +34,9 @@
 
 #include <assert.h>
 
-#include "mallocinfo.h"
-#include "addheap.h"
-#include "gcd.h"
+#include "wrappers/mallocinfo.h"
+#include "heaps/objectrep/addheap.h"
+#include "utility/gcd.h"
 
 namespace HL {
   

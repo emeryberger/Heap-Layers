@@ -102,6 +102,20 @@ namespace HL {};
 #pragma warning( disable:4786 4512 )
 #endif
 
+#include "heaps/all.h"
+#include "locks/all.h"
+#include "threads/all.h"
+#include "utility/all.h"
+#include "wrappers/all.h"
+
+
+
+//////////////////////////////
+
+
+#if 0
+
+
 #include "sassert.h"
 // #include "utility.h"		// convenient wrappers to replace C++ new & delete operators
 #include "dynarray.h"		// an array that grows by doubling
@@ -201,6 +215,9 @@ namespace HL {};
 // #include "xallocHeap.h" // 197.parser's heap
 
 #include "staticheap.h"
+
+#endif
+
 
 
 #ifdef _MSC_VER

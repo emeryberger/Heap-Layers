@@ -27,6 +27,8 @@
 #ifndef HL_RECURSIVELOCK_H
 #define HL_RECURSIVELOCK_H
 
+#include "threads/cpuinfo.h"
+
 /**
  * @class RecursiveLockType
  * @brief Implements a recursive lock using some base lock representation.
@@ -39,52 +41,46 @@ namespace HL {
   class RecursiveLockType : public BaseLock {
   public:
 
-    inline RecursiveLockType (void);
+    inline RecursiveLockType (void)
+      : _tid (-1),
+	_recursiveDepth (0)
+    {}
 
-    inline void lock (void);
-    inline void unlock (void);
+    inline void lock() {
+      int currthread = CPUInfo::getThreadId();
+      if (_tid == currthread) {
+	_recursiveDepth++;
+      } else {
+	BaseLock::lock();
+	_tid = currthread;
+	_recursiveDepth++;
+      }
+    }
+
+    inline void unlock (void) {
+      int currthread = CPUInfo::getThreadId();
+      if (_tid == currthread) {
+	_recursiveDepth--;
+	if (_recursiveDepth == 0) {
+	  _tid = -1;
+	  BaseLock::unlock();
+	}
+      } else {
+	// We tried to unlock it but we didn't lock it!
+	// This should never happen.
+	assert (0);
+	abort();
+      }
+    }
 
   private:
-    int tid;	/// The lock owner's thread id. -1 if unlocked.
-    int count;	/// The recursion depth of the lock.
+    int _tid;	                /// The lock owner's thread id. -1 if unlocked.
+    int _recursiveDepth;	/// The recursion depth of the lock.
   };
 
-
 }
 
-template <class BaseLock>
-HL::RecursiveLockType<BaseLock>::RecursiveLockType (void)
-  : tid (-1),
-    count (0)
-{}
 
-template <class BaseLock>
-void HL::RecursiveLockType<BaseLock>::lock (void) {
-  int currthread = GetCurrentThreadId();
-  if (tid == currthread) {
-    count++;
-  } else {
-    BaseLock::lock();
-    tid = currthread;
-    count++;
-  }
-}
 
-template <class BaseLock>
-void HL::RecursiveLockType<BaseLock>::unlock (void) {
-  int currthread = GetCurrentThreadId();
-  if (tid == currthread) {
-    count--;
-    if (count == 0) {
-      tid = -1;
-      BaseLock::unlock();
-    }
-  } else {
-    // We tried to unlock it but we didn't lock it!
-    // This should never happen.
-    assert (0);
-    abort();
-  }
-}
 
 #endif

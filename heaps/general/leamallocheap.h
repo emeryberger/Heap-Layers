@@ -24,8 +24,8 @@
 
 */
 
-#ifndef _LEAMALLOCHEAP_H_
-#define _LEAMALLOCHEAP_H_
+#ifndef HL_LEAMALLOCHEAP_H
+#define HL_LEAMALLOCHEAP_H
 
 #include <cstdlib>
 
@@ -40,22 +40,22 @@ extern "C" size_t dlmalloc_usable_size (void *);
 
 namespace HL {
 
-class LeaMallocHeap {
- public:
-  inline void * malloc (size_t sz) {
-    void * ptr = dlmalloc (sz);
-    return ptr;
-  }
+  class LeaMallocHeap {
+  public:
+    inline void * malloc (size_t sz) {
+      void * ptr = dlmalloc (sz);
+      return ptr;
+    }
 
-  inline void free (void * p) {
-    dlfree (p);
-  }
+    inline void free (void * p) {
+      dlfree (p);
+    }
 
-  inline size_t getSize (const void * p) {
-    return dlmalloc_usable_size ((void *) p);
-  }
-};
+    inline size_t getSize (const void * p) {
+      return dlmalloc_usable_size ((void *) p);
+    }
+  };
 
-};
+}
 
 #endif

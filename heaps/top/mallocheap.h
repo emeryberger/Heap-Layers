@@ -40,7 +40,7 @@ extern "C" size_t malloc_usable_size (void *) throw ();
  * @brief A "source heap" that uses malloc and free.
  */
 
-#include "mallocinfo.h"
+#include "wrappers/mallocinfo.h"
 
 
 namespace HL {

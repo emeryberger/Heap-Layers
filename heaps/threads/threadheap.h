@@ -29,7 +29,8 @@
 
 #include <assert.h>
 #include <new>
-#include "cpuinfo.h"
+
+#include "threads/cpuinfo.h"
 
 #if !defined(_WIN32)
 #include <pthread.h>

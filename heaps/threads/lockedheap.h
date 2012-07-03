@@ -27,7 +27,7 @@
 #ifndef HL_LOCKEDHEAP_H
 #define HL_LOCKEDHEAP_H
 
-#include "guard.h"
+#include "utility/guard.h"
 
 namespace HL {
 
@@ -45,6 +45,11 @@ namespace HL {
     inline void free (void * ptr) {
       Guard<LockType> l (thelock);
       Super::free (ptr);
+    }
+
+    inline size_t getSize (void * ptr) const {
+      Guard<LockType> l (thelock);
+      return Super::getSize (ptr);
     }
 
     inline size_t getSize (void * ptr) {

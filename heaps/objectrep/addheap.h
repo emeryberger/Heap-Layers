@@ -30,7 +30,7 @@
 // Reserve space for a class in the head of every allocated object.
 
 #include <assert.h>
-#include "lcm.h"
+#include "utility/lcm.h"
 
 namespace HL {
 

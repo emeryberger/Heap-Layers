@@ -36,7 +36,7 @@
 
 #include <pthread.h>
 
-#include "mmapwrapper.h"
+#include "wrappers/mmapwrapper.h"
 
 namespace HL {
 

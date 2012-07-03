@@ -24,8 +24,8 @@
 
 */
 
-#ifndef _DLHEAP_H_
-#define _DLHEAP_H_
+#ifndef HL_DLHEAP_H
+#define HL_DLHEAP_H
 
 /**
  * @file dlheap.h
@@ -35,9 +35,9 @@
 
 #include <assert.h>
 
-#include "adaptheap.h"
-#include "dllist.h"
-#include "sllist.h"
+#include "heaps/buildingblock/adaptheap.h"
+#include "utility/dllist.h"
+#include "utility/sllist.h"
 
 #ifndef TRUE
 #define TRUE 1

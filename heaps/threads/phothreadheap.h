@@ -1,11 +1,12 @@
 /* -*- C++ -*- */
 
-#ifndef HL_PHOThreadHeap_H_
-#define HL_PHOThreadHeap_H_
+#ifndef HL_PHOTHREADHEAP_H
+#define HL_PHOTHREADHEAP_H
 
 #include <assert.h>
 
-#include "cpuinfo.h"
+#include "threads/cpuinfo.h"
+
 using namespace HL;
 
 template <int NumHeaps, class SuperHeap>
