@@ -38,13 +38,13 @@
 #include "heaps/buildingblock/adaptheap.h"
 #include "utility/dllist.h"
 #include "utility/sllist.h"
+#include "heaps/objectrep/coalesceableheap.h"
 
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0
 #endif
  
-#include "coalesceableheap.h"
 
 /**
  * @class CoalesceableMmapHeap

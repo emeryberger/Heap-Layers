@@ -28,8 +28,9 @@
 #define HL_HYBRIDHEAP_H
 
 #include <assert.h>
-#include "sassert.h"
-#include "gcd.h"
+
+#include "utility/sassert.h"
+#include "utility/gcd.h"
 
 /**
  * @class HybridHeap
