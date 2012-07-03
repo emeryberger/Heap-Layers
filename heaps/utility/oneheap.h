@@ -1,3 +1,5 @@
+// -*- C++ -*-
+
 #ifndef HL_ONEHEAP_H
 #define HL_ONEHEAP_H
 
@@ -6,7 +8,7 @@
 namespace HL {
 
   template <class TheHeap>
-    class OneHeap : public singleton<TheHeap> {
+  class OneHeap : public singleton<TheHeap> {
   public:
     
     enum { Alignment = TheHeap::Alignment };

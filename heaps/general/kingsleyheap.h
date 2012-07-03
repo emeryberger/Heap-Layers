@@ -100,7 +100,7 @@ namespace Kingsley {
 
   enum { NUMBINS = 29 };
 
-};
+}
 
 /**
  * @class KingsleyHeap

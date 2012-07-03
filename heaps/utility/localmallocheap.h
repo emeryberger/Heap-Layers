@@ -69,10 +69,14 @@ namespace HL {
 	// We haven't initialized anything yet.
 	// Initialize all of the malloc shim functions.
 
-	freefn = (freeFunction *) dlsym (RTLD_NEXT, "free");
-	msizefn = (msizeFunction *) dlsym (RTLD_NEXT, "malloc_usable_size");
-	trueExitFunction = (exitFunction *) dlsym (RTLD_NEXT, "exit");
-	mallocfn = (mallocFunction *) dlsym (RTLD_NEXT, "malloc");
+	freefn = (freeFunction *)
+	  ((unsigned long) dlsym (RTLD_NEXT, "free"));
+	msizefn = (msizeFunction *)
+	  ((unsigned long) dlsym (RTLD_NEXT, "malloc_usable_size"));
+	trueExitFunction = (exitFunction *)
+	  ((unsigned long) dlsym (RTLD_NEXT, "exit"));
+	mallocfn = (mallocFunction *)
+	  ((unsigned long) dlsym (RTLD_NEXT, "malloc"));
 
 	if (!(freefn && msizefn && trueExitFunction && mallocfn)) {
 	  fprintf (stderr, "Serious problem!\n");
