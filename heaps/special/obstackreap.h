@@ -15,7 +15,7 @@
 #include <windows.h>
 #endif
 
-#include "dynarray.h"
+#include "utility/dynarray.h"
 
 namespace ObstackReapNS {
 
