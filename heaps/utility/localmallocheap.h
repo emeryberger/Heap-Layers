@@ -33,8 +33,13 @@
 #include "heaps/objectrep/sizeheap.h"
 #include "heaps/top/staticheap.h"
 
+#if defined(__SVR4)
+extern "C" size_t malloc_usable_size (void *);
+#else
+extern "C" size_t malloc_usable_size (void *) throw ();
+#endif
+
 extern "C" {
-  size_t malloc_usable_size (void *);
   
   typedef void * mallocFunction (size_t);
   typedef void freeFunction (void *);

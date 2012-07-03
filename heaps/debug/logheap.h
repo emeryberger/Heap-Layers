@@ -11,9 +11,10 @@
 #include <assert.h>
 #include <math.h>
 #include <limits.h>
+#include <stdlib.h>
 
 // UNIX-specific for now...
-#include <unistd.h>
+//#include <unistd.h>
 
 #include <fstream>
 #include <ios>

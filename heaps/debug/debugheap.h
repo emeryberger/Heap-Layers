@@ -5,6 +5,7 @@
 #define HL_DEBUGHEAP_H_
 
 #include <assert.h>
+#include <stdlib.h>
 
 /**
  *

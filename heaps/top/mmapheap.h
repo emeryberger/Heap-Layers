@@ -41,14 +41,15 @@
 
 #include <new>
 
-#include "utility/sassert.h"
-#include "utility/myhashmap.h"
-#include "wrappers/stlallocator.h"
 #include "heaps/buildingblock/freelistheap.h"
 #include "heaps/special/zoneheap.h"
+#include "heaps/special/bumpalloc.h"
 #include "heaps/threads/lockedheap.h"
 #include "locks/posixlock.h"
+#include "utility/myhashmap.h"
+#include "utility/sassert.h"
 #include "wrappers/mmapwrapper.h"
+#include "wrappers/stlallocator.h"
 
 #if HL_EXECUTABLE_HEAP
 #define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC)

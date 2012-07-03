@@ -5,6 +5,8 @@
 
 #include <cstring>
 
+#include <assert.h>
+#include <stdio.h>
 /**
  * @class CheckHeap
  * @brief Performs simple checks on memory allocations.
