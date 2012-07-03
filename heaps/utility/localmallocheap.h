@@ -42,9 +42,6 @@ extern "C" {
   typedef void * mallocFunction (size_t);
   typedef void freeFunction (void *);
   typedef size_t msizeFunction (void *);
-  
-  typedef void exitFunction (int);
-  exitFunction * trueExitFunction;
 }
 
 namespace HL {
@@ -95,19 +92,16 @@ namespace HL {
 	  ((unsigned long) dlsym (RTLD_NEXT, "free"));
 	msizefn = (msizeFunction *)
 	  ((unsigned long) dlsym (RTLD_NEXT, "malloc_usable_size"));
-	trueExitFunction = (exitFunction *)
-	  ((unsigned long) dlsym (RTLD_NEXT, "exit"));
 	mallocfn = (mallocFunction *)
 	  ((unsigned long) dlsym (RTLD_NEXT, "malloc"));
 	
-	if (!(freefn && msizefn && trueExitFunction && mallocfn)) {
+	if (!(freefn && msizefn && && mallocfn)) {
 	  fprintf (stderr, "Serious problem!\n");
 	  abort();
 	}
 	
 	assert (freefn);
 	assert (msizefn);
-	assert (trueExitFunction);
 	assert (mallocfn);
 	
 	firsttime = false;
