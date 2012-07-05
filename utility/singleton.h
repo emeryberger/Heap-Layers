@@ -8,7 +8,7 @@
 namespace HL {
 
   template <class C>
-  class singleton : public C {
+  class singleton {
   public:
     
     static inline C& getInstance() {
