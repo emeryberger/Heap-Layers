@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
+#include <new>
 
 /*
   To use this library,
@@ -91,14 +92,23 @@ extern "C" {
   }
 
   static void * my_malloc_hook (size_t size, const void *) {
+    if (!initialized) {
+      my_init_hook();
+    }
     return xxmalloc(size);
   }
 
   static void my_free_hook (void * ptr, const void *) {
+    if (!initialized) {
+      my_init_hook();
+    }
     xxfree(ptr);
   }
 
   static void * my_realloc_hook (void * ptr, size_t sz, const void *) {
+    if (!initialized) {
+      my_init_hook();
+    }
     // NULL ptr = malloc.
     if (ptr == NULL) {
       return xxmalloc(sz);
@@ -149,6 +159,9 @@ extern "C" {
   }
 
   static void * my_memalign_hook (size_t size, size_t alignment, const void *) {
+    if (!initialized) {
+      my_init_hook();
+    }
     // Check for non power-of-two alignment, or mistake in size.
     if ((alignment == 0) ||
 	(alignment & (alignment - 1)))
@@ -201,8 +214,92 @@ extern "C" {
   }
 
   size_t malloc_usable_size (void * ptr) throw() {
+    if (!initialized) {
+      my_init_hook();
+    }
     return xxmalloc_usable_size (ptr);
+  }
+
+  int mallopt (int param, int value) throw() {
+    // NOP.
+    return 1; // success.
+  }
+
+  int malloc_trim (size_t pad) throw() {
+    // NOP.
+    return 0; // no memory returned to OS.
+  }
+
+  void malloc_stats (void) throw() {
+    // NOP.
+  }
+
+  void * malloc_get_state (void) throw() {
+    return NULL; // always returns "error".
+  }
+
+  int malloc_set_state (void * ptr) throw() {
+    return 0; // success.
+  }
+
+  struct mallinfo mallinfo(void) throw() {
+    // For now, we return useless stats.
+    struct mallinfo m;
+    m.arena = 0;
+    m.ordblks = 0;
+    m.smblks = 0;
+    m.hblks = 0;
+    m.hblkhd = 0;
+    m.usmblks = 0;
+    m.fsmblks = 0;
+    m.uordblks = 0;
+    m.fordblks = 0;
+    m.keepcost = 0;
+    return m;
   }
 
 }
 
+
+void * operator new (size_t sz) throw (std::bad_alloc)
+{
+  void * ptr = xxmalloc (sz);
+  if (ptr == NULL) {
+    throw std::bad_alloc();
+  } else {
+    return ptr;
+  }
+}
+
+void operator delete (void * ptr)
+  throw ()
+{
+  xxfree (ptr);
+}
+
+void * operator new (size_t sz, const std::nothrow_t&) throw() {
+  return xxmalloc(sz);
+} 
+
+void * operator new[] (size_t size) 
+  throw (std::bad_alloc)
+{
+  void * ptr = xxmalloc(size);
+  if (ptr == NULL) {
+    throw std::bad_alloc();
+  } else {
+    return ptr;
+  }
+}
+
+void * operator new[] (size_t sz, const std::nothrow_t&)
+  throw()
+ {
+  return xxmalloc(sz);
+} 
+
+void operator delete[] (void * ptr)
+  throw ()
+{
+  xxfree (ptr);
+}
