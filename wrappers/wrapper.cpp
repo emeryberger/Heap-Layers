@@ -30,9 +30,6 @@
  * @author Emery Berger <http://www.cs.umass.edu/~emery>
  */
 
-
-// #pragma once
-
 #include <string.h> // for memcpy and memset
 #include <stdlib.h> // size_t
 #include <stdint.h>
@@ -72,10 +69,6 @@ extern "C" {
 #pragma inline_depth(255)
 #pragma warning(disable: 4074)	// initializers put in compiler reserved area
 
-//#pragma init_seg(compiler)
-
-// #pragma comment(linker, "/merge:.CRT=.data")
-
 #pragma comment(linker, "/disallowlib:libc.lib")
 #pragma comment(linker, "/disallowlib:libcd.lib")
 #pragma comment(linker, "/disallowlib:libcmt.lib")
@@ -95,8 +88,8 @@ extern "C" {
 #define CUSTOM_REALLOC(x,y)  CUSTOM_PREFIX(realloc)(x,y)
 #define CUSTOM_CALLOC(x,y)   CUSTOM_PREFIX(calloc)(x,y)
 #define CUSTOM_MEMALIGN(x,y) CUSTOM_PREFIX(memalign)(x,y)
+#define CUSTOM_POSIX_MEMALIGN(x,y,z) CUSTOM_PREFIX(posix_memalign)(x,y,z)
 #define CUSTOM_GETSIZE(x)    CUSTOM_PREFIX(malloc_usable_size)(x)
-#define CUSTOM_MALLOPT(x,y)  CUSTOM_PREFIX(mallopt)(x,y)
 #define CUSTOM_VALLOC(x)     CUSTOM_PREFIX(valloc)(x)
 #define CUSTOM_PVALLOC(x)    CUSTOM_PREFIX(pvalloc)(x)
 #define CUSTOM_RECALLOC(x,y,z)   CUSTOM_PREFIX(recalloc)(x,y,z)
@@ -104,7 +97,14 @@ extern "C" {
 #define CUSTOM_STRDUP(s)     CUSTOM_PREFIX(strdup)(s)
 #define CUSTOM_GETCWD(b,s)   CUSTOM_PREFIX(getcwd)(b,s)
 #define CUSTOM_GETENV(s)     CUSTOM_PREFIX(getenv)(s)
-#define CUSTOM_PUTENV(s)     CUSTOM_PREFIX(_putenv)(s)
+
+// GNU-related routines:
+#define CUSTOM_MALLOPT(x,y)         CUSTOM_PREFIX(mallopt)(x,y)
+#define CUSTOM_MALLOC_TRIM(s)       CUSTOM_PREFIX(malloc_trim)(s)
+#define CUSTOM_MALLOC_STATS(a)      CUSTOM_PREFIX(malloc_stats)(a)
+#define CUSTOM_MALLOC_GET_STATE(p)  CUSTOM_PREFIX(malloc_get_state)(p)
+#define CUSTOM_MALLOC_SET_STATE(p)  CUSTOM_PREFIX(malloc_set_state)(p)
+#define CUSTOM_MALLINFO(a)          CUSTOM_PREFIX(mallinfo)(a)
 
 #if defined(_WIN32)
 #define MYCDECL __cdecl
@@ -144,7 +144,7 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 #if !defined(_WIN32)
 extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size);
 
-extern "C" int posix_memalign (void **memptr, size_t alignment, size_t size) throw()
+extern "C" int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size) throw()
 {
   // Check for non power-of-two alignment.
   if ((alignment == 0) ||
@@ -277,6 +277,46 @@ extern "C"  char * MYCDECL CUSTOM_GETCWD(char * buf, size_t size)
 #endif
 
 
+extern "C" int  CUSTOM_MALLOPT (int param, int value) {
+  // NOP.
+  return 1; // success.
+}
+
+extern "C" int CUSTOM_MALLOC_TRIM (size_t pad) {
+  // NOP.
+  return 0; // no memory returned to OS.
+}
+
+extern "C" void CUSTOM_MALLOC_STATS(void) {
+  // NOP.
+}
+
+extern "C" void * CUSTOM_MALLOC_GET_STATE(void) {
+  return NULL; // always returns "error".
+}
+
+extern "C" int CUSTOM_MALLOC_SET_STATE (void * ptr) {
+  return 0; // success.
+}
+
+#if defined(__GNUC__)
+extern "C" struct mallinfo CUSTOM_MALLINFO(void) {
+  // For now, we return useless stats.
+  struct mallinfo m;
+  m.arena = 0;
+  m.ordblks = 0;
+  m.smblks = 0;
+  m.hblks = 0;
+  m.hblkhd = 0;
+  m.usmblks = 0;
+  m.fsmblks = 0;
+  m.uordblks = 0;
+  m.fordblks = 0;
+  m.keepcost = 0;
+  return m;
+}
+#endif
+
 #if defined(__SVR4)
 // Apparently we no longer need to replace new and friends for Solaris.
 #define NEW_INCLUDED
@@ -343,14 +383,6 @@ void operator delete[] (void * ptr)
 #endif
 
 /***** replacement functions for GNU libc extensions to malloc *****/
-
-// A stub function to ensure that we capture mallopt.
-// It does nothing and always returns a failure value (0).
-extern "C" int MYCDECL CUSTOM_MALLOPT (int /* number */, int /* value */)
-{
-  // Always fail.
-  return 0;
-}
 
 // NOTE: for convenience, we assume page size = 8192.
 

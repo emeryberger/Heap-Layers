@@ -204,5 +204,43 @@ extern "C" {
     return xxmalloc_usable_size (ptr);
   }
 
+  int mallopt (int param, int value) throw() {
+    // NOP.
+    return 1; // success.
+  }
+
+  int malloc_trim (size_t pad) throw() {
+    // NOP.
+    return 0; // no memory returned to OS.
+  }
+
+  void malloc_stats (void) throw() {
+    // NOP.
+  }
+
+  void * malloc_get_state (void) throw() {
+    return NULL; // always returns "error".
+  }
+
+  int malloc_set_state (void * ptr) throw() {
+    return 0; // success.
+  }
+
+  struct mallinfo mallinfo(void) throw() {
+    // For now, we return useless stats.
+    struct mallinfo m;
+    m.arena = 0;
+    m.ordblks = 0;
+    m.smblks = 0;
+    m.hblks = 0;
+    m.hblkhd = 0;
+    m.usmblks = 0;
+    m.fsmblks = 0;
+    m.uordblks = 0;
+    m.fordblks = 0;
+    m.keepcost = 0;
+    return m;
+  }
+
 }
 
