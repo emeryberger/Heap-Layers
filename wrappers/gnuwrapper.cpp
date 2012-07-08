@@ -19,6 +19,8 @@
 #include <malloc.h>
 #include <new>
 
+#include "heaplayers.h"
+
 /*
   To use this library,
   you only need to define the following allocation functions:
@@ -47,10 +49,7 @@ extern "C" {
 
   void * xxmalloc (size_t);
   void   xxfree (void *);
-
-  // Takes a pointer and returns how much space it holds.
   size_t xxmalloc_usable_size (void *);
-
 
   static void my_init_hook (void);
 
@@ -76,39 +75,32 @@ extern "C" {
   void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook) (void) = my_init_hook;
 
   static void my_init_hook (void) {
-    // Store the old hooks.
-    old_malloc_hook = __malloc_hook;
-    old_free_hook = __free_hook;
-    old_realloc_hook = __realloc_hook;
-    old_memalign_hook = __memalign_hook;
+    if (!initialized) {
+      // Store the old hooks.
+      old_malloc_hook = __malloc_hook;
+      old_free_hook = __free_hook;
+      old_realloc_hook = __realloc_hook;
+      old_memalign_hook = __memalign_hook;
+      
+      // Point the hooks to the replacement functions.
+      __malloc_hook = my_malloc_hook;
+      __free_hook = my_free_hook;
+      __realloc_hook = my_realloc_hook;
+      __memalign_hook = my_memalign_hook;
 
-    // Point the hooks to the replacement functions.
-    __malloc_hook = my_malloc_hook;
-    __free_hook = my_free_hook;
-    __realloc_hook = my_realloc_hook;
-    __memalign_hook = my_memalign_hook;
-
-    initialized = true;
+      initialized = true;
+    }
   }
 
   static void * my_malloc_hook (size_t size, const void *) {
-    if (!initialized) {
-      my_init_hook();
-    }
     return xxmalloc(size);
   }
 
   static void my_free_hook (void * ptr, const void *) {
-    if (!initialized) {
-      my_init_hook();
-    }
     xxfree(ptr);
   }
 
   static void * my_realloc_hook (void * ptr, size_t sz, const void *) {
-    if (!initialized) {
-      my_init_hook();
-    }
     // NULL ptr = malloc.
     if (ptr == NULL) {
       return xxmalloc(sz);
@@ -159,9 +151,6 @@ extern "C" {
   }
 
   static void * my_memalign_hook (size_t size, size_t alignment, const void *) {
-    if (!initialized) {
-      my_init_hook();
-    }
     // Check for non power-of-two alignment, or mistake in size.
     if ((alignment == 0) ||
 	(alignment & (alignment - 1)))
@@ -189,6 +178,8 @@ extern "C" {
     return alignedPtr;
   }
 
+  ////// END OF HOOK FUNCTIONS
+
 
   // This is here because, for some reason, the GNU hooks don't
   // necessarily replace all memory operations as they should.
@@ -213,10 +204,9 @@ extern "C" {
     }
   }
 
+  //// DIRECT REPLACEMENTS FOR MALLOC FAMILY.
+
   size_t malloc_usable_size (void * ptr) throw() {
-    if (!initialized) {
-      my_init_hook();
-    }
     return xxmalloc_usable_size (ptr);
   }
 
@@ -256,6 +246,38 @@ extern "C" {
     m.fordblks = 0;
     m.keepcost = 0;
     return m;
+  }
+
+  void * malloc (size_t sz) throw () {
+    return xxmalloc (sz);
+  }
+
+  void free (void * ptr) throw() {
+    xxfree (ptr);
+  }
+
+  void * realloc (void * ptr, size_t sz) throw () {
+    return my_realloc_hook (ptr, sz, NULL);
+  }
+
+  void * memalign (size_t sz, size_t alignment) throw() {
+    return my_memalign_hook (sz, alignment, NULL);
+  }
+
+  void cfree (void * ptr) throw () {
+    xxfree (ptr);
+  }
+
+  size_t malloc_size (void * p) {
+    return xxmalloc_usable_size (p);
+  }
+
+  void * valloc (size_t sz) throw() {
+    return my_memalign_hook (sz, HL::CPUInfo::PageSize, NULL);
+  }
+
+  void * pvalloc (size_t sz) throw() {
+    return valloc ((sz + HL::CPUInfo::PageSize - 1) & ~(HL::CPUInfo::PageSize - 1));
   }
 
 }
@@ -303,3 +325,5 @@ void operator delete[] (void * ptr)
 {
   xxfree (ptr);
 }
+
+
