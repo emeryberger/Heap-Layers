@@ -212,11 +212,14 @@ extern "C" {
 
   int mallopt (int param, int value) throw() {
     // NOP.
+    param = param;
+    value = value;
     return 1; // success.
   }
 
   int malloc_trim (size_t pad) throw() {
     // NOP.
+    pad = pad;
     return 0; // no memory returned to OS.
   }
 
@@ -229,6 +232,7 @@ extern "C" {
   }
 
   int malloc_set_state (void * ptr) throw() {
+    ptr = ptr;
     return 0; // success.
   }
 

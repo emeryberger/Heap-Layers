@@ -28,6 +28,7 @@ namespace HL {
   
     ANSIWrapper() {
       sassert<(gcd<SuperHeap::Alignment, HL::MallocInfo::Alignment>::value == HL::MallocInfo::Alignment)> checkAlignment;
+      checkAlignment = checkAlignment;
     }
 
     inline void * malloc (size_t sz) {
