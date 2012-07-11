@@ -91,6 +91,16 @@ namespace HL {
 
 #if defined(_WIN32) 
   
+    static void protect (void * ptr, size_t sz) {
+      DWORD oldProtection;
+      VirtualProtect (ptr, sz, PAGE_NOACCESS, &oldProtection);
+    }
+    
+    static void unprotect (void * ptr, size_t sz) {
+      DWORD oldProtection;
+      VirtualProtect (ptr, sz, PAGE_READWRITE, &oldProtection);
+    }
+
     static void * map (size_t sz) {
       void * ptr;
 #if HL_EXECUTABLE_HEAP
@@ -106,7 +116,15 @@ namespace HL {
       VirtualFree (ptr, 0, MEM_RELEASE);
     }
 
-#else
+#else // UNIX
+
+    static void protect (void * ptr, size_t sz) {
+      mprotect ((char *) ptr, sz, PROT_NONE);
+    }
+    
+    static void unprotect (void * ptr, size_t sz) {
+      mprotect ((char *) ptr, sz, PROT_READ | PROT_WRITE | PROT_EXEC);
+    }
 
     static void * map (size_t sz) {
 
