@@ -28,7 +28,9 @@
   - xxmalloc
   - xxfree
   - xxmalloc_usable_size
-  
+  - xxmalloc_lock
+  - xxmalloc_unlock
+
   See the extern "C" block below for function prototypes and more
   details. YOU SHOULD NOT NEED TO MODIFY ANY OF THE CODE HERE TO
   SUPPORT ANY ALLOCATOR.
@@ -50,6 +52,8 @@ extern "C" {
   void * xxmalloc (size_t);
   void   xxfree (void *);
   size_t xxmalloc_usable_size (void *);
+  void   xxmalloc_lock (void);
+  void   xxmalloc_unlock (void);
 
   static void my_init_hook (void);
 
@@ -88,8 +92,13 @@ extern "C" {
       __realloc_hook = my_realloc_hook;
       __memalign_hook = my_memalign_hook;
 
+      // Set up everything so that fork behaves properly.
+      pthread_atfork(xxmalloc_lock, xxmalloc_unlock, xxmalloc_unlock);
+
       initialized = true;
+
     }
+
   }
 
   static void * my_malloc_hook (size_t size, const void *) {
@@ -179,7 +188,6 @@ extern "C" {
   }
 
   ////// END OF HOOK FUNCTIONS
-
 
   // This is here because, for some reason, the GNU hooks don't
   // necessarily replace all memory operations as they should.
