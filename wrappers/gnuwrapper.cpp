@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <new>
+#include <pthread.h>
 
 #include "heaplayers.h"
 
