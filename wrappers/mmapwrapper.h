@@ -39,10 +39,12 @@
 #include <map>
 #endif
 
+#if !defined(HL_MMAP_PROTECTION_MASK)
 #if HL_EXECUTABLE_HEAP
 #define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC)
 #else
 #define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE)
+#endif
 #endif
 
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
@@ -91,6 +93,16 @@ namespace HL {
 
 #if defined(_WIN32) 
   
+    static void protect (void * ptr, size_t sz) {
+      DWORD oldProtection;
+      VirtualProtect (ptr, sz, PAGE_NOACCESS, &oldProtection);
+    }
+    
+    static void unprotect (void * ptr, size_t sz) {
+      DWORD oldProtection;
+      VirtualProtect (ptr, sz, PAGE_READWRITE, &oldProtection);
+    }
+
     static void * map (size_t sz) {
       void * ptr;
 #if HL_EXECUTABLE_HEAP
@@ -106,7 +118,15 @@ namespace HL {
       VirtualFree (ptr, 0, MEM_RELEASE);
     }
 
-#else
+#else // UNIX
+
+    static void protect (void * ptr, size_t sz) {
+      mprotect ((char *) ptr, sz, PROT_NONE);
+    }
+    
+    static void unprotect (void * ptr, size_t sz) {
+      mprotect ((char *) ptr, sz, PROT_READ | PROT_WRITE | PROT_EXEC);
+    }
 
     static void * map (size_t sz) {
 
@@ -118,15 +138,36 @@ namespace HL {
       sz = Size * ((sz + Size - 1) / Size);
 
       void * ptr;
+      unsigned int mapFlag = 0;
+      char * startAddress = 0;
 
 #if defined(MAP_ALIGN) && defined(MAP_ANON)
-      // Request memory aligned to the Alignment value above.
-      ptr = mmap ((char *) Alignment, sz, HL_MMAP_PROTECTION_MASK, MAP_PRIVATE | MAP_ALIGN | MAP_ANON, -1, 0);
+      int fd = -1;
+      startAddress = (char *) Alignment;
+      mapFlag |= MAP_PRIVATE | MAP_ALIGN | MAP_ANON;
 #elif !defined(MAP_ANONYMOUS)
       static int fd = ::open ("/dev/zero", O_RDWR);
-      ptr = mmap (NULL, sz, HL_MMAP_PROTECTION_MASK, MAP_PRIVATE, fd, 0);
+      mapFlag |= MAP_PRIVATE;
 #else
-      ptr = mmap (0, sz, HL_MMAP_PROTECTION_MASK, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+      int fd = -1;
+      mapFlag |= MAP_ANONYMOUS | MAP_PRIVATE;
+#endif
+
+#if 0 // defined(MAP_HUGETLB)
+      if (sz >= 1048576) {
+	// Magic number: if you allocate 1MB or more, we assume you want it to
+	// use a huge TLB mapping.
+	mapFlag |= MAP_HUGETLB;
+      }
+#endif
+
+      ptr = mmap (startAddress, sz, HL_MMAP_PROTECTION_MASK,  mapFlag, fd, 0);
+#if 0 // defined(MAP_HUGETLB)
+      if (ptr != MAP_FAILED) {
+	fprintf (stderr, "HUGE!\n");
+      } else {
+	ptr = mmap (startAddress, sz, HL_MMAP_PROTECTION_MASK, mapFlag & ~MAP_HUGETLB, fd, 0);
+      }
 #endif
 
       if (ptr == MAP_FAILED) {

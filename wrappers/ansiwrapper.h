@@ -28,6 +28,7 @@ namespace HL {
   
     ANSIWrapper() {
       sassert<(gcd<SuperHeap::Alignment, HL::MallocInfo::Alignment>::value == HL::MallocInfo::Alignment)> checkAlignment;
+      checkAlignment = checkAlignment;
     }
 
     inline void * malloc (size_t sz) {
@@ -41,9 +42,13 @@ namespace HL {
       	sz = HL::MallocInfo::MinSize;
       }
       // Enforce alignment requirements: round up allocation sizes if needed.
-      if ((size_t) SuperHeap::Alignment < (size_t) HL::MallocInfo::Alignment) {
-	sz += HL::MallocInfo::Alignment - (sz % HL::MallocInfo::Alignment);
-      }
+      // NOTE: Alignment needs to be a power of two.
+      sassert<(HL::MallocInfo::Alignment & (HL::MallocInfo::Alignment - 1)) == 0> powTwo;
+      powTwo = powTwo;
+
+      // Enforce alignment.
+      sz = (sz + HL::MallocInfo::Alignment - 1) & ~(HL::MallocInfo::Alignment - 1);
+
       void * ptr = SuperHeap::malloc (sz);
       assert ((size_t) ptr % HL::MallocInfo::Alignment == 0);
       return ptr;

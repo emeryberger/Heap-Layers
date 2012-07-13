@@ -63,7 +63,7 @@ namespace HL {
       return index;
 #else
 
-#if 1
+#if 0
       // From http://graphics.stanford.edu/~seander/bithacks.html#ZerosOnRightMultLookup
       // Works for up to 32 bit sizes.
       int r;
