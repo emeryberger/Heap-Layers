@@ -51,11 +51,14 @@
 #include "wrappers/mmapwrapper.h"
 #include "wrappers/stlallocator.h"
 
+#ifndef HL_MMAP_PROTECTION_MASK
 #if HL_EXECUTABLE_HEAP
 #define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC)
 #else
 #define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE)
 #endif
+#endif
+
 
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
 #define MAP_ANONYMOUS MAP_ANON
