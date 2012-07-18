@@ -43,60 +43,58 @@
 
 namespace Kingsley {
 
-  size_t class2Size (const int i);
-
-#if defined(__sparc) && defined(__GNUC__)
-  inline int popc (int v) {
-    int r;
-    asm volatile ("popc %1, %0"
-		  : "=r" (r)
-		  : "r" (v));
-    return r;
-  }
-#endif
-
-  /**
-   * A speed optimization:
-   * we use this array to quickly return the size class of objects
-   * from 8 to 128 bytes.
-   */
-  const int cl[16] = { 0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4 };
-
-  inline int size2Class (const size_t sz) {
-#if defined(__sparc) && defined(__GNUC__)
-    // Adapted from _Hacker's Delight_, by Henry Warren (p.80)
-    size_t x = sz;
-    x = x | (x >> 1);
-    x = x | (x >> 2);
-    x = x | (x >> 4);
-    x = x | (x >> 8);
-    x = x | (x >> 16);
-    return popc(x) - 3;
-#else
-    if (sz < 128 ) {
-      assert (class2Size(cl[sz >> 3]) >= sz);
-      return cl[(sz - 1) >> 3];
-    } else {
-      //
-      // We know that the object is more than 128 bytes long,
-      // so we can avoid iterating 5 times.
-      //
-      int c = 5;
-      size_t sz1 = ((sz - 1) >> 5);
-      while (sz1 > 7) {
-	sz1 >>= 1;
-	c++;
-      }
-      assert (class2Size(c) >= sz);
-      return c;
-    }
-#endif
-
-  }
-
   inline size_t class2Size (const int i) {
     return (size_t) (1 << (i+3));
   }
+
+  inline int size2class (const size_t sz) {
+    return log2(sz) - 3;
+  }
+
+  /// Quickly calculate the CEILING of the log (base 2) of the argument.
+#if defined(_WIN32)
+  static inline int log2 (size_t sz) 
+  {
+    int retval;
+    sz = (sz << 1) - 1;
+    __asm {
+      bsr eax, sz
+	mov retval, eax
+	}
+    return retval;
+  }
+#elif defined(__GNUC__) && defined(__i386__)
+  static inline int log2 (size_t sz) 
+  {
+    sz = (sz << 1) - 1;
+    asm ("bsrl %0, %0" : "=r" (sz) : "0" (sz));
+    return (int) sz;
+  }
+#elif defined(__GNUC__) && defined(__x86_64__)
+  static inline int log2 (size_t sz) 
+  {
+    sz = (sz << 1) - 1;
+    asm ("bsrq %0, %0" : "=r" (sz) : "0" (sz));
+    return (int) sz;
+  }
+#elif defined(__GNUC__)
+  // Just use the intrinsic.
+  static inline int log2 (size_t sz) 
+  {
+    sz = (sz << 1) - 1;
+    return (sizeof(unsigned long) * 8) - __builtin_clzl(sz) - 1;
+  }
+#else
+  static inline int log2 (size_t v) {
+    int log = 0;
+    unsigned int value = 1;
+    while (value < v) {
+      value <<= 1;
+      log++;
+    }
+    return log;
+  }
+#endif
 
   enum { NUMBINS = 29 };
 
