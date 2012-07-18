@@ -25,7 +25,7 @@
 
 namespace HL {
 
-  extern "C" typedef void * (*ThreadFunctionType) (void *);
+  typedef void * (*ThreadFunctionType) (void *);
 
 class Fred {
 public:
