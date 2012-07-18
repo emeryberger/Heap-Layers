@@ -153,22 +153,7 @@ namespace HL {
       mapFlag |= MAP_ANONYMOUS | MAP_PRIVATE;
 #endif
 
-#if 0 // defined(MAP_HUGETLB)
-      if (sz >= 1048576) {
-	// Magic number: if you allocate 1MB or more, we assume you want it to
-	// use a huge TLB mapping.
-	mapFlag |= MAP_HUGETLB;
-      }
-#endif
-
       ptr = mmap (startAddress, sz, HL_MMAP_PROTECTION_MASK,  mapFlag, fd, 0);
-#if 0 // defined(MAP_HUGETLB)
-      if (ptr != MAP_FAILED) {
-	fprintf (stderr, "HUGE!\n");
-      } else {
-	ptr = mmap (startAddress, sz, HL_MMAP_PROTECTION_MASK, mapFlag & ~MAP_HUGETLB, fd, 0);
-      }
-#endif
 
       if (ptr == MAP_FAILED) {
 	char buf[255];
