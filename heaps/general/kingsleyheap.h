@@ -47,7 +47,7 @@ namespace Kingsley {
     return (size_t) (1 << (i+3));
   }
 
-  inline int size2class (const size_t sz) {
+  inline int size2Class (const size_t sz) {
     return log2(sz) - 3;
   }
 
