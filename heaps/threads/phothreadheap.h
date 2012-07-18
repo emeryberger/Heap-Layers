@@ -33,7 +33,7 @@ public:
     void * ptr = SuperHeap::malloc (sz);
     if (ptr != NULL) {
       int tid = CPUInfo::getThreadId() % NumHeaps;
-      tid;
+      tid = tid;
       assert (SuperHeap::getHeap(ptr) == tid);
     }
     return ptr;
