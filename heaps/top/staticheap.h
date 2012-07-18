@@ -67,8 +67,8 @@ namespace HL {
   private:
 
     // Disable copying and assignment.
-    StaticHeap (const StaticHeap& treap);
-    StaticHeap& operator= (const StaticHeap& treap);
+    StaticHeap (const StaticHeap&);
+    StaticHeap& operator= (const StaticHeap&);
 
     char buf[MemorySize];
     char * ptr;
