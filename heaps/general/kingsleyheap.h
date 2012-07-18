@@ -4,7 +4,7 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2003 by Emery Berger
+  Copyright (C) 2000-2012 by Emery Berger
   http://www.cs.umass.edu/~emery
   emery@cs.umass.edu
   
