@@ -27,6 +27,8 @@
 #ifndef HL_BUMPALLOC_H
 #define HL_BUMPALLOC_H
 
+#include "utility/gcd.h"
+
 /**
  * @class BumpAlloc
  * @brief Obtains memory in chunks and bumps a pointer through the chunks.
@@ -36,23 +38,30 @@
 namespace HL {
 
   template <int ChunkSize,
-	    class Super>
+	    class Super,
+	    int Alignment_ = 1>
   class BumpAlloc : public Super {
   public:
 
-    enum { Alignment = 1 };
+    enum { Alignment = Alignment_ };
 
     BumpAlloc (void)
       : _bump (NULL),
 	_remaining (0)
-    {}
+    {
+      sassert<(gcd<ChunkSize, Alignment>::VALUE == Alignment)> verifyAlignmentSatisfiable;
+      sassert<((Alignment & (Alignment-1)) == 0)> verifyPowerOfTwoAlignment;
+    }
 
     inline void * malloc (size_t sz) {
+      // Round up the size if necessary.
+      sz = (sz + Alignment - 1) & ~(Alignment - 1);
       // If there's not enough space left to fulfill this request, get
       // another chunk.
       if (_remaining < sz) {
 	refill(sz);
       }
+      // Bump that pointer.
       char * old = _bump;
       _bump += sz;
       _remaining -= sz;
