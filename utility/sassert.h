@@ -10,9 +10,6 @@
  *   sassert<(1+1 == 2)> CheckOnePlusOneIsTwo;
  * @endcode
  *
- * This code is part of the Hoard distribution and is governed by its license.
- * <http://www.hoard.org>
- *
  */
 
 namespace HL {
