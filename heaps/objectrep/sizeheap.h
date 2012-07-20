@@ -49,9 +49,10 @@ namespace HL {
   class SizeHeap : public SuperHeap {
     
   private:
-    union freeObject {
+    struct freeObject {
       size_t _sz;
-      char _buf[HL::MallocInfo::Alignment];
+      size_t _magic;
+      //      char _buf[HL::MallocInfo::Alignment];
     };
     
   public:
@@ -64,14 +65,17 @@ namespace HL {
     inline void * malloc (size_t sz) {
       freeObject * p = (freeObject *) SuperHeap::malloc (sz + sizeof(freeObject));
       p->_sz = sz;
+      p->_magic = 0xcafebabe;
       return (void *) (p + 1);
     }
     
     inline void free (void * ptr) {
+      assert (getHeader(ptr)->_magic == 0xcafebabe);
       SuperHeap::free (getHeader(ptr));
     }
     
     inline static size_t getSize (const void * ptr) {
+      assert (getHeader(ptr)->_magic == 0xcafebabe);
       size_t size = getHeader(ptr)->_sz;
       return size;
     }
@@ -79,6 +83,7 @@ namespace HL {
   private:
     
     inline static void setSize (void * ptr, size_t sz) {
+      assert (getHeader(ptr)->_magic == 0xcafebabe);
       getHeader(ptr)->_sz = sz;
     }
     

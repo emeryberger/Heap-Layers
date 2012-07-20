@@ -43,6 +43,7 @@ namespace HL {
     MyHashMap (unsigned int size = INITIAL_NUM_BINS)
       : _numBins (size)
     {
+      assert (_numBins > 0);
       void * buf = _allocator.malloc (sizeof(ListNodePtr) * _numBins); 
       _bins = new (buf) ListNodePtr[_numBins];
       for (unsigned int i = 0 ; i < _numBins; i++) {

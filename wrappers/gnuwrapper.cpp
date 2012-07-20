@@ -129,6 +129,14 @@ extern "C" {
     }
 
     size_t objSize = xxmalloc_usable_size(ptr);
+    
+#if 0
+    {
+      char buf[255];
+      sprintf (buf, "old obj size = %u\n", objSize);
+      printf (buf);
+    }
+#endif
 
 #if 0
     // Custom logic here to ensure we only do a logarithmic number of
