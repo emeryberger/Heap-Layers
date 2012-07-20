@@ -78,11 +78,11 @@ namespace Kingsley {
       return cl[(sz - 1) >> 3];
     } else {
       //
-      // We know that the object is more than 128 bytes long,
-      // so we can avoid iterating 5 times.
+      // We know that the object is at least 128 bytes long,
+      // so we can avoid iterating 4 times.
       //
-      int c = 5;
-      size_t sz1 = ((sz - 1) >> 5);
+      int c = 4;
+      size_t sz1 = ((sz - 1) >> 4);
       while (sz1 > 7) {
 	sz1 >>= 1;
 	c++;
