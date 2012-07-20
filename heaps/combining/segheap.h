@@ -66,16 +66,11 @@ namespace HL {
 	    class LittleHeap,
 	    class BigHeap>
   class SegHeap : public LittleHeap {
-  private:
-
-    typedef int (*scFunction) (const size_t);
-    typedef size_t (*csFunction) (const int);
-
   public:
 
     inline SegHeap (void)
       : memoryHeld (0),
-	maxObjectSize (((csFunction) getClassMaxSize) (NumBins - 1))
+	maxObjectSize (getClassMaxSize(NumBins - 1))
     {
       for (int i = 0; i < NUM_ULONGS; i++) {
 	binmap[i] = 0;
@@ -99,7 +94,7 @@ namespace HL {
       }
 
       {
-	const int sc = ((scFunction) getSizeClass)(sz);
+	const int sc = getSizeClass(sz);
 	assert (sc >= 0);
 	assert (sc < NumBins);
 	int idx = sc;
@@ -157,19 +152,19 @@ namespace HL {
 	// printf ("free up! (size class = %d)\n", objectSizeClass);
 	bigheap.free (ptr);
       } else {
-	int objectSizeClass = ((scFunction) getSizeClass) (objectSize);
+	int objectSizeClass = getSizeClass(objectSize);
 	assert (objectSizeClass >= 0);
 	assert (objectSizeClass < NumBins);
 	// Put the freed object into the right sizeclass heap.
 	assert (getClassMaxSize(objectSizeClass) >= objectSize);
 #if 1
-	while (((csFunction) getClassMaxSize)(objectSizeClass) > objectSize) {
+	while (getClassMaxSize(objectSizeClass) > objectSize) {
 	  objectSizeClass--;
 	}
 #endif
-	assert (((csFunction) getClassMaxSize)(objectSizeClass) <= objectSize);
+	assert (getClassMaxSize(objectSizeClass) <= objectSize);
 	if (objectSizeClass > 0) {
-	  assert (objectSize >= ((csFunction) getClassMaxSize)(objectSizeClass - 1));
+	  assert (objectSize >= getClassMaxSize(objectSizeClass - 1));
 	}
 
 

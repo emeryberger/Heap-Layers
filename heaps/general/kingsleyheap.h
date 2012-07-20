@@ -44,16 +44,20 @@
 namespace Kingsley {
 
   inline size_t class2Size (const int i) {
-    return (size_t) (1 << (i+3));
+    size_t sz = (size_t) (1 << (i+3));
+    return sz;
   }
+  
+  static inline int ceilLog2 (size_t);
 
   inline int size2Class (const size_t sz) {
-    return log2(sz) - 3;
+    int cl = ceilLog2((sz < 8) ? 8 : sz) - 3;
+    return cl;
   }
 
   /// Quickly calculate the CEILING of the log (base 2) of the argument.
 #if defined(_WIN32)
-  static inline int log2 (size_t sz) 
+  static inline int ceilLog2 (size_t sz) 
   {
     int retval;
     sz = (sz << 1) - 1;
@@ -64,14 +68,14 @@ namespace Kingsley {
     return retval;
   }
 #elif defined(__GNUC__) && defined(__i386__)
-  static inline int log2 (size_t sz) 
+  static inline int ceilLog2 (size_t sz) 
   {
     sz = (sz << 1) - 1;
     asm ("bsrl %0, %0" : "=r" (sz) : "0" (sz));
     return (int) sz;
   }
-#elif defined(__GNUC__) && defined(__x86_64__)
-  static inline int log2 (size_t sz) 
+#elif 0 // defined(__GNUC__) && defined(__x86_64__)
+  static inline int ceilLog2 (size_t sz) 
   {
     sz = (sz << 1) - 1;
     asm ("bsrq %0, %0" : "=r" (sz) : "0" (sz));
@@ -79,13 +83,13 @@ namespace Kingsley {
   }
 #elif defined(__GNUC__)
   // Just use the intrinsic.
-  static inline int log2 (size_t sz) 
+  static inline int ceilLog2 (size_t sz) 
   {
     sz = (sz << 1) - 1;
     return (sizeof(unsigned long) * 8) - __builtin_clzl(sz) - 1;
   }
 #else
-  static inline int log2 (size_t v) {
+  static inline int ceilLog2 (size_t v) {
     int log = 0;
     unsigned int value = 1;
     while (value < v) {

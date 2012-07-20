@@ -46,6 +46,7 @@
 #include "heaps/special/bumpalloc.h"
 #include "heaps/threads/lockedheap.h"
 #include "locks/posixlock.h"
+#include "threads/cpuinfo.h"
 #include "utility/myhashmap.h"
 #include "utility/sassert.h"
 #include "wrappers/mmapwrapper.h"
@@ -112,6 +113,8 @@ namespace HL {
 #else
 
     static inline void * malloc (size_t sz) {
+      // Round up to the size of a page.
+      sz = (sz + CPUInfo::PageSize - 1) & ~(CPUInfo::PageSize - 1);
 #if defined(MAP_ALIGN) && defined(MAP_ANON)
       // Request memory aligned to the Alignment value above.
       void * ptr = mmap ((char *) Alignment, sz, HL_MMAP_PROTECTION_MASK, MAP_PRIVATE | MAP_ALIGN | MAP_ANON, -1, 0);
@@ -177,10 +180,12 @@ namespace HL {
       return sz;
     }
 
+#if 0
     // WORKAROUND: apparent gcc bug.
     void free (void * ptr, size_t sz) {
       PrivateMmapHeap::free (ptr, sz);
     }
+#endif
 
     inline void free (void * ptr) {
       assert (reinterpret_cast<size_t>(ptr) % Alignment == 0);

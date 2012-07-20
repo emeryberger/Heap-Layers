@@ -38,33 +38,40 @@
 namespace HL {
 
   template <int ChunkSize,
-	    class Super,
+	    class SuperHeap,
 	    int Alignment_ = 1>
-  class BumpAlloc : public Super {
+  class BumpAlloc : public SuperHeap {
   public:
 
     enum { Alignment = Alignment_ };
 
-    BumpAlloc (void)
+    BumpAlloc()
       : _bump (NULL),
 	_remaining (0)
     {
-      sassert<(gcd<ChunkSize, Alignment>::VALUE == Alignment)> verifyAlignmentSatisfiable;
-      sassert<((Alignment & (Alignment-1)) == 0)> verifyPowerOfTwoAlignment;
+      sassert<(gcd<ChunkSize, Alignment>::VALUE == Alignment)> 
+	verifyAlignmentSatisfiable;
+      sassert<(gcd<SuperHeap::Alignment, Alignment>::VALUE == Alignment)>
+	verifyAlignmentFromSuperHeap;
+      sassert<((Alignment & (Alignment-1)) == 0)>
+	verifyPowerOfTwoAlignment;
     }
 
     inline void * malloc (size_t sz) {
       // Round up the size if necessary.
-      sz = (sz + Alignment - 1) & ~(Alignment - 1);
+      size_t newSize = (sz + Alignment - 1) & ~(Alignment - 1);
+
       // If there's not enough space left to fulfill this request, get
       // another chunk.
-      if (_remaining < sz) {
-	refill(sz);
+      if (_remaining < newSize) {
+	refill(newSize);
       }
       // Bump that pointer.
       char * old = _bump;
-      _bump += sz;
-      _remaining -= sz;
+      _bump += newSize;
+      _remaining -= newSize;
+
+      assert ((size_t) old % Alignment == 0);
       return old;
     }
 
@@ -84,7 +91,8 @@ namespace HL {
       if (sz < ChunkSize) {
 	sz = ChunkSize;
       }
-      _bump = (char *) Super::malloc (sz);
+      _bump = (char *) SuperHeap::malloc (sz);
+      assert ((size_t) _bump % Alignment == 0);
       _remaining = sz;
     }
 

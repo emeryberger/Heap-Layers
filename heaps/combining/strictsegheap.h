@@ -55,26 +55,23 @@
 namespace HL {
 
   template <int NumBins,
-	    int (*getSizeClass) (const size_t),
-	    size_t (*getClassMaxSize) (const int),
+	    int (*size2class) (const size_t),
+	    size_t (*class2size) (const int),
 	    class LittleHeap,
 	    class BigHeap>
   class StrictSegHeap :
-    public SegHeap<NumBins, getSizeClass, getClassMaxSize, LittleHeap, BigHeap>
+    public SegHeap<NumBins, size2class, class2size, LittleHeap, BigHeap>
   {
   private:
 
-    typedef SegHeap<NumBins, getSizeClass, getClassMaxSize, LittleHeap, BigHeap> SuperHeap;
-
-    typedef int (*scFunction) (const size_t);
-    typedef size_t (*csFunction) (const int);
+    typedef SegHeap<NumBins, size2class, class2size, LittleHeap, BigHeap> SuperHeap;
 
   public:
 
     void freeAll (void) {
       int i;
       for (i = 0; i < NumBins; i++) {
-	const size_t sz = ((csFunction) getClassMaxSize)(i);
+	const size_t sz = class2size(i);
 	void * ptr;
 	while ((ptr = SuperHeap::myLittleHeap[i].malloc (sz)) != NULL) {
 	  SuperHeap::bigheap.free (ptr);
@@ -94,9 +91,12 @@ namespace HL {
 
     inline void * malloc (const size_t sz) {
       void * ptr = NULL;
-      const int sizeClass = ((scFunction) getSizeClass) (sz);
-      const size_t realSize = getClassMaxSize(sizeClass);
-      if (sz <= SuperHeap::maxObjectSize) {
+      const int sizeClass   = size2class(sz);
+      const size_t realSize = class2size(sizeClass);
+
+      assert (realSize >= sz);
+
+      if (realSize <= SuperHeap::maxObjectSize) {
 	assert (sizeClass >= 0);
 	assert (sizeClass < NumBins);
 	ptr = SuperHeap::myLittleHeap[sizeClass].malloc (realSize);
@@ -112,7 +112,7 @@ namespace HL {
       if (objectSize > SuperHeap::maxObjectSize) {
 	SuperHeap::bigheap.free (ptr);
       } else {
-	int objectSizeClass = ((scFunction) getSizeClass) (objectSize);
+	int objectSizeClass = size2class(objectSize);
 	assert (objectSizeClass >= 0);
 	assert (objectSizeClass < NumBins);
 
