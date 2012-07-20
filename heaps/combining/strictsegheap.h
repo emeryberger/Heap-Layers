@@ -94,14 +94,15 @@ namespace HL {
 
     inline void * malloc (const size_t sz) {
       void * ptr = NULL;
+      const int sizeClass = ((scFunction) getSizeClass) (sz);
+      const size_t realSize = getClassMaxSize(sizeClass);
       if (sz <= SuperHeap::maxObjectSize) {
-	const int sizeClass = ((scFunction) getSizeClass) (sz);
 	assert (sizeClass >= 0);
 	assert (sizeClass < NumBins);
-	ptr = SuperHeap::myLittleHeap[sizeClass].malloc (sz);
+	ptr = SuperHeap::myLittleHeap[sizeClass].malloc (realSize);
       }
       if (!ptr) {
-	ptr = SuperHeap::bigheap.malloc (sz);
+	ptr = SuperHeap::bigheap.malloc (realSize);
       }
       return ptr;
     }
@@ -114,15 +115,8 @@ namespace HL {
 	int objectSizeClass = ((scFunction) getSizeClass) (objectSize);
 	assert (objectSizeClass >= 0);
 	assert (objectSizeClass < NumBins);
+
 	// Put the freed object into the right sizeclass heap.
-	assert (getClassMaxSize(objectSizeClass) >= objectSize);
-	while (((csFunction) getClassMaxSize)(objectSizeClass) > objectSize) {
-	  objectSizeClass--;
-	}
-	assert (((csFunction) getClassMaxSize)(objectSizeClass) <= objectSize);
-	if (objectSizeClass > 0) {
-	  assert (objectSize >= ((csFunction) getClassMaxSize)(objectSizeClass - 1));
-	}
 
 	SuperHeap::myLittleHeap[objectSizeClass].free (ptr);
 	SuperHeap::memoryHeld += objectSize;
