@@ -273,7 +273,7 @@ extern "C" {
     return my_realloc_hook (ptr, sz, NULL);
   }
 
-  void * memalign (size_t sz, size_t alignment) throw() {
+  void * memalign (size_t alignment, size_t sz) throw() {
     return my_memalign_hook (sz, alignment, NULL);
   }
 
