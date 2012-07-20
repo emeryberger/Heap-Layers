@@ -68,6 +68,8 @@ namespace HL {
   class SegHeap : public LittleHeap {
   public:
 
+    enum { Alignment = gcd<LittleHeap::Alignment, BigHeap::Alignment>::VALUE };
+
     inline SegHeap (void)
       : memoryHeld (0),
 	maxObjectSize (getClassMaxSize(NumBins - 1))
