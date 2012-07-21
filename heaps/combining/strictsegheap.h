@@ -118,6 +118,12 @@ namespace HL {
 
 	// Put the freed object into the right sizeclass heap.
 
+	// Ensure that the bin that we are going to put it in is for
+	// objects that are no bigger than the actual size of the
+	// object.
+	while (class2size(objectSizeClass) > objectSize)
+	  objectSizeClass--;
+
 	SuperHeap::myLittleHeap[objectSizeClass].free (ptr);
 	SuperHeap::memoryHeld += objectSize;
       }
