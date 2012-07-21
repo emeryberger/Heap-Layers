@@ -42,7 +42,9 @@ extern "C" {
   typedef void * mallocFunction (size_t);
   typedef void freeFunction (void *);
   typedef size_t msizeFunction (void *);
+
 }
+
 
 namespace HL {
 
@@ -55,20 +57,30 @@ namespace HL {
       : freefn (NULL),
 	msizefn (NULL),
 	mallocfn (NULL),
-	firsttime (true)
+	_initializing (false),
+	_initialized (false)
     {}
 
     inline void * malloc (size_t sz) {
+      if (_initializing) {
+	return NULL;
+      }
       activate();
       return (*mallocfn)(sz);
     }
 
     inline void free (void * ptr) {
+      if (_initializing) {
+	return;
+      }
       activate();
       (*freefn)(ptr);
     }
 
     inline size_t getSize (void * ptr) {
+      if (_initializing) {
+	return 0;
+      }
       activate();
       return (*msizefn)(ptr);
     }
@@ -76,14 +88,16 @@ namespace HL {
   private:
 
     void activate() {
-      if (!firsttime) {
+      if (_initialized) {
 	return;
       }
       activateSlowPath();
     }
 
     void activateSlowPath() {
-      if (!firsttime) {
+      _initializing = true;
+
+      if (!_initialized) {
 
 	// We haven't initialized anything yet.
 	// Initialize all of the malloc shim functions.
@@ -103,9 +117,11 @@ namespace HL {
 	assert (freefn);
 	assert (msizefn);
 	assert (mallocfn);
-	
-	firsttime = false;
+
+	_initialized = true;
       }
+
+      _initializing = false;
     }
 
     // Shim functions below.
@@ -114,7 +130,8 @@ namespace HL {
     msizeFunction *  msizefn;
     mallocFunction * mallocfn;
 
-    bool firsttime;   /// True iff we haven't initialized the shim functions.
+    bool _initialized;
+    bool _initializing;
 
   };
 
