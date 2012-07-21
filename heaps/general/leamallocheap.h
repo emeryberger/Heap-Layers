@@ -29,6 +29,8 @@
 
 #include <cstdlib>
 
+#include "wrappers/mallocinfo.h"
+
 /**
  * @class LeaMallocHeap
  * @brief A "source heap" that uses the Lea allocator.
@@ -42,6 +44,8 @@ namespace HL {
 
   class LeaMallocHeap {
   public:
+    enum { Alignment = MallocInfo::Alignment };
+
     inline void * malloc (size_t sz) {
       void * ptr = dlmalloc (sz);
       return ptr;
