@@ -27,6 +27,8 @@
 #ifndef HL_LOCALMALLOCHEAP_H
 #define HL_LOCALMALLOCHEAP_H
 
+#if !defined(_WIN32) // not implemented for Windows
+
 #include <dlfcn.h>
 
 #include "wrappers/mallocinfo.h"
@@ -137,4 +139,5 @@ namespace HL {
 
 }
 
+#endif
 #endif

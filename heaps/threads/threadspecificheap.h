@@ -30,9 +30,7 @@
 #include <assert.h>
 #include <new>
 
-#if defined(_WIN32)
-#error "This functionality currently is not implemented for Windows."
-#endif
+#if !defined(_WIN32) // not implemented for Windows
 
 #include <pthread.h>
 
@@ -106,4 +104,7 @@ namespace HL {
   };
 
 }
+
+#endif
+
 #endif
