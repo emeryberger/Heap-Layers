@@ -14,7 +14,9 @@
 #include <stdlib.h>
 
 // UNIX-specific for now...
-//#include <unistd.h>
+#if defined(unix)
+#include <unistd.h>
+#endif
 
 #include <fstream>
 #include <ios>
@@ -32,7 +34,11 @@ namespace HL {
     Log (void) :
       numEntries (0)
     {
+#if defined(unix)
       sprintf (filename, "theLog-%d", getpid());
+#else
+      sprintf (filename, "theLog");
+#endif
     }
 
     ~Log (void) {
