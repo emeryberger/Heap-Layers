@@ -63,8 +63,8 @@ namespace HL {
       : freefn (NULL),
 	msizefn (NULL),
 	mallocfn (NULL),
-	_initializing (false),
-	_initialized (false)
+	_initialized (false),
+  _initializing (false)
     {}
 
     inline void * malloc (size_t sz) {
