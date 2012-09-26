@@ -47,7 +47,7 @@ namespace Kingsley {
     size_t sz = (size_t) (1 << (i+3));
     return sz;
   }
-  
+
   static inline int ceilLog2 (size_t);
 
   inline int size2Class (const size_t sz) {
@@ -57,25 +57,25 @@ namespace Kingsley {
 
   /// Quickly calculate the CEILING of the log (base 2) of the argument.
 #if defined(_WIN32)
-  static inline int ceilLog2 (size_t sz) 
+  static inline int ceilLog2 (size_t sz)
   {
     int retval;
     sz = (sz << 1) - 1;
     __asm {
       bsr eax, sz
-	mov retval, eax
-	}
+        mov retval, eax
+        }
     return retval;
   }
 #elif defined(__GNUC__) && defined(__i386__)
-  static inline int ceilLog2 (size_t sz) 
+  static inline int ceilLog2 (size_t sz)
   {
     sz = (sz << 1) - 1;
     asm ("bsrl %0, %0" : "=r" (sz) : "0" (sz));
     return (int) sz;
   }
 #elif 0 // defined(__GNUC__) && defined(__x86_64__)
-  static inline int ceilLog2 (size_t sz) 
+  static inline int ceilLog2 (size_t sz)
   {
     sz = (sz << 1) - 1;
     asm ("bsrq %0, %0" : "=r" (sz) : "0" (sz));
@@ -83,7 +83,7 @@ namespace Kingsley {
   }
 #elif defined(__GNUC__)
   // Just use the intrinsic.
-  static inline int ceilLog2 (size_t sz) 
+  static inline int ceilLog2 (size_t sz)
   {
     sz = (sz << 1) - 1;
     return (sizeof(unsigned long) * 8) - __builtin_clzl(sz) - 1;
@@ -115,12 +115,12 @@ namespace Kingsley {
 namespace HL {
 
 template <class PerClassHeap, class BigHeap>
-  class KingsleyHeap : 
+  class KingsleyHeap :
    public StrictSegHeap<Kingsley::NUMBINS,
-			Kingsley::size2Class,
-			Kingsley::class2Size,
-			PerClassHeap,
-			BigHeap> {};
+                        Kingsley::size2Class,
+                        Kingsley::class2Size,
+                        PerClassHeap,
+                        BigHeap> {};
 
 }
 

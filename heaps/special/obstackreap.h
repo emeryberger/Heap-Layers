@@ -4,12 +4,13 @@
 #define HL_OBSTACKREAP_H
 
 #include <assert.h>
+#include <iostream>
 
 /*
 
   ObstackReap layers obstack functionality on top of reaps.
 
-  */
+ */
 
 #if WIN32
 #include <windows.h>
@@ -27,20 +28,20 @@ namespace ObstackReapNS {
       : internalArray (0),
 	internalArrayLength (0)
     {}
-    
+
     ~DynamicArray (void)
     {
       clear();
     }
-    
+
     // clear deletes everything in the array.
 
     inline void clear (void) {
       if (internalArray) {
-	delete [] internalArray;
-	internalArray = 0;
-	internalArrayLength = 0;
-	//printf ("\ninternalArrayLength %x = %d\n", this, internalArrayLength);
+        delete [] internalArray;
+        internalArray = 0;
+        internalArrayLength = 0;
+        //printf ("\ninternalArrayLength %x = %d\n", this, internalArrayLength);
       }
     }
 
@@ -60,25 +61,25 @@ namespace ObstackReapNS {
       assert (index >= 0);
       if (index >= internalArrayLength) {
 
-	// This index is beyond the current size of the array.
-	// Grow the array by doubling and copying the old array into the new.
+        // This index is beyond the current size of the array.
+        // Grow the array by doubling and copying the old array into the new.
 
-	const int newSize = index * 2 + 1;
-	ObjType * arr = new ObjType[newSize];
-	// printf ("grow! %d to %d\n", internalArrayLength, newSize);
+        const int newSize = index * 2 + 1;
+        ObjType * arr = new ObjType[newSize];
+        // printf ("grow! %d to %d\n", internalArrayLength, newSize);
 #if MALLOC_TRACE
-	printf ("m %x %d\n", arr, newSize * sizeof(ObjType));
+        printf ("m %x %d\n", arr, newSize * sizeof(ObjType));
 #endif
-	if (internalArray) {
-	  memcpy (arr, internalArray, internalArrayLength * sizeof(ObjType));
-	  delete [] internalArray;
+        if (internalArray) {
+          memcpy (arr, internalArray, internalArrayLength * sizeof(ObjType));
+          delete [] internalArray;
 #if MALLOC_TRACE
-	  printf ("f %x\n", internalArray);
+          printf ("f %x\n", internalArray);
 #endif
-	}
-	internalArray = arr;
-	internalArrayLength = newSize;
-	// printf ("\ninternalArrayLength %x = %d\n", this, internalArrayLength);
+        }
+        internalArray = arr;
+        internalArrayLength = newSize;
+        // printf ("\ninternalArrayLength %x = %d\n", this, internalArrayLength);
       }
       return internalArray[index];
     }
@@ -93,22 +94,22 @@ namespace ObstackReapNS {
       // drops below one-fourth of the array size.
 
       if (internalArray) {
-	if (nelts * 4 < internalArrayLength) {
-	  const int newSize = nelts * 2;
-	  ObjType * arr = new ObjType[newSize];
-	  // printf ("trim! %d to %d\n", internalArrayLength, newSize);
+        if (nelts * 4 < internalArrayLength) {
+          const int newSize = nelts * 2;
+          ObjType * arr = new ObjType[newSize];
+          // printf ("trim! %d to %d\n", internalArrayLength, newSize);
 #if MALLOC_TRACE
-	  printf ("m %x %d\n", arr, newSize * sizeof(ObjType));
+          printf ("m %x %d\n", arr, newSize * sizeof(ObjType));
 #endif
-	  memcpy (arr, internalArray, sizeof(ObjType) * nelts);
-	  delete [] internalArray;
+          memcpy (arr, internalArray, sizeof(ObjType) * nelts);
+          delete [] internalArray;
 #if MALLOC_TRACE
-	  printf ("f %x\n", internalArray);
+          printf ("f %x\n", internalArray);
 #endif
-	  internalArray = arr;
-	  internalArrayLength = newSize;
-	}
-	assert (nelts <= internalArrayLength);
+          internalArray = arr;
+          internalArrayLength = newSize;
+        }
+        assert (nelts <= internalArrayLength);
       }
     }
 
@@ -120,7 +121,7 @@ namespace ObstackReapNS {
     ObjType * internalArray;
 
     // The length of the internal array, in elements.
-	
+
     int internalArrayLength;
   };
 #endif
@@ -144,10 +145,10 @@ namespace ObstackReapNS {
     inline OBJTYPE * pop (void) {
       OBJTYPE * ptr = 0;
       if (numItems > 0) {
-	ptr = items[numItems];
-	numItems--;
-	// The array has shrunk, so potentially trim it.
-	items.trim (numItems + 1);
+        ptr = items[numItems];
+        numItems--;
+        // The array has shrunk, so potentially trim it.
+        items.trim (numItems + 1);
       }
       return ptr;
     }
@@ -155,7 +156,7 @@ namespace ObstackReapNS {
     inline OBJTYPE * top (void) {
       OBJTYPE * ptr = NULL;
       if (numItems > 0) {
-	ptr = items[numItems];
+        ptr = items[numItems];
       }
       return ptr;
     }
@@ -163,9 +164,9 @@ namespace ObstackReapNS {
     inline void clear (void) {
       items.clear();
     }
-  
+
   private:
-  
+
     // The number of items recorded above.
     // 0 == no items.
     // 1 == items[1] has the single item, etc.
@@ -175,7 +176,7 @@ namespace ObstackReapNS {
 
     // The array of remembered objects.
 
-    DynamicArray<OBJTYPE *> items;
+    HL::DynamicArray<OBJTYPE *> items;
   };
 
 };
@@ -201,7 +202,7 @@ public:
     delete currentReap;
     delete currentObject;
   }
-  
+
   inline void * malloc (size_t sz);
   inline void freeAfter (void * ptr);
   inline void freeAll (void);
@@ -264,7 +265,7 @@ void ObstackReap<ReapType>::freeAll (void) {
     delete currentReap;
     currentReap = reapStack.pop();
   }
-  currentHeap = new ReapType;
+  currentReap = new ReapType;
 }
 
 
@@ -289,7 +290,7 @@ inline void * ObstackReap<ReapType>::grow (size_t sz) {
   const int requestedObjectSize = currentObjectSize + sz;
 
   if (requestedObjectSize > actualObjectSize) {
-    cout << "resize!\n";
+    std::cout << "resize!\n";
     void * ptr = currentReap->realloc (currentObject, sz);
     currentObjectPosition = (char *) ptr + (currentObjectPosition - (char *) currentObject);
     if (isCurrentObjectExposed) {

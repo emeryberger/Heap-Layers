@@ -43,18 +43,18 @@ namespace HL {
 
     inline ChunkHeap (void)
       : buffer (NULL),
-	eob (NULL)
+      eob (NULL)
     {}
 
     inline void * malloc (const size_t sz) {
       void * ptr = buffer;
       buffer += sz;
       if (buffer <= eob) {
-	assert (eob != NULL);
-	assert ((size_t) (eob - (char *) ptr + 1) >= sz);
-	return ptr;
+        assert (eob != NULL);
+        assert ((size_t) (eob - (char *) ptr + 1) >= sz);
+        return ptr;
       }
-	  buffer -= sz;		// we didn't succeed, back up
+      buffer -= sz;		// we didn't succeed, back up
       return getMoreMemory(sz);
     }
 
@@ -75,19 +75,19 @@ namespace HL {
       size_t reqSize = (((sz-1) / ChunkSize) + 1) * ChunkSize;
       char * buf = (char *) SuperHeap::malloc (reqSize);
       if (buf == NULL) {
-	return NULL;
+        return NULL;
       }
       // If the current end of buffer is not the same as the new buffer,
       // reset the buffer pointer.
       if (eob != buf) {
-	buffer = buf;
+        buffer = buf;
       }
-	  else {
-		  // we still have a bit leftover at the end of previous buffer
-		  reqSize += eob - buffer;
-	  }
+      else {
+        // we still have a bit leftover at the end of previous buffer
+        reqSize += eob - buffer;
+      }
       eob = buffer + reqSize;
-    
+
       void * ptr = buffer;
       buffer += sz;
       return ptr;

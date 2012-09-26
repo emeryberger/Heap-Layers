@@ -27,6 +27,7 @@
 #ifndef HL_LOCKEDHEAP_H
 #define HL_LOCKEDHEAP_H
 
+#include <cstddef>
 #include "utility/guard.h"
 
 namespace HL {
@@ -41,7 +42,7 @@ namespace HL {
       Guard<LockType> l (thelock);
       return Super::malloc (sz);
     }
-  
+
     inline void free (void * ptr) {
       Guard<LockType> l (thelock);
       Super::free (ptr);
@@ -62,9 +63,9 @@ namespace HL {
     }
 
     inline void unlock (void) {
-      thelock.unlock(); 
+      thelock.unlock();
     }
- 
+
   private:
     //    char dummy[128]; // an effort to avoid false sharing.
     LockType thelock;
