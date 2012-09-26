@@ -37,13 +37,13 @@ namespace HL {
   template <class Add, class SuperHeap>
   class AddHeap : public SuperHeap {
   public:
-  
+
     inline void * malloc (size_t sz) {
       void * ptr = SuperHeap::malloc (sz + HeaderSize);
       void * newPtr = (char *) ptr + HeaderSize;
       return newPtr;
     }
-  
+
     inline void free (void * ptr) {
       SuperHeap::free (getOriginal(ptr));
     }

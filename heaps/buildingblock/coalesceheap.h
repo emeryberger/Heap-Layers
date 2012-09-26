@@ -48,12 +48,12 @@ namespace HL {
     {
       void * ptr = super::malloc (sz);
       if (ptr != NULL) {
-	super::markInUse (ptr);
-	void * splitPiece = split (ptr, sz);
-	if (splitPiece != NULL) {
-	  super::markFree (splitPiece);
-	  super::free (splitPiece);
-	}
+        super::markInUse (ptr);
+        void * splitPiece = split (ptr, sz);
+        if (splitPiece != NULL) {
+          super::markFree (splitPiece);
+          super::free (splitPiece);
+        }
       }
       return ptr;
     }
@@ -63,9 +63,9 @@ namespace HL {
     {
       // Try to coalesce this object with its predecessor & successor.
       if ((super::getNext(super::getPrev(ptr)) != ptr) || (super::getPrev(super::getNext(ptr)) != ptr)) {
-	// We're done with this object.
-	super::free (ptr);
-	return;
+        // We're done with this object.
+        super::free (ptr);
+        return;
       }
       assert (super::getPrev(super::getNext(ptr)) == ptr);
       // Try to coalesce with the previous object..
@@ -74,16 +74,16 @@ namespace HL {
       assert (prev != ptr);
 
       if (super::isPrevFree(ptr)) {
-	assert (super::isFree(prev));
-	super::remove (prev);
-	coalesce (prev, ptr);
-	ptr = prev;
+        assert (super::isFree(prev));
+        super::remove (prev);
+        coalesce (prev, ptr);
+        ptr = prev;
       }
       if (super::isFree(next)) {
-	super::remove (next);
-	coalesce (ptr, next);
+        super::remove (next);
+        coalesce (ptr, next);
       }
-	
+
       super::markFree (ptr);
 
       // We're done with this object.
@@ -110,21 +110,21 @@ namespace HL {
       // We split aggressively (for now; this could be a parameter).
       const size_t actualSize = super::getSize(obj);
       if (actualSize - requestedSize >= sizeof(typename super::Header) + sizeof(double)) {
-	// Split the object.
-	super::setSize(obj, requestedSize);
-	void * splitPiece = (char *) obj + requestedSize + sizeof(typename super::Header);
-	super::makeObject ((void *) super::getHeader(splitPiece),
-			   requestedSize,
-			   actualSize - requestedSize - sizeof(typename super::Header));
-	assert (!super::isFree(splitPiece));
-	// Now that we have a new successor (splitPiece), we need to
-	// mark obj as in use.
-	(super::getHeader(splitPiece))->markPrevInUse();
-	assert (super::getSize(splitPiece) >= sizeof(double));
-	assert (super::getSize(obj) >= requestedSize);
-	return splitPiece;
+        // Split the object.
+        super::setSize(obj, requestedSize);
+        void * splitPiece = (char *) obj + requestedSize + sizeof(typename super::Header);
+        super::makeObject ((void *) super::getHeader(splitPiece),
+          requestedSize,
+          actualSize - requestedSize - sizeof(typename super::Header));
+        assert (!super::isFree(splitPiece));
+        // Now that we have a new successor (splitPiece), we need to
+        // mark obj as in use.
+        (super::getHeader(splitPiece))->markPrevInUse();
+        assert (super::getSize(splitPiece) >= sizeof(double));
+        assert (super::getSize(obj) >= requestedSize);
+        return splitPiece;
       } else {
-	return NULL;
+        return NULL;
       }
     }
 

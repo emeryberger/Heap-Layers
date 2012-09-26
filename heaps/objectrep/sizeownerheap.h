@@ -57,7 +57,7 @@ private:
   typedef AddHeap<SizeOwner<Super>, Super> SuperHeap;
 
 public:
-  
+
   inline void * malloc (size_t sz) {
     void * ptr = SuperHeap::malloc (sz);
     // Store the requested size.
@@ -67,7 +67,7 @@ public:
     // Store the owner.
     return (void *) (so + 1);
   }
-  
+
   inline void free (void * ptr) {
     void * origPtr = (void *) ((SizeOwner<Super> *) ptr - 1);
     SuperHeap::free (origPtr);

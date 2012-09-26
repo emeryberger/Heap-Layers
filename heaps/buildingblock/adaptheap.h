@@ -48,7 +48,7 @@ namespace HL {
     inline void * malloc (const size_t) {
       void * ptr = (Entry *) dict.get();
       if (ptr) {
-	assert (SuperHeap::getSize(ptr) >= sizeof(dict));
+        assert (SuperHeap::getSize(ptr) >= sizeof(dict));
       }
       return ptr;
     }
@@ -56,17 +56,17 @@ namespace HL {
     /// Deallocate the object (return to the dictionary).
     inline void free (void * ptr) {
       if (ptr) {
-	assert (SuperHeap::getSize(ptr) >= sizeof(dict));
-	Entry * entry = (Entry *) ptr;
-	dict.insert (entry);
+        assert (SuperHeap::getSize(ptr) >= sizeof(dict));
+        Entry * entry = (Entry *) ptr;
+        dict.insert (entry);
       }
     }
 
     /// Remove an object from the dictionary.
     inline int remove (void * ptr) {
       if (ptr) {
-	assert (SuperHeap::getSize(ptr) >= sizeof(dict));
-	dict.remove ((Entry *) ptr);
+        assert (SuperHeap::getSize(ptr) >= sizeof(dict));
+        dict.remove ((Entry *) ptr);
       }
       return 1;
     }
@@ -75,7 +75,7 @@ namespace HL {
     inline void clear (void) {
       Entry * ptr;
       while ((ptr = (Entry *) dict.get()) != NULL) {
-	SuperHeap::free (ptr);
+        SuperHeap::free (ptr);
       }
       dict.clear();
       SuperHeap::clear();

@@ -39,10 +39,10 @@ namespace HL {
 
     /// A map of pointers to objects and their allocated sizes.
     typedef std::map<void *, size_t, localComparator, localAllocator> mapType;
-  
+
     /// A freed object has a special size, -1.
     enum { FREED = -1 };
-  
+
     /**
      * @brief "Error messages", used in asserts.
      * These must all equal zero.
@@ -50,13 +50,13 @@ namespace HL {
     enum { MALLOC_RETURNED_ALLOCATED_OBJECT = 0,
 	   FREE_CALLED_ON_OBJECT_I_NEVER_ALLOCATED = 0,
 	   FREE_CALLED_TWICE_ON_SAME_OBJECT = 0 };
-  
+
   public:
 
     inline void * malloc (size_t sz) {
       void * ptr = SuperHeap::malloc (sz);
       if (ptr == NULL) {
-	return NULL;
+        return NULL;
       }
       // Fill the space with a known value.
       memset (ptr, 'A', sz);
@@ -65,20 +65,20 @@ namespace HL {
       // Look for this object in the map of allocated objects.
       i = allocatedObjects.find (ptr);
       if (i == allocatedObjects.end()) {
-	// We didn't find it (this is good).
-	// Add the tuple (ptr, sz).
-	allocatedObjects.insert (std::pair<void *, int>(ptr, sz));
+        // We didn't find it (this is good).
+        // Add the tuple (ptr, sz).
+        allocatedObjects.insert (std::pair<void *, int>(ptr, sz));
       } else {
-	// We found it.
-	// It really should have been freed.
-	if ((*i).second != FREED) {
-	  // This object is still in use!
-	  assert ( MALLOC_RETURNED_ALLOCATED_OBJECT );
-	  return NULL;
-	} else {
-	  // This object has been freed. Mark it as allocated.
-	  (*i).second = sz;
-	}
+      // We found it.
+      // It really should have been freed.
+        if ((*i).second != FREED) {
+          // This object is still in use!
+          assert ( MALLOC_RETURNED_ALLOCATED_OBJECT );
+          return NULL;
+        } else {
+          // This object has been freed. Mark it as allocated.
+          (*i).second = sz;
+        }
       }
       return ptr;
     }
@@ -88,14 +88,14 @@ namespace HL {
       mapType::iterator i;
       i = allocatedObjects.find (ptr);
       if (i == allocatedObjects.end()) {
-	assert ( FREE_CALLED_ON_OBJECT_I_NEVER_ALLOCATED );
-	return;
+        assert ( FREE_CALLED_ON_OBJECT_I_NEVER_ALLOCATED );
+        return;
       }
       // We found the object. It should not have been freed already.
       if ((*i).second == FREED) {
-	// Oops, this object WAS freed before.
-	assert ( FREE_CALLED_TWICE_ON_SAME_OBJECT );
-	return;
+        // Oops, this object WAS freed before.
+        assert ( FREE_CALLED_TWICE_ON_SAME_OBJECT );
+        return;
       }
       // Fill the space with a known value.
       memset (ptr, 'F', (*i).second);

@@ -5,10 +5,12 @@
 
 // Beware -- this is for one "size class" only!!
 
+#include <cstdlib>
+
 template <int numObjects, class Super>
 class BoundedFreeListHeap : public Super {
 public:
-  
+
   BoundedFreeListHeap (void)
     : nObjects (0),
     myFreeList (NULL)
@@ -29,7 +31,7 @@ public:
     }
     return ptr;
   }
-  
+
   inline void free (void * ptr) {
     if (nObjects < numObjects) {
       // Add this object to the free list.

@@ -4,6 +4,7 @@
 #define HL_STATS_H
 
 #include <map>
+#include <cassert>
 
 namespace HL {
 
@@ -32,8 +33,8 @@ namespace HL {
       mapType::iterator i;
       i = allocatedObjects.find (ptr);
       if (i == allocatedObjects.end()) {
-	// oops -- called free on object i didn't allocate.
-	assert (0);
+        // oops -- called free on object i didn't allocate.
+        assert (0);
       }
       inUse -= (*i).second;
       allocatedObjects.erase (i);
@@ -60,15 +61,15 @@ namespace HL {
   public:
     AllocatedHeap (void)
       : allocated (0),
-	maxAllocated (0)
+      maxAllocated (0)
     {}
     void * malloc (size_t sz) {
       void * ptr = SuperHeap::malloc (sz);
       if (ptr != NULL) {
-	allocated += SuperHeap::getSize(ptr);
-	if (maxAllocated < allocated) {
-	  maxAllocated = allocated;
-	}
+        allocated += SuperHeap::getSize(ptr);
+        if (maxAllocated < allocated) {
+          maxAllocated = allocated;
+        }
       }
       return ptr;
     }
@@ -77,7 +78,7 @@ namespace HL {
       allocated -= SuperHeap::getSize(ptr);
       SuperHeap::free (ptr);
     }
-    
+
     int getAllocated (void) const {
       return allocated;
     }

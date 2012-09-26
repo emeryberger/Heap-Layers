@@ -37,7 +37,7 @@
 /**
  * @class StrictSegHeap
  * @brief A "strict" segregated-fits collection of (homogeneous) heaps.
- * 
+ *
  * One extra heap is used for objects that are "too big".  Unlike
  * SegHeap, StrictSegHeap does not perform splitting to satisfy memory
  * requests. If no memory is available from the appropriate bin,
@@ -71,19 +71,19 @@ namespace HL {
     void freeAll (void) {
       int i;
       for (i = 0; i < NumBins; i++) {
-	const size_t sz = class2size(i);
-	void * ptr;
-	while ((ptr = SuperHeap::myLittleHeap[i].malloc (sz)) != NULL) {
-	  SuperHeap::bigheap.free (ptr);
-	}
+        const size_t sz = class2size(i);
+        void * ptr;
+        while ((ptr = SuperHeap::myLittleHeap[i].malloc (sz)) != NULL) {
+          SuperHeap::bigheap.free (ptr);
+        }
       }
       for (int j = 0; j < SuperHeap::NUM_ULONGS; j++) {
-	SuperHeap::binmap[j] = 0;
+        SuperHeap::binmap[j] = 0;
       }
       SuperHeap::memoryHeld = 0;
     }
 
-  
+
     /**
      * Malloc from exactly one available size.
      * (don't look in every small heap, as in SegHeap).
@@ -97,12 +97,12 @@ namespace HL {
       assert (realSize >= sz);
 
       if (realSize <= SuperHeap::maxObjectSize) {
-	assert (sizeClass >= 0);
-	assert (sizeClass < NumBins);
-	ptr = SuperHeap::myLittleHeap[sizeClass].malloc (realSize);
+        assert (sizeClass >= 0);
+        assert (sizeClass < NumBins);
+        ptr = SuperHeap::myLittleHeap[sizeClass].malloc (realSize);
       }
       if (!ptr) {
-	ptr = SuperHeap::bigheap.malloc (realSize);
+        ptr = SuperHeap::bigheap.malloc (realSize);
       }
       return ptr;
     }
@@ -110,22 +110,22 @@ namespace HL {
     inline void free (void * ptr) {
       const size_t objectSize = SuperHeap::getSize(ptr);
       if (objectSize > SuperHeap::maxObjectSize) {
-	SuperHeap::bigheap.free (ptr);
+        SuperHeap::bigheap.free (ptr);
       } else {
-	int objectSizeClass = size2class(objectSize);
-	assert (objectSizeClass >= 0);
-	assert (objectSizeClass < NumBins);
+        int objectSizeClass = size2class(objectSize);
+        assert (objectSizeClass >= 0);
+        assert (objectSizeClass < NumBins);
 
-	// Put the freed object into the right sizeclass heap.
+        // Put the freed object into the right sizeclass heap.
 
-	// Ensure that the bin that we are going to put it in is for
-	// objects that are no bigger than the actual size of the
-	// object.
-	while (class2size(objectSizeClass) > objectSize)
-	  objectSizeClass--;
+        // Ensure that the bin that we are going to put it in is for
+        // objects that are no bigger than the actual size of the
+        // object.
+        while (class2size(objectSizeClass) > objectSize)
+          objectSizeClass--;
 
-	SuperHeap::myLittleHeap[objectSizeClass].free (ptr);
-	SuperHeap::memoryHeld += objectSize;
+        SuperHeap::myLittleHeap[objectSizeClass].free (ptr);
+        SuperHeap::memoryHeld += objectSize;
       }
     }
 

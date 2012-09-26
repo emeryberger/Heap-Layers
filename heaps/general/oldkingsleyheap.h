@@ -49,8 +49,8 @@ namespace Kingsley {
   inline int popc (int v) {
     int r;
     asm volatile ("popc %1, %0"
-		  : "=r" (r)
-		  : "r" (v));
+                  : "=r" (r)
+                  : "r" (v));
     return r;
   }
 #endif
@@ -84,8 +84,8 @@ namespace Kingsley {
       int c = 4;
       size_t sz1 = ((sz - 1) >> 4);
       while (sz1 > 7) {
-	sz1 >>= 1;
-	c++;
+        sz1 >>= 1;
+        c++;
       }
       assert (class2Size(c) >= sz);
       return c;
@@ -113,12 +113,12 @@ namespace Kingsley {
 namespace HL {
 
 template <class PerClassHeap, class BigHeap>
-  class KingsleyHeap : 
+  class KingsleyHeap :
    public StrictSegHeap<Kingsley::NUMBINS,
-			Kingsley::size2Class,
-			Kingsley::class2Size,
-			PerClassHeap,
-			BigHeap> {};
+                        Kingsley::size2Class,
+                        Kingsley::class2Size,
+                        PerClassHeap,
+                        BigHeap> {};
 
 }
 

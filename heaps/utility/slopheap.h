@@ -27,6 +27,8 @@
 #ifndef HL_SLOPHEAP_H
 #define HL_SLOPHEAP_H
 
+#include <cstddef>
+
 /**
  * @class SlopHeap
  * 

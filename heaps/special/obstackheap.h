@@ -55,10 +55,10 @@ namespace HL {
       assert (isValid());
       ChunkHeader * ch = currentChunk;
       while (ch != NULL) {
-	ChunkHeader * pch = ch->getPrevChunk();
-	// cout << "Freeing chunk " << ch << endl;
-	SuperHeap::free (ch);
-	ch = pch;
+        ChunkHeader * pch = ch->getPrevChunk();
+        // cout << "Freeing chunk " << ch << endl;
+        SuperHeap::free (ch);
+        ch = pch;
       }
     }
 
@@ -69,16 +69,16 @@ namespace HL {
       // get a new one.
       assert (isValid());
       if ((int) ((char *) currentChunk->getLimit() - (char *) nextPos) < sz) {
-	ChunkHeader * newCurrent = copyToNew(sz);
-	if (newCurrent == NULL)
-	  return NULL;
+        ChunkHeader * newCurrent = copyToNew(sz);
+        if (newCurrent == NULL)
+          return NULL;
 #if 0
-	// Now delete the previous chunk if this was the only object in it.
-	if (deleteChunk != NULL) {
-	  SuperHeap::free (deleteChunk);
-	}
+        // Now delete the previous chunk if this was the only object in it.
+        if (deleteChunk != NULL) {
+          SuperHeap::free (deleteChunk);
+        }
 #endif
-	assert (isValid());
+        assert (isValid());
       }
       assert (((int) ((char *) currentChunk->getLimit() - (char *) nextPos) >= sz));
       assert ((char *) (sz + nextPos) <= currentChunk->getLimit());
@@ -93,19 +93,19 @@ namespace HL {
     inline void * malloc (size_t sz) {
       assert (isValid());
       if (currentChunk == NULL) {
-	return NULL;
+        return NULL;
       }
       //sz = align(sz > 0 ? sz : 1);
       // If this object can't fit in the current chunk,
       // get another one.
       if ((int) ((char *) currentChunk->getLimit() - (char *) nextPos) < sz) {
-	// Allocate a chunk that's large enough to hold the requested size.
-	currentChunk = makeChunk (currentChunk, sz);
-	if (currentChunk == NULL) {
-	  return NULL;
-	}
-	currentBase = nextPos = (char *) (currentChunk + 1);
-	assert (isValid());
+        // Allocate a chunk that's large enough to hold the requested size.
+        currentChunk = makeChunk (currentChunk, sz);
+        if (currentChunk == NULL) {
+          return NULL;
+        }
+        currentBase = nextPos = (char *) (currentChunk + 1);
+        assert (isValid());
       }
       assert (((int) ((char *) currentChunk->getLimit() - (char *) nextPos) >= sz));
       assert ((char *) (sz + nextPos) <= currentChunk->getLimit());
@@ -127,24 +127,24 @@ namespace HL {
       while (currentChunk != NULL &&
 	     (((char *) currentChunk > (char *) ptr) ||
 	      ((char *) currentChunk->getLimit() < (char *) ptr))) {
-	ChunkHeader * pch = currentChunk;
-	currentChunk = currentChunk->getPrevChunk();
-	SuperHeap::free (pch);
+        ChunkHeader * pch = currentChunk;
+        currentChunk = currentChunk->getPrevChunk();
+        SuperHeap::free (pch);
       }
       if (currentChunk != NULL) {
-	currentBase = nextPos = (char *) ptr;
-	assert (isValid());
+        currentBase = nextPos = (char *) ptr;
+        assert (isValid());
       } else {
-	if (ptr != NULL) {
-	  // Something bad has happened -- we tried to free an item that
-	  // wasn't in any chunk.
-	  abort();
-	} else {
-	  // Get one chunk.
-	  currentChunk = makeChunk (NULL, ChunkSize);
-	  currentBase = nextPos = (char *) (currentChunk + 1);
-	  assert (isValid());
-	}
+        if (ptr != NULL) {
+          // Something bad has happened -- we tried to free an item that
+          // wasn't in any chunk.
+          abort();
+        } else {
+          // Get one chunk.
+          currentChunk = makeChunk (NULL, ChunkSize);
+          currentBase = nextPos = (char *) (currentChunk + 1);
+          assert (isValid());
+        }
       }
     }
 
@@ -198,8 +198,8 @@ namespace HL {
     class ChunkHeader {
     public:
       inline ChunkHeader (ChunkHeader * prev, size_t sz)
-	: _pastEnd ((char *) (this + 1) + sz),
-	  _prevChunk (prev)
+        : _pastEnd ((char *) (this + 1) + sz),
+        _prevChunk (prev)
       {}
 
       // Return the end of the current chunk.
@@ -220,14 +220,14 @@ namespace HL {
     inline ChunkHeader * makeChunk (ChunkHeader * ch, size_t sz) {
       // Round up the allocation size to at least one chunk.
       size_t allocSize
-	= HL::align<Alignment>((sz > ChunkSize - sizeof(ChunkHeader)) ? sz : ChunkSize - sizeof(ChunkHeader));
+        = HL::align<Alignment>((sz > ChunkSize - sizeof(ChunkHeader)) ? sz : ChunkSize - sizeof(ChunkHeader));
       // Make a new chunk.
       void * ptr = SuperHeap::malloc (sizeof(ChunkHeader) + allocSize);
       if (ptr == NULL) {
-	return NULL;
+        return NULL;
       }
-      ChunkHeader * newChunk 
-	= new (ptr) ChunkHeader (ch, allocSize);
+      ChunkHeader * newChunk
+        = new (ptr) ChunkHeader (ch, allocSize);
       return newChunk;
     }
 
@@ -245,17 +245,17 @@ namespace HL {
       // If this object was the only one in the chunk,
       // link back past this chunk.
       if (currentBase == (char *) (currentChunk + 1)) {
-	newChunk = makeChunk (currentChunk->getPrevChunk(), new_size);
-	deleteChunk = currentChunk;
+        newChunk = makeChunk (currentChunk->getPrevChunk(), new_size);
+        deleteChunk = currentChunk;
       } else {
-	newChunk = makeChunk (currentChunk, new_size);
+        newChunk = makeChunk (currentChunk, new_size);
       }
 #else
       newChunk = makeChunk (currentChunk, new_size);
 #endif
       if (newChunk == NULL) {
-	currentChunk = NULL;
-	return NULL;
+        currentChunk = NULL;
+        return NULL;
       }
       // Copy the current object to the new chunk.
       memcpy ((char *) (newChunk + 1), currentBase, obj_size);
@@ -264,7 +264,7 @@ namespace HL {
       nextPos = currentBase + obj_size;
 #if 0
       if (deleteChunk != NULL) {
-	SuperHeap::free (deleteChunk);
+        SuperHeap::free (deleteChunk);
       }
 #endif
       return currentChunk;
