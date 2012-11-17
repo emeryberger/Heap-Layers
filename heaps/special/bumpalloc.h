@@ -50,11 +50,11 @@ namespace HL {
 	_remaining (0)
     {
       sassert<(gcd<ChunkSize, Alignment>::VALUE == Alignment)> 
-	verifyAlignmentSatisfiable;
+	     verifyAlignmentSatisfiable;
       sassert<(gcd<SuperHeap::Alignment, Alignment>::VALUE == Alignment)>
-	verifyAlignmentFromSuperHeap;
+	     verifyAlignmentFromSuperHeap;
       sassert<((Alignment & (Alignment-1)) == 0)>
-	verifyPowerOfTwoAlignment;
+	     verifyPowerOfTwoAlignment;
     }
 
     inline void * malloc (size_t sz) {
@@ -64,7 +64,7 @@ namespace HL {
       // If there's not enough space left to fulfill this request, get
       // another chunk.
       if (_remaining < newSize) {
-	refill(newSize);
+      	refill(newSize);
       }
       // Bump that pointer.
       char * old = _bump;
@@ -89,7 +89,7 @@ namespace HL {
     // Get another chunk.
     void refill (size_t sz) {
       if (sz < ChunkSize) {
-	sz = ChunkSize;
+      	sz = ChunkSize;
       }
       _bump = (char *) SuperHeap::malloc (sz);
       assert ((size_t) _bump % Alignment == 0);
