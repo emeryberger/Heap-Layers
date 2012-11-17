@@ -31,11 +31,12 @@ public:
 
   inline void * malloc (size_t sz) {
     void * ptr = SuperHeap::malloc (sz);
+#ifndef NDEBUG
     if (ptr != NULL) {
       int tid = CPUInfo::getThreadId() % NumHeaps;
-      tid = tid;
       assert (SuperHeap::getHeap(ptr) == tid);
     }
+#endif
     return ptr;
   }
 

@@ -27,7 +27,10 @@
 #ifndef HL_BUMPALLOC_H
 #define HL_BUMPALLOC_H
 
+#include <cstddef>
+
 #include "utility/gcd.h"
+#include "utility/sassert.h"
 
 /**
  * @class BumpAlloc
@@ -50,11 +53,11 @@ namespace HL {
 	_remaining (0)
     {
       sassert<(gcd<ChunkSize, Alignment>::VALUE == Alignment)> 
-	     verifyAlignmentSatisfiable;
+	verifyAlignmentSatisfiable;
       sassert<(gcd<SuperHeap::Alignment, Alignment>::VALUE == Alignment)>
-	     verifyAlignmentFromSuperHeap;
+	verifyAlignmentFromSuperHeap;
       sassert<((Alignment & (Alignment-1)) == 0)>
-	     verifyPowerOfTwoAlignment;
+	verifyPowerOfTwoAlignment;
     }
 
     inline void * malloc (size_t sz) {

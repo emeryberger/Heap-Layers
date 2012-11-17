@@ -3,6 +3,8 @@
 #if !defined(_BINS4K_H_)
 #define _BINS4K_H_
 
+#include <cassert>
+
 #include "bins.h"
 #include "sassert.h"
 

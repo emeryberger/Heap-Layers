@@ -27,6 +27,9 @@
 #ifndef HL_XALLOCHEAP_H
 #define HL_XALLOCHEAP_H
 
+#include <cstddef>
+#include <utility/align.h>
+
 namespace HL {
 
   template <int ArenaSize, class SuperHeap>
@@ -49,8 +52,8 @@ namespace HL {
       char * old_end_of_array = end_of_array;
       end_of_array += HL::align<sizeof(double)>(size + sizeof(Nuggie));
       if (old_end_of_array + size >= start_of_array + ArenaSize) {
-	// We're out of memory.
-	return NULL;
+        // We're out of memory.
+        return NULL;
       }
       size_lval(end_of_array) = end_of_array - old_end_of_array;
       clear_use(end_of_array);  /* this is not necessary, cause it will be zero */
@@ -66,20 +69,20 @@ namespace HL {
 	 is set, and also check that the size is right */
       clear_use(p);  /* mark this block as unused */
       if (p == last_block) {
-	while (1) {
-	  q = prev_block(p);
-	  if (q == p) {
-	    last_block = NULL;
-	    end_of_array = p;
-	    break;  /* only happens when we get to the beginning */
-	  }
-	  if (in_use(q)) {
-	    last_block = q;
-	    end_of_array = p;
-	    break;
-	  }
-	  p = q;
-	}
+        while (1) {
+          q = prev_block(p);
+          if (q == p) {
+            last_block = NULL;
+            end_of_array = p;
+            break;  /* only happens when we get to the beginning */
+          }
+          if (in_use(q)) {
+            last_block = q;
+            end_of_array = p;
+            break;
+          }
+          p = q;
+        }
       }
     }
 

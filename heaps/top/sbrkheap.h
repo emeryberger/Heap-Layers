@@ -3,6 +3,8 @@
 #ifndef HL_SBRKHEAP_H
 #define HL_SBRKHEAP_H
 
+#include <cstddef>
+
 #ifdef WIN32
 
 // If we're using Windows, we'll need to link in sbrk.c,

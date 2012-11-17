@@ -93,8 +93,6 @@ namespace HL {}
 #define ALLOCATION_STATS 0
 #endif
 
-
-
 #ifdef _MSC_VER
 // 4786: Disable warnings about long (> 255 chars) identifiers.
 // 4512: Disable warnings about assignment operators.
@@ -107,118 +105,6 @@ namespace HL {}
 #include "threads/all.h"
 #include "utility/all.h"
 #include "wrappers/all.h"
-
-
-
-//////////////////////////////
-
-
-#if 0
-
-
-#include "sassert.h"
-// #include "utility.h"		// convenient wrappers to replace C++ new & delete operators
-#include "dynarray.h"		// an array that grows by doubling
-#include "myhashmap.h"
-
-// Hiding machine dependencies.
-
-#include "mallocinfo.h"
-
-#include "cpuinfo.h"
-#include "timer.h"			// allows high-resolution timing across a wide range of platforms
-#include "guard.h"
-#include "fred.h"
-
-// Lock implementations.
-
-#include "spinlock.h"		// spin-then-yield
-
-#if defined(_WIN32)
-#include "winlock.h"		// critical-sections (i.e., for Windows only)
-#include "recursivelock.h"	// a wrapper for recursive locking
-#endif
-
-// Useful utilities.
-
-#include "uniqueheap.h"
-#include "tryheap.h"
-
-// Base heaps
-
-#include "zoneheap.h"		// a zone allocator (frees all memory when the heap goes out of scope)
-
-// Adapters
-
-#include "perclassheap.h"	// make a per-class heap
-
-
-// Freelist-like heaps ("allocation caches")
-// NB: All of these should be used for exactly one size class.
-
-#include "freelistheap.h"	// a free list. Never frees memory.
-//#include "fifofreelist.h"   // a FIFO free list.
-//#include "fifodlfreelist.h"  // a doubly-linked FIFO free list.
-#include "boundedfreelistheap.h"	// a free list with a bounded length. 
-
-
-#include "nullheap.h"
-#include "coalesceheap.h" // A chunk heap with coalescing.
-#include "coalesceableheap.h"
-
-// Utility heap layers
-
-#include "sizethreadheap.h"	// Adds size(ptr) & thread(ptr) methods
-#include "lockedheap.h"		// Code-locks a heap
-#include "checkheap.h"		// Raises assertions if malloc'ed objects aren't right.
-// #include "exceptionheap.h"	// Raise an exception if a malloc fails.
-
-#include "sanitycheckheap.h" // Check for multiple frees and mallocs of same locations.
-#include "ansiwrapper.h"     // Provide ANSI C like behavior for malloc (alignment, etc.)
-
-// Multi-threaded heaps
-//   hashes the thread id across a number of heaps
-
-//#include "phothreadheap.h"	// Private-heaps with ownership
-#include "threadheap.h"		// Pure-private heaps (sort of)
-
-// Generic heaps
-
-#include "segheap.h"		// A *very general* segregated fits allocator.
-
-// "Standard" heap layers
-
-#include "kingsleyheap.h"	// A power-of-two size class allocator,
-							// a la Chris Kingsley's BSD allocator.
-
-// "Top" heaps.
-#include "mallocheap.h"		// a thin wrapper around the system's malloc/free
-#include "mmapheap.h"		// a wrapper around the system's virtual memory system
-
-// the rest...
-
-#include "oneheap.h"
-#include "debugheap.h"
-#include "sizeheap.h"
-#include "addheap.h"
-#include "profileheap.h"
-#include "sizeownerheap.h"
-#include "hybridheap.h"
-#include "traceheap.h"
-#include "stlallocator.h"
-#include "adaptheap.h"
-#include "dllist.h"
-#include "dlheap.h"
-// #include "logheap.h"
-// #include "obstackheap.h"
-// #include "sbrkheap.h"
-// #include "xallocHeap.h" // 197.parser's heap
-
-#include "staticheap.h"
-
-#endif
-
-
 
 #ifdef _MSC_VER
 #pragma warning( pop )

@@ -33,6 +33,8 @@
 #ifndef HL_STATICHEAP_H
 #define HL_STATICHEAP_H
 
+#include <cstddef>
+
 namespace HL {
 
   template <int MemorySize>

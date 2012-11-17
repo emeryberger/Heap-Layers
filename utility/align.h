@@ -15,6 +15,7 @@ namespace HL {
   template <unsigned long Alignment>
   inline size_t align (size_t v) {
     sassert<((Alignment & (Alignment-1)) == 0)> isPowerOfTwo;
+    isPowerOfTwo = isPowerOfTwo;
     return ((v + (Alignment-1)) & ~(Alignment-1));
   }
 

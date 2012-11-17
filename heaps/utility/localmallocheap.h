@@ -27,6 +27,10 @@
 #ifndef HL_LOCALMALLOCHEAP_H
 #define HL_LOCALMALLOCHEAP_H
 
+#include <cstddef>
+#include <cassert>
+#include <iostream>
+
 #if !defined(_WIN32) // not implemented for Windows
 
 #include <dlfcn.h>

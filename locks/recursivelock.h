@@ -27,6 +27,7 @@
 #ifndef HL_RECURSIVELOCK_H
 #define HL_RECURSIVELOCK_H
 
+#include <cassert>
 #include "threads/cpuinfo.h"
 
 /**

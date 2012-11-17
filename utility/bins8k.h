@@ -3,6 +3,8 @@
 #if !defined(HL_BINS8K_H)
 #define HL_BINS8K_H
 
+#include <cassert>
+
 #include "bins.h"
 #include "sassert.h"
 

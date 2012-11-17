@@ -71,15 +71,15 @@ public:
     if (child != NULL) {
       NestedHeap<SuperHeap> * nextChild = child->next;
       while (child != NULL) {
-	NestedHeap<SuperHeap> * prevChild = child->prev;
-	delete child;
-	child = prevChild;
+        NestedHeap<SuperHeap> * prevChild = child->prev;
+        delete child;
+        child = prevChild;
       }
       child = nextChild;
       while (child != NULL) {
-	nextChild = child->next;
-	delete child;
-	child = nextChild;
+        nextChild = child->next;
+        delete child;
+        child = nextChild;
       }
     }
     assert (child == NULL);
@@ -120,11 +120,11 @@ private:
     assert (ch != NULL);
     if (child == ch) {
       if (ch->prev) {
-	child = ch->prev;
+        child = ch->prev;
       } else if (ch->next) {
-	child = ch->next;
+        child = ch->next;
       } else {
-	child = NULL;
+        child = NULL;
       }
     }
     removeSibling (ch);
