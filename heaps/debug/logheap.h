@@ -16,6 +16,7 @@
 // UNIX-specific for now...
 #if defined(unix)
 #include <unistd.h>
+#include <sys/types.h>
 #endif
 
 #include <fstream>
