@@ -29,6 +29,9 @@
 
 #include "utility/gcd.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+
 /**
  * @class BumpAlloc
  * @brief Obtains memory in chunks and bumps a pointer through the chunks.
@@ -99,5 +102,7 @@ namespace HL {
   };
 
 }
+
+#pragma clang diagnostic pop
 
 #endif

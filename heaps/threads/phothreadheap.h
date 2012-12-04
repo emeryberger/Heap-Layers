@@ -7,6 +7,9 @@
 
 #include "threads/cpuinfo.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+
 using namespace HL;
 
 template <int NumHeaps, class SuperHeap>
@@ -33,7 +36,6 @@ public:
     void * ptr = SuperHeap::malloc (sz);
     if (ptr != NULL) {
       int tid = CPUInfo::getThreadId() % NumHeaps;
-      tid = tid;
       assert (SuperHeap::getHeap(ptr) == tid);
     }
     return ptr;
@@ -94,5 +96,7 @@ private:
   MarkThreadHeap<NumHeaps, SuperHeap> ptHeaps[NumHeaps];
 
 };
+
+#pragma clang diagnostic pop
 
 #endif
