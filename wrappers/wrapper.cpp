@@ -125,6 +125,9 @@ extern "C" {
 
 extern "C" void * MYCDECL CUSTOM_MALLOC(size_t sz)
 {
+  if (sz >> (sizeof(size_t) * CHAR_BIT - 1)) {
+    return NULL;
+  }
   void * ptr = xxmalloc(sz);
   return ptr;
 }
@@ -132,6 +135,9 @@ extern "C" void * MYCDECL CUSTOM_MALLOC(size_t sz)
 extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 {
   size_t n = nelem * elsize;
+  if (elsize && nelem != n / elsize) {
+    return NULL;
+  }
   void * ptr = CUSTOM_MALLOC(n);
   // Zero out the malloc'd block.
   if (ptr != NULL) {
