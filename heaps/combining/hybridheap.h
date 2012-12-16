@@ -29,8 +29,7 @@
 
 #include <assert.h>
 
-#include "utility/sassert.h"
-#include "utility/gcd.h"
+#include <heaplayers.h>
 
 /**
  * @class HybridHeap
@@ -53,28 +52,28 @@ namespace HL {
     MALLOC_FUNCTION INLINE void * malloc (size_t sz) {
       void * ptr;
       if (sz <= BigSize) {
-	ptr = SmallHeap::malloc (sz);
+        ptr = SmallHeap::malloc (sz);
       } else {
-	ptr = slowPath (sz);
+        ptr = slowPath (sz);
       }
       assert (SmallHeap::getSize(ptr) >= sz);
       assert ((size_t) ptr % Alignment == 0);
       return ptr;
     }
-  
+
     inline void free (void * ptr) {
       if (SmallHeap::getSize(ptr) <= BigSize) {
-	SmallHeap::free (ptr);
+        SmallHeap::free (ptr);
       } else {
-	bm.free (ptr);
+        bm.free (ptr);
       }
     }
-  
+
     inline void clear (void) {
       bm.clear();
       SmallHeap::clear();
     }
-  
+
 
   private:
 

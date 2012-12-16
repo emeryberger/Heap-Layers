@@ -71,7 +71,7 @@ public:
 
   // The Header for every object, allocated or freed.
   class Header {
-	  friend class RequireCoalesceable<SuperHeap>;
+    friend class RequireCoalesceable<SuperHeap>;
   public:
 
     //
@@ -79,13 +79,13 @@ public:
     // Returns the start of the object (i.e., just past the header).
     //
     inline static void * makeObject (void * buf, const size_t prevsz, const size_t sz) {
-	  *((Header *) buf) = Header (prevsz, sz);
-	  Header * nextHeader = (Header *) ((char *) ((Header *) buf + 1) + sz);
-//	  Header * nextHeader = h->getNextHeader();
-//	  nextHeader->markPrevInUse();
-	  nextHeader->setPrevSize (sz);
+      *((Header *) buf) = Header (prevsz, sz);
+      Header * nextHeader = (Header *) ((char *) ((Header *) buf + 1) + sz);
+      // Header * nextHeader = h->getNextHeader();
+      // nextHeader->markPrevInUse();
+      nextHeader->setPrevSize (sz);
       // return Header::getObject (h);
-	  return ((Header *) buf + 1);
+      return ((Header *) buf + 1);
     }
 
 
@@ -98,7 +98,7 @@ public:
       assert (getNextHeader()->getPrev() == getObject(this));
 #if 0
       if (isPrevFree()) {
-	assert (getPrevSize() == getHeader(getPrev())->getSize());
+        assert (getPrevSize() == getHeader(getPrev())->getSize());
       }
 #endif
 #endif
@@ -116,33 +116,33 @@ public:
 //  private:
     inline size_t getPrevSize (void) const { return _prevSize; }
 
-    inline void markFree (void)        {
-		// printf ("markFree\n");
-		getNextHeader()->markPrevFree();
-	}
+    inline void markFree (void) {
+      // printf ("markFree\n");
+      getNextHeader()->markPrevFree();
+    }
     inline void markInUse (void)       {
-		// printf ("markInUse\n");
-		getNextHeader()->markPrevInUse();
-	}
+      // printf ("markInUse\n");
+      getNextHeader()->markPrevInUse();
+    }
     inline void markMmapped (void)     { _isMmapped = IS_MMAPPED; }
     inline void markNotMmapped (void)  { _isMmapped = NOT_MMAPPED; }
     inline int isFree (void) const     {
-		// printf ("isFree\n");
-		return getNextHeader()->isPrevFree();
-	}
+      // printf ("isFree\n");
+      return getNextHeader()->isPrevFree();
+    }
     inline int isNextFree (void) const {
-		// printf ("isNextFree\n");
-		return getNextHeader()->getNextHeader()->isPrevFree();
-	}
+      // printf ("isNextFree\n");
+      return getNextHeader()->getNextHeader()->isPrevFree();
+    }
     inline int isMmapped (void) const  { return (_isMmapped != NOT_MMAPPED); }
     inline void * getPrev (void) const {
-	//	fprintf (stderr, "coalesceableheap.h: %x, %d\n", this, getPrevSize());
-		return ((char *) this) - getPrevSize(); 
-	}
-    inline void * getNext (void) const { 
-		// printf ("getNext\n");
-		return ((char *) (this + 2)) + getSize();
-	}
+      // fprintf (stderr, "coalesceableheap.h: %x, %d\n", this, getPrevSize());
+      return ((char *) this) - getPrevSize();
+    }
+    inline void * getNext (void) const {
+      // printf ("getNext\n");
+      return ((char *) (this + 2)) + getSize();
+    }
 
     inline void markPrevFree (void)    { _prevStatus = PREV_FREE; }
     inline void markPrevInUse (void)   { _prevStatus = PREV_INUSE; }
@@ -279,7 +279,7 @@ public:
       header->setSize (sz);
 
       // Below was:
-//      Header * nextHeader = Header::getHeader (header->getNext());
+      // Header * nextHeader = Header::getHeader (header->getNext());
       Header * nextHeader = (Header *) ((char *) (header + 1) + sz);
 
       nextHeader->setPrevSize (sz);
@@ -314,7 +314,7 @@ public:
       // accidental coalescing.
       //
 
-//	  (nextHeader + 1)->markPrevInUse();
+      // (nextHeader + 1)->markPrevInUse();
       nextHeader->markInUse ();
 #endif
 
@@ -324,7 +324,7 @@ public:
     }
     return NULL;
   }
-  
+
   inline void free (void * ptr) {
     assert (SuperHeap::isFree(ptr));
     SuperHeap::free ((Header *) ptr - 1);

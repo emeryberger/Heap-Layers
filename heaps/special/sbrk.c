@@ -21,7 +21,7 @@ void * sbrk (long size) {
   static long remainingCommitted = 0;
   static long pageSize;
   void * p;
-  
+
   if (!initialized) {
 
     /*
@@ -35,16 +35,16 @@ void * sbrk (long size) {
     SYSTEM_INFO sSysInfo;
     LPVOID base;
     GetSystemInfo(&sSysInfo);
-    
+
     pageSize = sSysInfo.dwPageSize;
-    
+
     /* Reserve pages in the process's virtual address space. */
-    
+
 #if 1
     base = VirtualAlloc(NULL, remainingReserved, MEM_RESERVE, PAGE_NOACCESS);
 #else
     base = VirtualAlloc(NULL, remainingReserved, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-	remainingCommitted =  PRE_RESERVE;
+    remainingCommitted =  PRE_RESERVE;
 #endif
 
     if (base == NULL )
@@ -58,16 +58,16 @@ void * sbrk (long size) {
 
 #if 0
   /* Uncommit pages if possible.
-       Round the size down to a multiple of the page size,
-       and decommit those pages.
-    */
+     Round the size down to a multiple of the page size,
+     and decommit those pages.
+   */
 
 
     int bytesToUncommit = (-size & ~(pageSize - 1));
 
     if (bytesToUncommit > PRE_RESERVE - remainingReserved) {
       /* Error -- the user has tried to free memory that we never
-	 even reserved. */
+         even reserved. */
       return currentPosition;
     }
 
@@ -75,8 +75,8 @@ void * sbrk (long size) {
 
       int result = VirtualFree (nextPage - bytesToUncommit, bytesToUncommit, MEM_DECOMMIT);
       if (result == 0) {
-	/* Error -- don't change a thing. */
-	return currentPosition;
+        /* Error -- don't change a thing. */
+        return currentPosition;
       }
       remainingCommitted -= bytesToUncommit;
     }
@@ -93,8 +93,8 @@ void * sbrk (long size) {
     if (size > remainingCommitted) {
 
       /* Commit some more pages.
-	 We round up to an even number of pages.
-	 Note that page size must be a power of two.
+         We round up to an even number of pages.
+         Note that page size must be a power of two.
       */
 
       int bytesToCommit = (size - remainingCommitted + pageSize - 1) & ~(pageSize - 1); 
@@ -103,12 +103,12 @@ void * sbrk (long size) {
       result = VirtualAlloc((LPVOID) nextPage, bytesToCommit, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
       if (result == NULL )
-	exit (1); /* VirtualAlloc commit failed */
+        exit (1); /* VirtualAlloc commit failed */
 
       nextPage += bytesToCommit;
       remainingCommitted += bytesToCommit;
     }
-      
+
     p = currentPosition;
     currentPosition += size;
     remainingCommitted -= size;

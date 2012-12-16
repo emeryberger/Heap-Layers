@@ -57,6 +57,7 @@
  **/
 
 #include <assert.h>
+#include <utility/gcd.h>
 
 namespace HL {
 
@@ -72,10 +73,10 @@ namespace HL {
 
     inline SegHeap (void)
       : memoryHeld (0),
-	maxObjectSize (getClassMaxSize(NumBins - 1))
+      maxObjectSize (getClassMaxSize(NumBins - 1))
     {
       for (int i = 0; i < NUM_ULONGS; i++) {
-	binmap[i] = 0;
+        binmap[i] = 0;
       }
     }
 
@@ -92,57 +93,57 @@ namespace HL {
     inline void * malloc (const size_t sz) {
       void * ptr = NULL;
       if (sz > maxObjectSize) {
-	goto GET_MEMORY;
+        goto GET_MEMORY;
       }
 
       {
-	const int sc = getSizeClass(sz);
-	assert (sc >= 0);
-	assert (sc < NumBins);
-	int idx = sc;
-	int block = idx2block (idx);
-	unsigned long map = binmap[block];
-	unsigned long bit = idx2bit (idx);
-    
-	for (;;) {
-	  if (bit > map || bit == 0) {
-	    do {
-	      if (++block >= NUM_ULONGS) {
-		goto GET_MEMORY;
-		// return bigheap.malloc (sz);
-	      }
-	    } while ( (map = binmap[block]) == 0);
+        const int sc = getSizeClass(sz);
+        assert (sc >= 0);
+        assert (sc < NumBins);
+        int idx = sc;
+        int block = idx2block (idx);
+        unsigned long map = binmap[block];
+        unsigned long bit = idx2bit (idx);
 
-	    idx = block << SHIFTS_PER_ULONG;
-	    bit = 1;
-	  }
-	
-	  while ((bit & map) == 0) {
-	    bit <<= 1;
-	    assert(bit != 0);
-	    idx++;
-	  }
-      
-	  assert (idx < NumBins);
-	  ptr = myLittleHeap[idx].malloc (sz);
-      
-	  if (ptr == NULL) {
-	    binmap[block] = map &= ~bit; // Write through
-	    idx++;
-	    bit <<= 1;
-	  } else {
-	    return ptr;
-	  }
-	}
+        for (;;) {
+          if (bit > map || bit == 0) {
+            do {
+              if (++block >= NUM_ULONGS) {
+                goto GET_MEMORY;
+                // return bigheap.malloc (sz);
+              }
+            } while ( (map = binmap[block]) == 0);
+
+            idx = block << SHIFTS_PER_ULONG;
+            bit = 1;
+          }
+
+          while ((bit & map) == 0) {
+            bit <<= 1;
+            assert(bit != 0);
+            idx++;
+          }
+
+          assert (idx < NumBins);
+          ptr = myLittleHeap[idx].malloc (sz);
+
+          if (ptr == NULL) {
+            binmap[block] = map &= ~bit; // Write through
+            idx++;
+            bit <<= 1;
+          } else {
+            return ptr;
+          }
+        }
       }
 
-    GET_MEMORY:
+      GET_MEMORY:
       if (ptr == NULL) {
-	// There was no free memory in any of the bins.
-	// Get some memory.
-	ptr = bigheap.malloc (sz);
+        // There was no free memory in any of the bins.
+        // Get some memory.
+        ptr = bigheap.malloc (sz);
       }
-    
+
       return ptr;
     }
 
@@ -151,28 +152,28 @@ namespace HL {
       // printf ("Free: %x (%d bytes)\n", ptr, getSize(ptr));
       const size_t objectSize = getSize(ptr); // was bigheap.getSize(ptr)
       if (objectSize > maxObjectSize) {
-	// printf ("free up! (size class = %d)\n", objectSizeClass);
-	bigheap.free (ptr);
+        // printf ("free up! (size class = %d)\n", objectSizeClass);
+        bigheap.free (ptr);
       } else {
-	int objectSizeClass = getSizeClass(objectSize);
-	assert (objectSizeClass >= 0);
-	assert (objectSizeClass < NumBins);
-	// Put the freed object into the right sizeclass heap.
-	assert (getClassMaxSize(objectSizeClass) >= objectSize);
+        int objectSizeClass = getSizeClass(objectSize);
+        assert (objectSizeClass >= 0);
+        assert (objectSizeClass < NumBins);
+        // Put the freed object into the right sizeclass heap.
+        assert (getClassMaxSize(objectSizeClass) >= objectSize);
 #if 1
-	while (getClassMaxSize(objectSizeClass) > objectSize) {
-	  objectSizeClass--;
-	}
+        while (getClassMaxSize(objectSizeClass) > objectSize) {
+          objectSizeClass--;
+        }
 #endif
-	assert (getClassMaxSize(objectSizeClass) <= objectSize);
-	if (objectSizeClass > 0) {
-	  assert (objectSize >= getClassMaxSize(objectSizeClass - 1));
-	}
+        assert (getClassMaxSize(objectSizeClass) <= objectSize);
+        if (objectSizeClass > 0) {
+          assert (objectSize >= getClassMaxSize(objectSizeClass - 1));
+        }
 
 
-	myLittleHeap[objectSizeClass].free (ptr);
-	mark_bin (objectSizeClass);
-	memoryHeld += objectSize;
+        myLittleHeap[objectSizeClass].free (ptr);
+        mark_bin (objectSizeClass);
+        memoryHeld += objectSize;
       }
     }
 
@@ -180,10 +181,10 @@ namespace HL {
     void clear (void) {
       int i;
       for (i = 0; i < NumBins; i++) {
-	myLittleHeap[i].clear();
+        myLittleHeap[i].clear();
       }
       for (int j = 0; j < NUM_ULONGS; j++) {
-	binmap[j] = 0;
+        binmap[j] = 0;
       }
       bigheap.clear();
       memoryHeld = 0;

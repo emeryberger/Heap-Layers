@@ -25,25 +25,25 @@ namespace HL {
     enum { RECEIVED_AN_UNALIGNED_OBJECT_FROM_MALLOC = 0 };
 
   public:
-    
+
     inline void * malloc (size_t sz) {
       void * addr = SuperHeap::malloc (sz);
 #if !defined(NDEBUG)
 
       // Check for null (this should in general not happen).
       if (addr == NULL) {
-	assert (RECEIVED_A_NULL_OBJECT_FROM_MALLOC);
-	printf ("RECEIVED_A_NULL_OBJECT_FROM_MALLOC\n");
-	abort();
+        assert (RECEIVED_A_NULL_OBJECT_FROM_MALLOC);
+        printf ("RECEIVED_A_NULL_OBJECT_FROM_MALLOC\n");
+        abort();
       }
       // Ensure object size is correct.
       assert (SuperHeap::getSize(addr) >= sz);
 
       // Check alignment.
       if ((unsigned long) addr % SuperHeap::Alignment != 0) {
-	assert (RECEIVED_AN_UNALIGNED_OBJECT_FROM_MALLOC);
-	printf ("RECEIVED_AN_UNALIGNED_OBJECT_FROM_MALLOC\n");
-	abort();
+        assert (RECEIVED_AN_UNALIGNED_OBJECT_FROM_MALLOC);
+        printf ("RECEIVED_AN_UNALIGNED_OBJECT_FROM_MALLOC\n");
+        abort();
       }
 
       // Wipe out the old contents.
@@ -59,7 +59,7 @@ namespace HL {
 #endif
       SuperHeap::free (ptr);
     }
-    
+
   };
 
 }

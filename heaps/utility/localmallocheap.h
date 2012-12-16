@@ -27,6 +27,10 @@
 #ifndef HL_LOCALMALLOCHEAP_H
 #define HL_LOCALMALLOCHEAP_H
 
+#include <cstddef>
+#include <cassert>
+#include <iostream>
+
 #if !defined(_WIN32) // not implemented for Windows
 
 #include <dlfcn.h>
@@ -56,42 +60,42 @@ namespace HL {
     enum { Alignment = HL::MallocInfo::Alignment };
 
     LocalMallocHeap (void)
-      : freefn (NULL),
-	msizefn (NULL),
-	mallocfn (NULL),
-	_initialized (false),
-	_initializing (false)
+      : _freefn (NULL),
+      	_msizefn (NULL),
+      	_mallocfn (NULL),
+      	_initialized (false),
+        _initializing (false)
     {}
 
     inline void * malloc (size_t sz) {
       if (_initializing) {
-	return NULL;
+      	return NULL;
       }
       activate();
-      return (*mallocfn)(sz);
+      return (*_mallocfn)(sz);
     }
 
     inline void free (void * ptr) {
       if (_initializing) {
-	return;
+      	return;
       }
       activate();
-      (*freefn)(ptr);
+      (*_freefn)(ptr);
     }
 
     inline size_t getSize (void * ptr) {
       if (_initializing) {
-	return 0;
+      	return 0;
       }
       activate();
-      return (*msizefn)(ptr);
+      return (*_msizefn)(ptr);
     }
 
   private:
 
     void activate() {
       if (_initialized) {
-	return;
+      	return;
       }
       activateSlowPath();
     }
@@ -101,38 +105,40 @@ namespace HL {
 
       if (!_initialized) {
 
-	// We haven't initialized anything yet.
-	// Initialize all of the malloc shim functions.
+      	// We haven't initialized anything yet.
+      	// Initialize all of the malloc shim functions.
+      	
+      	_freefn = (freeFunction *)
+      	  ((unsigned long) dlsym (RTLD_NEXT, "free"));
+      	_msizefn = (msizeFunction *)
+      	  ((unsigned long) dlsym (RTLD_NEXT, "malloc_usable_size"));
+      	_mallocfn = (mallocFunction *)
+      	  ((unsigned long) dlsym (RTLD_NEXT, "malloc"));
+      	
+      	if (!(_freefn && _msizefn && _mallocfn)) {
+      	  fprintf (stderr, "Serious problem!\n");
+      	  abort();
+      	}
 	
-	freefn = (freeFunction *)
-	  ((unsigned long) dlsym (RTLD_NEXT, "free"));
-	msizefn = (msizeFunction *)
-	  ((unsigned long) dlsym (RTLD_NEXT, "malloc_usable_size"));
-	mallocfn = (mallocFunction *)
-	  ((unsigned long) dlsym (RTLD_NEXT, "malloc"));
-	
-	if (!(freefn && msizefn && mallocfn)) {
-	  fprintf (stderr, "Serious problem!\n");
-	  abort();
-	}
-	
-	assert (freefn);
-	assert (msizefn);
-	assert (mallocfn);
+      	assert (_freefn);
+      	assert (_msizefn);
+      	assert (_mallocfn);
 
-	_initialized = true;
+      	_initialized = true;
       }
-
       _initializing = false;
     }
 
     // Shim functions below.
 
-    freeFunction *   freefn;
-    msizeFunction *  msizefn;
-    mallocFunction * mallocfn;
+    freeFunction *   _freefn;
+    msizeFunction *  _msizefn;
+    mallocFunction * _mallocfn;
 
+    // Has everything been initialized yet?
     bool _initialized;
+
+    // Are we in the process of initializing?
     bool _initializing;
 
   };
