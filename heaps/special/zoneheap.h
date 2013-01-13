@@ -134,7 +134,6 @@ namespace HL {
 
       Arena * nextArena;
       char * arenaSpace;
-      long long _dummy; // For alignment.
     };
     
     /// Space left in the current arena.
