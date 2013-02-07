@@ -156,9 +156,6 @@ namespace HL {
       ptr = mmap (startAddress, sz, HL_MMAP_PROTECTION_MASK,  mapFlag, fd, 0);
 
       if (ptr == MAP_FAILED) {
-	char buf[255];
-	sprintf (buf, "Out of memory!");
-	fprintf (stderr, "%s\n", buf);
 	return NULL;
       } else {
 	return ptr;
