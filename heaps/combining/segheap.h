@@ -71,19 +71,17 @@ namespace HL {
 
     enum { Alignment = gcd<LittleHeap::Alignment, BigHeap::Alignment>::VALUE };
 
-    inline SegHeap (void)
-      : memoryHeld (0),
-      maxObjectSize (getClassMaxSize(NumBins - 1))
+    inline SegHeap()
+      : _memoryHeld (0),
+	_maxObjectSize (getClassMaxSize(NumBins - 1))
     {
       for (int i = 0; i < NUM_ULONGS; i++) {
         binmap[i] = 0;
       }
     }
 
-    inline ~SegHeap (void) {}
-
-    inline size_t getMemoryHeld (void) const {
-      return memoryHeld;
+    inline size_t getMemoryHeld() const {
+      return _memoryHeld;
     }
 
     size_t getSize (void * ptr) {
@@ -92,7 +90,7 @@ namespace HL {
 
     inline void * malloc (const size_t sz) {
       void * ptr = NULL;
-      if (sz > maxObjectSize) {
+      if (sz > _maxObjectSize) {
         goto GET_MEMORY;
       }
 
@@ -132,6 +130,7 @@ namespace HL {
             idx++;
             bit <<= 1;
           } else {
+	    _memoryHeld -= sz;
             return ptr;
           }
         }
@@ -151,7 +150,8 @@ namespace HL {
     inline void free (void * ptr) {
       // printf ("Free: %x (%d bytes)\n", ptr, getSize(ptr));
       const size_t objectSize = getSize(ptr); // was bigheap.getSize(ptr)
-      if (objectSize > maxObjectSize) {
+      if (objectSize > _maxObjectSize) {
+	cout << objectSize << " > " << _maxObjectSize << endl;
         // printf ("free up! (size class = %d)\n", objectSizeClass);
         bigheap.free (ptr);
       } else {
@@ -170,30 +170,28 @@ namespace HL {
           assert (objectSize >= getClassMaxSize(objectSizeClass - 1));
         }
 
-
         myLittleHeap[objectSizeClass].free (ptr);
         mark_bin (objectSizeClass);
-        memoryHeld += objectSize;
+        _memoryHeld += objectSize;
       }
     }
 
 
-    void clear (void) {
-      int i;
-      for (i = 0; i < NumBins; i++) {
+    void clear() {
+      for (int i = 0; i < NumBins; i++) {
         myLittleHeap[i].clear();
       }
       for (int j = 0; j < NUM_ULONGS; j++) {
         binmap[j] = 0;
       }
       bigheap.clear();
-      memoryHeld = 0;
+      _memoryHeld = 0;
     }
 
   private:
 
-    enum { BITS_PER_ULONG = 32 };
-    enum { SHIFTS_PER_ULONG = 5 };
+    enum { BITS_PER_ULONG = sizeof(unsigned long) * 8 };
+    enum { SHIFTS_PER_ULONG = (BITS_PER_ULONG == 32) ? 5 : 6 };
     enum { MAX_BITS = (NumBins + BITS_PER_ULONG - 1) & ~(BITS_PER_ULONG - 1) };
 
 
@@ -231,9 +229,9 @@ namespace HL {
       binmap[i >> SHIFTS_PER_ULONG] &= ~(idx2bit(i));
     }
 
-    size_t memoryHeld;
+    size_t _memoryHeld;
 
-    const size_t maxObjectSize;
+    const size_t _maxObjectSize;
 
     // The little heaps.
     LittleHeap myLittleHeap[NumBins];
