@@ -68,7 +68,7 @@ namespace HL {
 
   public:
 
-    void freeAll (void) {
+    void clear () {
       int i;
       for (i = 0; i < NumBins; i++) {
         const size_t sz = class2size(i);
@@ -80,9 +80,8 @@ namespace HL {
       for (int j = 0; j < SuperHeap::NUM_ULONGS; j++) {
         SuperHeap::binmap[j] = 0;
       }
-      SuperHeap::memoryHeld = 0;
+      SuperHeap::_memoryHeld = 0;
     }
-
 
     /**
      * Malloc from exactly one available size.
@@ -96,7 +95,7 @@ namespace HL {
 
       assert (realSize >= sz);
 
-      if (realSize <= SuperHeap::maxObjectSize) {
+      if (realSize <= SuperHeap::_maxObjectSize) {
         assert (sizeClass >= 0);
         assert (sizeClass < NumBins);
         ptr = SuperHeap::myLittleHeap[sizeClass].malloc (realSize);
@@ -109,7 +108,7 @@ namespace HL {
 
     inline void free (void * ptr) {
       const size_t objectSize = SuperHeap::getSize(ptr);
-      if (objectSize > SuperHeap::maxObjectSize) {
+      if (objectSize > SuperHeap::_maxObjectSize) {
         SuperHeap::bigheap.free (ptr);
       } else {
         int objectSizeClass = size2class(objectSize);
@@ -125,7 +124,6 @@ namespace HL {
           objectSizeClass--;
 
         SuperHeap::myLittleHeap[objectSizeClass].free (ptr);
-        SuperHeap::memoryHeld += objectSize;
       }
     }
 
