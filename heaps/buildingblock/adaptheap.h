@@ -28,6 +28,7 @@
 #ifndef HL_ADAPTHEAP_H
 #define HL_ADAPTHEAP_H
 
+#include <assert.h>
 #include <stdlib.h>
 
 /**

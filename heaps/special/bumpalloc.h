@@ -57,12 +57,15 @@ namespace HL {
       : _bump (NULL),
 	_remaining (0)
     {
-      sassert<(gcd<ChunkSize, Alignment>::VALUE == Alignment)> 
+      sassert<((int) gcd<ChunkSize, Alignment>::VALUE == Alignment)> 
 	verifyAlignmentSatisfiable;
-      sassert<(gcd<SuperHeap::Alignment, Alignment>::VALUE == Alignment)>
+      sassert<((int) gcd<SuperHeap::Alignment, Alignment>::VALUE == Alignment)>
 	verifyAlignmentFromSuperHeap;
       sassert<((Alignment & (Alignment-1)) == 0)>
 	verifyPowerOfTwoAlignment;
+      verifyAlignmentSatisfiable = verifyAlignmentSatisfiable;
+      verifyAlignmentFromSuperHeap = verifyAlignmentFromSuperHeap;
+      verifyPowerOfTwoAlignment = verifyPowerOfTwoAlignment;
     }
 
     inline void * malloc (size_t sz) {

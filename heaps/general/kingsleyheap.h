@@ -86,7 +86,7 @@ namespace Kingsley {
   static inline int ceilLog2 (size_t sz)
   {
     sz = (sz << 1) - 1;
-    return (sizeof(unsigned long) * 8) - __builtin_clzl(sz) - 1;
+    return (int) ((sizeof(unsigned long) * 8) - __builtin_clzl(sz) - 1);
   }
 #else
   static inline int ceilLog2 (size_t v) {
