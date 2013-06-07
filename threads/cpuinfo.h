@@ -90,19 +90,17 @@ namespace HL {
 
 class CPUInfo {
 public:
-  CPUInfo (void)
-  {}
 
   // Good for practically all platforms.
   enum { PageSize = 4096 };
 
-  inline static int getNumProcessors (void) {
+  inline static int getNumProcessors() {
     static int _numProcessors = computeNumProcessors();
     return _numProcessors;
   }
 
-  static inline unsigned int getThreadId (void);
-  inline static int computeNumProcessors (void);
+  static inline unsigned int getThreadId();
+  inline static int computeNumProcessors();
 
 };
 
@@ -140,7 +138,7 @@ int CPUInfo::computeNumProcessors (void)
   extern __thread int localThreadId;
 #endif
 
-unsigned int CPUInfo::getThreadId (void) {
+unsigned int CPUInfo::getThreadId() {
 #if defined(__SVR4)
   return (unsigned int) pthread_self();
 #elif defined(_WIN32)
