@@ -323,10 +323,6 @@ extern "C" {
   {
     return &theDefaultZone;
   }
-  
-  void * MACWRAPPER_PREFIX(malloc_default_zone) (void) {
-    return (void *) &theDefaultZone;
-  }
 
   void MACWRAPPER_PREFIX(malloc_destroy_zone) (malloc_zone_t *) {
     // Do nothing.
@@ -336,6 +332,24 @@ extern "C" {
     return NULL;
   }
   
+  void * MACWRAPPER_PREFIX(malloc_default_zone) (void) {
+    return (void *) &theDefaultZone;
+  }
+
+  void MACWRAPPER_PREFIX(malloc_zone_free_definite_size) (malloc_zone_t *, void * ptr, size_t) {
+    MACWRAPPER_PREFIX(free)(ptr);
+  }
+
+  void MACWRAPPER_PREFIX(malloc_zone_register) (malloc_zone_t *) {
+  }
+
+  void MACWRAPPER_PREFIX(malloc_zone_unregister) (malloc_zone_t *) {
+  }
+
+  int MACWRAPPER_PREFIX(malloc_jumpstart)(int) {
+    return 1;
+  }
+
   void * MACWRAPPER_PREFIX(malloc_zone_malloc) (malloc_zone_t *, size_t size) {
     return MACWRAPPER_PREFIX(malloc) (size);
   }
@@ -358,20 +372,6 @@ extern "C" {
   
   void MACWRAPPER_PREFIX(malloc_zone_free) (malloc_zone_t *, void * ptr) {
     MACWRAPPER_PREFIX(free)(ptr);
-  }
-  
-  void MACWRAPPER_PREFIX(malloc_zone_free_definite_size) (malloc_zone_t *, void * ptr, size_t) {
-    MACWRAPPER_PREFIX(free)(ptr);
-  }
-
-  void MACWRAPPER_PREFIX(malloc_zone_register) (malloc_zone_t *) {
-  }
-
-  void MACWRAPPER_PREFIX(malloc_zone_unregister) (malloc_zone_t *) {
-  }
-
-  int MACWRAPPER_PREFIX(malloc_jumpstart)(int) {
-    return 1;
   }
 
   size_t MACWRAPPER_PREFIX(internal_malloc_zone_size) (malloc_zone_t *, const void * ptr) {
@@ -410,27 +410,31 @@ MAC_INTERPOSE(macwrapper_calloc, calloc);
 MAC_INTERPOSE(macwrapper_malloc_good_size, malloc_good_size);
 MAC_INTERPOSE(macwrapper_strdup, strdup);
 MAC_INTERPOSE(macwrapper_posix_memalign, posix_memalign);
-MAC_INTERPOSE(macwrapper_malloc_create_zone, malloc_create_zone);
 MAC_INTERPOSE(macwrapper_malloc_default_zone, malloc_default_zone);
 
-MAC_INTERPOSE(macwrapper_malloc_destroy_zone, malloc_destroy_zone);
+#if 1
 MAC_INTERPOSE(macwrapper_malloc_zone_batch_malloc, malloc_zone_batch_malloc);
 MAC_INTERPOSE(macwrapper_malloc_zone_batch_free, malloc_zone_batch_free);
-MAC_INTERPOSE(macwrapper_malloc_zone_check, malloc_zone_check);
-MAC_INTERPOSE(macwrapper_malloc_zone_print, malloc_zone_print);
-MAC_INTERPOSE(macwrapper_malloc_zone_log, malloc_zone_log);
-MAC_INTERPOSE(macwrapper_malloc_set_zone_name, malloc_set_zone_name);
-MAC_INTERPOSE(macwrapper_malloc_zone_from_ptr, malloc_zone_from_ptr);
 MAC_INTERPOSE(macwrapper_malloc_zone_malloc, malloc_zone_malloc);
 MAC_INTERPOSE(macwrapper_malloc_zone_calloc, malloc_zone_calloc);
 MAC_INTERPOSE(macwrapper_malloc_zone_valloc, malloc_zone_valloc);
 MAC_INTERPOSE(macwrapper_malloc_zone_realloc, malloc_zone_realloc);
 MAC_INTERPOSE(macwrapper_malloc_zone_memalign, malloc_zone_memalign);
 MAC_INTERPOSE(macwrapper_malloc_zone_free, malloc_zone_free);
-MAC_INTERPOSE(macwrapper_malloc_zone_register, malloc_zone_register);
-MAC_INTERPOSE(macwrapper_malloc_zone_unregister, malloc_zone_unregister);
-MAC_INTERPOSE(macwrapper_malloc_jumpstart, malloc_jumpstart);
-MAC_INTERPOSE(macwrapper_malloc_get_zone_name, malloc_get_zone_name);
+#endif
+
+//MAC_INTERPOSE(macwrapper_malloc_get_zone_name, malloc_get_zone_name);
+//MAC_INTERPOSE(macwrapper_malloc_create_zone, malloc_create_zone);
+//MAC_INTERPOSE(macwrapper_malloc_destroy_zone, malloc_destroy_zone);
+//MAC_INTERPOSE(macwrapper_malloc_zone_check, malloc_zone_check);
+//MAC_INTERPOSE(macwrapper_malloc_zone_print, malloc_zone_print);
+//MAC_INTERPOSE(macwrapper_malloc_zone_log, malloc_zone_log);
+//MAC_INTERPOSE(macwrapper_malloc_set_zone_name, malloc_set_zone_name);
+//MAC_INTERPOSE(macwrapper_malloc_zone_from_ptr, malloc_zone_from_ptr);
+//MAC_INTERPOSE(macwrapper_malloc_zone_register, malloc_zone_register);
+//MAC_INTERPOSE(macwrapper_malloc_zone_unregister, malloc_zone_unregister);
+//MAC_INTERPOSE(macwrapper_malloc_jumpstart, malloc_jumpstart);
+
 MAC_INTERPOSE(macwrapper__malloc_fork_prepare, _malloc_fork_prepare);
 MAC_INTERPOSE(macwrapper__malloc_fork_parent, _malloc_fork_parent);
 MAC_INTERPOSE(macwrapper__malloc_fork_child, _malloc_fork_child);
@@ -460,23 +464,27 @@ __interpose_malloc_zone_print_ptr_info
 // A class to initialize exactly one malloc zone with the calls used
 // by our replacement.
 
-static const char * theOneTrueZoneName = "OneTrueZone";
+static const char * theOneTrueZoneName = "DefaultMallocZone";
 
 class initializeDefaultZone {
 public:
   initializeDefaultZone() {
+    theDefaultZone.size    = MACWRAPPER_PREFIX(internal_malloc_zone_size);
     theDefaultZone.malloc  = MACWRAPPER_PREFIX(malloc_zone_malloc);
     theDefaultZone.calloc  = MACWRAPPER_PREFIX(malloc_zone_calloc);
     theDefaultZone.valloc  = MACWRAPPER_PREFIX(malloc_zone_valloc);
     theDefaultZone.free    = MACWRAPPER_PREFIX(malloc_zone_free);
     theDefaultZone.realloc = MACWRAPPER_PREFIX(malloc_zone_realloc);
-    theDefaultZone.size    = MACWRAPPER_PREFIX(internal_malloc_zone_size);
+    theDefaultZone.destroy = MACWRAPPER_PREFIX(malloc_destroy_zone);
     theDefaultZone.zone_name = theOneTrueZoneName;
-    theDefaultZone.batch_malloc = NULL;
-    theDefaultZone.batch_free   = NULL;
+    theDefaultZone.batch_malloc = MACWRAPPER_PREFIX(malloc_zone_batch_malloc);
+    theDefaultZone.batch_free   = MACWRAPPER_PREFIX(malloc_zone_batch_free);
     theDefaultZone.introspect   = NULL;
-    theDefaultZone.memalign     = NULL;
-    theDefaultZone.free_definite_size = NULL;
+    theDefaultZone.version      = 1;
+    theDefaultZone.memalign     = MACWRAPPER_PREFIX(malloc_zone_memalign);
+    theDefaultZone.free_definite_size = MACWRAPPER_PREFIX(malloc_zone_free_definite_size);
+    theDefaultZone.pressure_relief = NULL;
+    malloc_zone_register (&theDefaultZone);
   }
 };
 
