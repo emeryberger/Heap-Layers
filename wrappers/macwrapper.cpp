@@ -413,6 +413,7 @@ MAC_INTERPOSE(macwrapper_posix_memalign, posix_memalign);
 MAC_INTERPOSE(macwrapper_malloc_default_zone, malloc_default_zone);
 
 #if 1
+// Zone allocation calls.
 MAC_INTERPOSE(macwrapper_malloc_zone_batch_malloc, malloc_zone_batch_malloc);
 MAC_INTERPOSE(macwrapper_malloc_zone_batch_free, malloc_zone_batch_free);
 MAC_INTERPOSE(macwrapper_malloc_zone_malloc, malloc_zone_malloc);
@@ -423,17 +424,20 @@ MAC_INTERPOSE(macwrapper_malloc_zone_memalign, malloc_zone_memalign);
 MAC_INTERPOSE(macwrapper_malloc_zone_free, malloc_zone_free);
 #endif
 
-//MAC_INTERPOSE(macwrapper_malloc_get_zone_name, malloc_get_zone_name);
-//MAC_INTERPOSE(macwrapper_malloc_create_zone, malloc_create_zone);
-//MAC_INTERPOSE(macwrapper_malloc_destroy_zone, malloc_destroy_zone);
-//MAC_INTERPOSE(macwrapper_malloc_zone_check, malloc_zone_check);
-//MAC_INTERPOSE(macwrapper_malloc_zone_print, malloc_zone_print);
-//MAC_INTERPOSE(macwrapper_malloc_zone_log, malloc_zone_log);
-//MAC_INTERPOSE(macwrapper_malloc_set_zone_name, malloc_set_zone_name);
-//MAC_INTERPOSE(macwrapper_malloc_zone_from_ptr, malloc_zone_from_ptr);
-//MAC_INTERPOSE(macwrapper_malloc_zone_register, malloc_zone_register);
-//MAC_INTERPOSE(macwrapper_malloc_zone_unregister, malloc_zone_unregister);
-//MAC_INTERPOSE(macwrapper_malloc_jumpstart, malloc_jumpstart);
+#if 1
+// Zone access, etc.
+MAC_INTERPOSE(macwrapper_malloc_get_zone_name, malloc_get_zone_name);
+MAC_INTERPOSE(macwrapper_malloc_create_zone, malloc_create_zone);
+MAC_INTERPOSE(macwrapper_malloc_destroy_zone, malloc_destroy_zone);
+MAC_INTERPOSE(macwrapper_malloc_zone_check, malloc_zone_check);
+MAC_INTERPOSE(macwrapper_malloc_zone_print, malloc_zone_print);
+MAC_INTERPOSE(macwrapper_malloc_zone_log, malloc_zone_log);
+MAC_INTERPOSE(macwrapper_malloc_set_zone_name, malloc_set_zone_name);
+MAC_INTERPOSE(macwrapper_malloc_zone_from_ptr, malloc_zone_from_ptr);
+MAC_INTERPOSE(macwrapper_malloc_zone_register, malloc_zone_register);
+MAC_INTERPOSE(macwrapper_malloc_zone_unregister, malloc_zone_unregister);
+MAC_INTERPOSE(macwrapper_malloc_jumpstart, malloc_jumpstart);
+#endif
 
 MAC_INTERPOSE(macwrapper__malloc_fork_prepare, _malloc_fork_prepare);
 MAC_INTERPOSE(macwrapper__malloc_fork_parent, _malloc_fork_parent);
