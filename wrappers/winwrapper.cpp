@@ -285,7 +285,7 @@ static bool PatchMeIn (void)
   bool patchedIn = false;
 
   // Library names. We check all of these at runtime and link ourselves in.
-  static const char * RlsCRTLibraryName[] = {"MSVCR71.DLL", "MSVCR80.DLL", "MSVCR90.DLL", "MSVCR100.DLL", "MSVCP100.DLL", "MSVCR110.DLL", "MSVCP110.DLL", "MSVCRT.DLL" };
+  static const char * RlsCRTLibraryName[] = {"MSVCR71.DLL", "MSVCR80.DLL", "MSVCR90.DLL", "MSVCR100.DLL", "MSVCP100.DLL", "MSVCR110.DLL", "MSVCP110.DLL", "MSVCR120.DLL", "MSVCP120.DLL", "MSVCRT.DLL" };
   
   static const int RlsCRTLibraryNameLength = sizeof(RlsCRTLibraryName) / sizeof(const char *);
   
