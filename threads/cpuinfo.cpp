@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-const int NUMTHREADS = 64;
+const int NUMTHREADS = 256;
 
 /// A counter array. We use this to check that CPUInfo is evenly
 /// distributing thread ids.
