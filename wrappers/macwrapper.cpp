@@ -490,8 +490,6 @@ public:
     theDefaultZone.memalign     = MACWRAPPER_PREFIX(malloc_zone_memalign);
     theDefaultZone.free_definite_size = MACWRAPPER_PREFIX(malloc_zone_free_definite_size);
     theDefaultZone.pressure_relief = NULL;
-    char str[] = "Using the Hoard scalable memory manager (http://www.hoard.org).\n";
-    write (2, str, strlen(str));
     malloc_zone_register (&theDefaultZone);
   }
 };
