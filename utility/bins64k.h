@@ -56,7 +56,7 @@ namespace HL {
 
     static inline unsigned int bitScanReverse (size_t i) {
 #ifdef __GNUC__
-      return (sizeof(unsigned long) * 8) - __builtin_clzl(i) - 1;
+      return (unsigned int) ((sizeof(unsigned long) * 8) - __builtin_clzl(i) - 1);
 #elif defined _WIN32
       unsigned long index;
       _BitScanReverse (&index, i);

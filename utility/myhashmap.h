@@ -66,7 +66,7 @@ namespace HL {
     }
 
     Value get (Key k) {
-      unsigned int binIndex = (unsigned int) Hash<Key>::hash(k) % _numBins;
+      unsigned int binIndex = (unsigned int) (Hash<Key>::hash(k) % _numBins);
       ListNode * l = _bins[binIndex];
       while (l != NULL) {
 	if (l->key == k) {
@@ -79,7 +79,7 @@ namespace HL {
     }
 
     void erase (Key k) {
-      unsigned int binIndex = (unsigned int) Hash<Key>::hash(k) % _numBins;
+      unsigned int binIndex = (unsigned int) (Hash<Key>::hash(k) % _numBins);
       ListNode * curr = _bins[binIndex];
       ListNode * prev = NULL;
       while (curr != NULL) {
@@ -105,7 +105,7 @@ namespace HL {
   private:
 
     void insert (Key k, Value v) {
-      unsigned int binIndex = (unsigned int) Hash<Key>::hash(k) % _numBins;
+      unsigned int binIndex = (unsigned int) (Hash<Key>::hash(k) % _numBins);
       void * ptr = _allocator.malloc (sizeof(ListNode));
       if (ptr) {
 	ListNode * l = new (ptr) ListNode;

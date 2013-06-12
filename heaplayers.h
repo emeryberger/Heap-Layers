@@ -38,6 +38,8 @@
 #ifndef HL_HEAPLAYERS_H
 #define HL_HEAPLAYERS_H
 
+#include <assert.h>
+
 namespace HL {}
 
 // Define HL_EXECUTABLE_HEAP as 1 if you want that (i.e., you're doing
