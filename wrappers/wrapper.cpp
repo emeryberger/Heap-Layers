@@ -125,7 +125,7 @@ extern "C" {
 
 extern "C" void * MYCDECL CUSTOM_MALLOC(size_t sz)
 {
-  if (sz >> (sizeof(size_t) * CHAR_BIT - 1)) {
+  if (sz >> (sizeof(size_t) * 8 - 1)) {
     return NULL;
   }
   void * ptr = xxmalloc(sz);
