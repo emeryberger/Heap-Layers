@@ -39,6 +39,11 @@
 #include <map>
 #endif
 
+#if defined(__SVR4)
+// Not sure why this is needed for Solaris, but there it is.
+extern "C" int madvise (caddr_t, size_t, int);
+#endif
+
 #if !defined(HL_MMAP_PROTECTION_MASK)
 #if HL_EXECUTABLE_HEAP
 #define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC)
