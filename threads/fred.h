@@ -23,9 +23,9 @@
 
 #endif
 
-namespace HL {
+extern "C" typedef void * (*ThreadFunctionType) (void *);
 
-  typedef void * (*ThreadFunctionType) (void *);
+namespace HL {
 
   class Fred {
   public:
