@@ -49,6 +49,7 @@ extern "C" int _thr_self(void);
 #endif
 
 #if defined(__linux)
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -151,7 +152,9 @@ unsigned int CPUInfo::getThreadId() {
   return tid;
 #elif defined(__BEOS__)
   return find_thread(0);
-#elif defined(__linux) || defined(PTHREAD_KEYS_MAX)
+#elif defined(__linux)
+  return (unsigned int) syscall (SYS_gettid);
+#elif defined(PTHREAD_KEYS_MAX)
   // As with Apple, above.
   return (unsigned int) pthread_self() >> 12;
 #elif defined(POSIX)
