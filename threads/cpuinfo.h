@@ -153,7 +153,7 @@ unsigned int CPUInfo::getThreadId() {
 #elif defined(__BEOS__)
   return find_thread(0);
 #elif defined(__linux)
-  return (unsigned int) syscall (SYS_gettid) >> 12;
+  return (unsigned int) syscall (SYS_gettid);
 #elif defined(PTHREAD_KEYS_MAX)
   // As with Apple, above.
   return (unsigned int) pthread_self() >> 12;
