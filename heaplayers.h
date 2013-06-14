@@ -102,10 +102,10 @@ namespace HL {}
 #pragma warning( disable:4786 4512 )
 #endif
 
+#include "utility/all.h"
 #include "heaps/all.h"
 #include "locks/all.h"
 #include "threads/all.h"
-#include "utility/all.h"
 #include "wrappers/all.h"
 
 #ifdef _MSC_VER
