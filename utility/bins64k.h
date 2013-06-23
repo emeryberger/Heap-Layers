@@ -31,6 +31,7 @@
 #include <assert.h>
 
 #include "bins.h"
+#include "./ilog2.h"
 #include "sassert.h"
 
 namespace HL {
@@ -54,6 +55,7 @@ namespace HL {
     enum { BIG_OBJECT = 8192 };
     enum { NUM_BINS = 11 };
 
+#if 0
     static inline unsigned int bitScanReverse (size_t i) {
 #ifdef __GNUC__
       return (unsigned int) ((sizeof(unsigned long) * 8) - __builtin_clzl(i) - 1);
@@ -61,30 +63,6 @@ namespace HL {
       unsigned long index;
       _BitScanReverse (&index, i);
       return index;
-#else
-
-#if 0
-      // From http://graphics.stanford.edu/~seander/bithacks.html#ZerosOnRightMultLookup
-      // Works for up to 32 bit sizes.
-      int r;
-      size_t v = i;
-
-      static const int MultiplyDeBruijnBitPosition[32] = 
-	{
-	  0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
-	  8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
-	};
-
-      v |= v >> 1; // first round down to one less than a power of 2 
-      v |= v >> 2;
-      v |= v >> 4;
-      v |= v >> 8;
-      v |= v >> 16;
-
-      r = MultiplyDeBruijnBitPosition[(uint32_t)(v * 0x07C4ACDDU) >> 27];
-
-      return r;
-
 #else // Naive approach.
       unsigned int r = 0;
       while (i >>= 1) {
@@ -92,11 +70,12 @@ namespace HL {
       }
       return r;
 #endif
-
-#endif
     }
+#endif
 
     static unsigned int log2ceil (size_t sz) {
+      return HL::ilog2 (sz);
+#if 0
       unsigned int index = bitScanReverse (sz);
       // Add one if sz is a power of two.
       if (!(sz & (sz-1))) {
@@ -104,6 +83,7 @@ namespace HL {
       } else {
 	return index+1;
       }
+#endif
     }
 
     static inline unsigned int getSizeClass (size_t sz) {

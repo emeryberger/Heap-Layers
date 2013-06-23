@@ -9,6 +9,7 @@
 #include "dynarray.h"
 #include "freesllist.h"
 #include "hash.h"
+#include "ilog2.h"
 #include "gcd.h"
 #include "guard.h"
 #include "istrue.h"
