@@ -4,7 +4,7 @@
 #define HL_ILOG2_H
 
 #if defined(_WIN32)
-#include <intrn.h>
+#include <windows.h>
 #endif
 
 namespace HL {
@@ -13,10 +13,13 @@ namespace HL {
 #if defined(_WIN32)
   static inline int ilog2 (size_t sz)
   {
-    int retval;
-    sz = (sz << 1) - 1;
-    _BitScanForward (&retval, sz);
-    return retval;
+    DWORD index;
+    _BitScanReverse (&index, sz);
+    if (!(sz & (sz-1))) {
+      return index;
+    } else {
+      return index+1;
+    }
   }
 #elif defined(__GNUC__) && defined(__i386__)
   static inline int ilog2 (size_t sz)
