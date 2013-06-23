@@ -60,21 +60,21 @@ namespace HL {
     enum { Alignment = PerThreadHeap::Alignment };
 
     inline void * malloc (size_t sz) {
-      int tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
+      unsigned int tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
       assert (tid >= 0);
       assert (tid < NumHeaps);
       return getHeap(tid)->malloc (sz);
     }
 
     inline void free (void * ptr) {
-      int tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
+      unsigned int tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
       assert (tid >= 0);
       assert (tid < NumHeaps);
       getHeap(tid)->free (ptr);
     }
 
     inline size_t getSize (void * ptr) {
-      int tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
+      unsigned int tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
       assert (tid >= 0);
       assert (tid < NumHeaps);
       return getHeap(tid)->getSize (ptr);

@@ -16,7 +16,8 @@ namespace HL {
   template <unsigned long Modulus>
   class Modulo {
   public:
-    static unsigned long mod (unsigned long m) {
+    template <class TYPE>
+    static TYPE mod (TYPE m) {
       if (IsPowerOfTwo<Modulus>::VALUE) {
 	return m & (Modulus - 1);
       } else {
