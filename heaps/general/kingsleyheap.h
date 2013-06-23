@@ -39,8 +39,6 @@
  * @brief Functions to implement KingsleyHeap.
  */
 
-
-
 namespace Kingsley {
 
   inline size_t class2Size (const int i) {
@@ -48,57 +46,10 @@ namespace Kingsley {
     return sz;
   }
 
-  static inline int ceilLog2 (size_t);
-
   inline int size2Class (const size_t sz) {
-    int cl = ceilLog2((sz < 8) ? 8 : sz) - 3;
+    int cl = HL::ilog2 ((sz < 8) ? 8 : sz) - 3;
     return cl;
   }
-
-  /// Quickly calculate the CEILING of the log (base 2) of the argument.
-#if defined(_WIN32)
-  static inline int ceilLog2 (size_t sz)
-  {
-    int retval;
-    sz = (sz << 1) - 1;
-    __asm {
-      bsr eax, sz
-        mov retval, eax
-        }
-    return retval;
-  }
-#elif defined(__GNUC__) && defined(__i386__)
-  static inline int ceilLog2 (size_t sz)
-  {
-    sz = (sz << 1) - 1;
-    asm ("bsrl %0, %0" : "=r" (sz) : "0" (sz));
-    return (int) sz;
-  }
-#elif 0 // defined(__GNUC__) && defined(__x86_64__)
-  static inline int ceilLog2 (size_t sz)
-  {
-    sz = (sz << 1) - 1;
-    asm ("bsrq %0, %0" : "=r" (sz) : "0" (sz));
-    return (int) sz;
-  }
-#elif defined(__GNUC__)
-  // Just use the intrinsic.
-  static inline int ceilLog2 (size_t sz)
-  {
-    sz = (sz << 1) - 1;
-    return (int) ((sizeof(unsigned long) * 8) - __builtin_clzl(sz) - 1);
-  }
-#else
-  static inline int ceilLog2 (size_t v) {
-    int log = 0;
-    unsigned int value = 1;
-    while (value < v) {
-      value <<= 1;
-      log++;
-    }
-    return log;
-  }
-#endif
 
   enum { NUMBINS = 29 };
 
