@@ -27,35 +27,37 @@ namespace HL {
     inline void * malloc (size_t sz) {
       // Add a guard area at the end.
       void * ptr;
-      ptr = Super::malloc (sz + sizeof(unsigned long));
+      ptr = Super::malloc (sz + sizeof(size_t));
       if (ptr == NULL) {
 	return NULL;
       }
       size_t realSize = Super::getSize (ptr);
       assert (realSize >= sz);
-      for (unsigned long i = 0; i < realSize; i++) {
+      for (size_t i = 0; i < realSize; i++) {
         ((char *) ptr)[i] = 'A';
       }
-      unsigned long * canaryLocation =
-	(unsigned long *) ((char *) ptr + realSize - sizeof(unsigned long));
-      *canaryLocation = (unsigned long) CANARY;
+      size_t * canaryLocation =
+	(size_t *) ((char *) ptr + realSize - sizeof(size_t));
+      *canaryLocation = (size_t) CANARY;
       return ptr;
     }
 
     // Fill with F's.
     inline void free (void * ptr) {
-      size_t realSize = Super::getSize(ptr);
-      // Check for the canary.
-      unsigned long * canaryLocation =
-	(unsigned long *) ((char *) ptr + realSize - sizeof(unsigned long));
-      unsigned long storedCanary = *canaryLocation;
-      if (storedCanary != CANARY) {
-        abort();
+      if (ptr) {
+	size_t realSize = Super::getSize(ptr);
+	// Check for the canary.
+	size_t * canaryLocation =
+	  (size_t *) ((char *) ptr + realSize - sizeof(size_t));
+	size_t storedCanary = *canaryLocation;
+	if (storedCanary != CANARY) {
+	  abort();
+	}
+	for (unsigned int i = 0; i < realSize; i++) {
+	  ((char *) ptr)[i] = freeChar;
+	}
+	Super::free (ptr);
       }
-      for (unsigned int i = 0; i < realSize; i++) {
-        ((char *) ptr)[i] = freeChar;
-      }
-      Super::free (ptr);
     }
   };
 

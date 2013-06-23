@@ -17,7 +17,7 @@ namespace HL {
   /// @name  align
   /// @brief Rounds up a value to the next multiple of v.
   /// @note  Argument must be a power of two.
-  template <unsigned long Alignment>
+  template <size_t Alignment>
   inline size_t align (size_t v) {
     sassert<((Alignment & (Alignment-1)) == 0)> isPowerOfTwo;
     isPowerOfTwo = isPowerOfTwo;

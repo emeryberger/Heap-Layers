@@ -61,8 +61,8 @@
 
 #if defined(__SUNPRO_CC)
 // x86-interchange.il, x86_64-interchange.il contributed by Markus Bernhardt.
-extern "C" unsigned long MyInterlockedExchange (unsigned long * oldval,
-						unsigned long newval);
+extern "C" size_t MyInterlockedExchange (size_t * oldval,
+						size_t newval);
 #endif
 
 #if defined(_WIN32) && !defined(_WIN64)
@@ -107,7 +107,7 @@ namespace HL {
 
     inline void lock (void) {
       if (anyThreadCreated) {
-	if (MyInterlockedExchange (const_cast<unsigned long *>(&mutex), LOCKED)
+	if (MyInterlockedExchange (const_cast<size_t *>(&mutex), LOCKED)
 	    != UNLOCKED) {
 	  contendedLock();
 	}
@@ -131,7 +131,7 @@ namespace HL {
 
 
 #if !defined(__SUNPRO_CC)
-    inline static unsigned long MyInterlockedExchange (unsigned long *,unsigned long); 
+    inline static size_t MyInterlockedExchange (size_t *, size_t); 
 #endif
 
   private:
@@ -144,7 +144,7 @@ namespace HL {
     NO_INLINE
     void contendedLock (void) {
       while (true) {
-	if (MyInterlockedExchange (const_cast<unsigned long *>(&mutex), LOCKED)
+	if (MyInterlockedExchange (const_cast<size_t *>(&mutex), LOCKED)
 	    == UNLOCKED) {
 	  return;
 	}
@@ -173,7 +173,7 @@ namespace HL {
 
     enum { MAX_SPIN_LIMIT = 1024 };
 
-    volatile unsigned long mutex;
+    volatile size_t mutex;
 #endif
 
   };
@@ -186,9 +186,9 @@ namespace HL {
 //   return retval;
 
 #if !defined(__SUNPRO_CC) // && !defined(__APPLE__)
-inline unsigned long 
-HL::SpinLockType::MyInterlockedExchange (unsigned long * oldval,
-					 unsigned long newval)
+inline size_t 
+HL::SpinLockType::MyInterlockedExchange (size_t * oldval,
+					 size_t newval)
 {
 #if defined(_WIN32) && defined(_MSC_VER)
   return InterlockedExchange ((volatile LONG *) oldval, newval);
@@ -245,7 +245,7 @@ HL::SpinLockType::MyInterlockedExchange (unsigned long * oldval,
 		: "memory");
   return (result);
 #elif defined(__APPLE__)
-  unsigned long oldValue = *oldval;
+  size_t oldValue = *oldval;
   bool swapped = OSAtomicCompareAndSwapLongBarrier (oldValue, newval, (volatile long *) oldval);
   if (swapped) {
     return newval;

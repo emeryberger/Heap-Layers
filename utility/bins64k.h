@@ -55,49 +55,13 @@ namespace HL {
     enum { BIG_OBJECT = 8192 };
     enum { NUM_BINS = 11 };
 
-#if 0
-    static inline unsigned int bitScanReverse (size_t i) {
-#ifdef __GNUC__
-      return (unsigned int) ((sizeof(unsigned long) * 8) - __builtin_clzl(i) - 1);
-#elif defined _WIN32
-      unsigned long index;
-      _BitScanReverse (&index, i);
-      return index;
-#else // Naive approach.
-      unsigned int r = 0;
-      while (i >>= 1) {
-	r++;
-      }
-      return r;
-#endif
-    }
-#endif
-
     static unsigned int log2ceil (size_t sz) {
       return HL::ilog2 (sz);
-#if 0
-      unsigned int index = bitScanReverse (sz);
-      // Add one if sz is a power of two.
-      if (!(sz & (sz-1))) {
-	return index;
-      } else {
-	return index+1;
-      }
-#endif
     }
 
     static inline unsigned int getSizeClass (size_t sz) {
       sz = (sz < sizeof(double)) ? sizeof(double) : sz;
       return log2ceil (sz) - 3;
-#if 0
-      size_t v = sizeof(double);
-      int sc = 0;
-      while (v < sz) {
-	sc++;
-	v <<= 1;
-      }
-      return sc;
-#endif
     }
 
     static inline size_t getClassSize (const unsigned int i) {
