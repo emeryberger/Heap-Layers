@@ -6,14 +6,15 @@
 /// A templated class that provides faster modulo functions when the
 /// argument is a power of two.
 
+#include <stdlib.h>
 #include "checkpoweroftwo.h"
 
 namespace HL {
 
-  template <unsigned long Modulus>
+  template <size_t Modulus>
   class Modulo;
 
-  template <unsigned long Modulus>
+  template <size_t Modulus>
   class Modulo {
   public:
     template <class TYPE>
