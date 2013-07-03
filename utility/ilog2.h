@@ -28,13 +28,6 @@ namespace HL {
     asm ("bsrl %0, %0" : "=r" (sz) : "0" (sz));
     return (int) sz;
   }
-#elif 0 // defined(__GNUC__) && defined(__x86_64__)
-  static inline int ilog2 (size_t sz)
-  {
-    sz = (sz << 1) - 1;
-    asm ("bsrq %0, %0" : "=r" (sz) : "0" (sz));
-    return (int) sz;
-  }
 #elif defined(__GNUC__)
   // Just use the intrinsic.
   static inline int ilog2 (size_t sz)
