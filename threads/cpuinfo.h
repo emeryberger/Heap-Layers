@@ -156,7 +156,7 @@ unsigned int CPUInfo::getThreadId() {
   return (unsigned int) syscall (SYS_gettid);
 #elif defined(PTHREAD_KEYS_MAX)
   // As with Apple, above.
-  return (unsigned int) pthread_self() >> 12;
+  return (unsigned int) ((size_t) pthread_self()) >> 12;
 #elif defined(POSIX)
   return (unsigned int) pthread_self();
 #elif USE_SPROC
