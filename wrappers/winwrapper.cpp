@@ -35,6 +35,8 @@
 
 */
 
+#include "x86jump.h"
+
 extern "C" {
 
   void * xxmalloc (size_t);
@@ -74,17 +76,17 @@ extern "C" {
 
 #define WINWRAPPER_PREFIX(x) winwrapper_##x
 
-static const int BytesToStore = 5;
+//static const int BytesToStore = 5;
 
-#define IAX86_NEARJMP_OPCODE	  0xe9
-#define MakeIAX86Offset(to,from)  ((unsigned)((char*)(to)-(char*)(from)) - BytesToStore)
+//#define IAX86_NEARJMP_OPCODE	  0xe9
+//#define MakeIAX86Offset(to,from)  ((unsigned)((char*)(to)-(char*)(from)) - BytesToStore)
 
 typedef struct
 {
   const char *import;		// import name of patch routine
   FARPROC replacement;		// pointer to replacement function
   FARPROC original;		// pointer to original function
-  unsigned char codebytes[BytesToStore];	// original code storage
+  unsigned char codebytes[sizeof(X86Jump)];	// original code storage
 } PATCH;
 
 
@@ -273,10 +275,11 @@ static void PatchIt (PATCH *patch)
   // 	save original code bytes for exit restoration
   //		write jmp <patch_routine> (at least 5 bytes long) to original.
 
-  memcpy (patch->codebytes, patch->original, sizeof(patch->codebytes));
+  memcpy (patch->codebytes, patch->original, sizeof(X86Jump));
   unsigned char *patchloc = (unsigned char*)patch->original;
-  *patchloc++ = IAX86_NEARJMP_OPCODE;
-  *(unsigned*)patchloc = MakeIAX86Offset(patch->replacement, patch->original);
+  new (patchloc) X86Jump (patch->replacement);
+  //  *patchloc++ = IAX86_NEARJMP_OPCODE;
+  //  *(unsigned*)patchloc = MakeIAX86Offset(patch->replacement, patch->original);
 	
   // Reset CRT library code to original page protection.
 
