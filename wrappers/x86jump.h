@@ -24,25 +24,17 @@ struct X86Jump32 {
 
 PACK(
 struct X86Jump64 {
-    volatile uint32_t sub_8_rsp;
-    volatile uint32_t mov_imm_0rsp;
-    volatile uint32_t target_low;
-    volatile uint32_t mov_imm_4rsp;
-    volatile uint32_t target_high;
-    volatile uint8_t retq;
+
+  volatile uint16_t farjmp;
+  volatile uint32_t offset;
+  volatile uint64_t addr;
 
     X86Jump64(void *target) {
-        /* x86_64 doesn't have an immediate 64 bit jump, so build one:
-         *  1. Move down 8 bytes on the stack
-         *  2. Put the target address on the stack in 32 bit chunks
-         *  3. Return
-         */
-        sub_8_rsp = 0x08EC8348;     // move the stack pointer down 8 bytes
-        mov_imm_0rsp = 0x002444C7;  // move an immediate to 0(%rsp)
-        target_low = (uint32_t)(int64_t)target;
-        mov_imm_4rsp = 0x042444C7;  // move an immediate to 4(%rsp)
-        target_high = (uint32_t)((int64_t)target >> 32);
-        retq = 0xC3;
+      //FF 25 00 00 00 00
+      // target
+      farjmp = 0x25ff;
+      offset = 0x00000000;
+      addr = (uint64_t) target;
     }
 });
 
