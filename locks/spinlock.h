@@ -79,8 +79,15 @@ extern "C" size_t MyInterlockedExchange (size_t * oldval,
 
 #define _MM_PAUSE  {__asm{_emit 0xf3};__asm {_emit 0x90}}
 #include <windows.h>
+
+#elif defined(__GNUC__)
+
+#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : :); }
+
 #else
+
 #define _MM_PAUSE
+
 #endif // defined(_WIN32) && !defined(_WIN64)
 
 extern volatile bool anyThreadCreated;
@@ -143,13 +150,18 @@ namespace HL {
 
     NO_INLINE
     void contendedLock (void) {
+      const int MAX_SPIN = 1000;
       while (true) {
 	if (MyInterlockedExchange (const_cast<size_t *>(&mutex), LOCKED)
 	    == UNLOCKED) {
 	  return;
 	}
-	while (mutex == LOCKED) {
+	int count = 0;
+	while ((mutex == LOCKED) && (count < MAX_SPIN)) {
 	  _MM_PAUSE;
+	  count++;
+	}
+	if (count == MAX_SPIN) {
 	  yieldProcessor();
 	}
       }
