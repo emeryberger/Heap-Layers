@@ -55,7 +55,7 @@ namespace HL {
     enum { BIG_OBJECT = 8192 };
     enum { NUM_BINS = 11 };
 
-    static unsigned int log2ceil (size_t sz) {
+    static inline unsigned int log2ceil (size_t sz) {
       return HL::ilog2 (sz);
     }
 
