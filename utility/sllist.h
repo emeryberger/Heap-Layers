@@ -51,6 +51,11 @@ namespace HL {
       head.next = NULL;
     }
 
+  /// Is the list empty?
+  inline bool isEmpty (void) const {
+    return (head.next == NULL);
+  }
+
     /// Get the head of the list.
     inline Entry * get (void) {
       const Entry * e = head.next;
