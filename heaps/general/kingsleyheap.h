@@ -27,6 +27,7 @@
 #ifndef HL_KINGSLEYHEAP_H
 #define HL_KINGSLEYHEAP_H
 
+#include "utility/ilog2.h"
 #include "heaps/combining/strictsegheap.h"
 
 /**
