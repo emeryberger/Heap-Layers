@@ -245,7 +245,8 @@ HL::SpinLockType::MyInterlockedExchange (size_t * oldval,
                 : "cr0", "memory"); 
   return ret;
 
-#elif defined(__arm__)
+#elif defined(__arm__) && !defined(__thumb__)
+
   // Contributed by Bo Granlund.
   long result;
   asm volatile (
@@ -256,6 +257,25 @@ HL::SpinLockType::MyInterlockedExchange (size_t * oldval,
 		: "r"(oldval), "r"(newval)
 		: "memory");
   return (result);
+#elif defined(__arm__)
+  // From code.google.com armv6-atomic
+  register int result;
+  asm volatile(
+	       "ldrex r0, [%1]         \n\t"  /*exclusive load of ptr */
+     "cmp      r0,  %2          \n\t" /*compare the oldval ==  *ptr */
+ #if defined(__thumb__)
+     "ite eq\n\t"
+ #endif
+     "strexeq  %0,  %3, [%1]\n\t" /*store if eq, strex+eq*/
+ #if defined(__thumb__)
+     "clrexne"
+ #endif
+     : "=&r" (result)
+     : "r"(oldval), "r"(&oldval),"r"(newval)
+     : "r0"
+     );
+   return result ==0;
+   //}
 #elif defined(__APPLE__)
   size_t oldValue = *oldval;
   bool swapped = OSAtomicCompareAndSwapLongBarrier (oldValue, newval, (volatile long *) oldval);
@@ -264,6 +284,8 @@ HL::SpinLockType::MyInterlockedExchange (size_t * oldval,
   } else {
     return oldValue;
   }
+#elif defined __GNUC__
+  return __sync_val_compare_and_swap(oldval, &oldval, newval);
 #else
 #error "No spin lock implementation is available for this platform."
 #endif
