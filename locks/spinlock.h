@@ -90,7 +90,7 @@ extern "C" size_t MyInterlockedExchange (size_t * oldval,
 
 #endif // defined(_WIN32) && !defined(_WIN64)
 
-extern volatile bool anyThreadCreated;
+//extern volatile bool anyThreadCreated;
 
 namespace HL {
 
@@ -109,11 +109,11 @@ namespace HL {
 #endif
     {}
   
-    ~SpinLockType (void)
+    ~SpinLockType()
     {}
 
-    inline void lock (void) {
-      if (anyThreadCreated) {
+    inline void lock() {
+      if (true) { // anyThreadCreated) {
 	if (MyInterlockedExchange (const_cast<size_t *>(&mutex), LOCKED)
 	    != UNLOCKED) {
 	  contendedLock();
@@ -125,8 +125,8 @@ namespace HL {
 
 
 
-    inline void unlock (void) {
-      if (anyThreadCreated) {
+    inline void unlock() {
+      if (true) { // anyThreadCreated) {
 #if defined(_WIN32) && !defined(_WIN64)
 	__asm {}
 #elif defined(__GNUC__)
@@ -149,7 +149,7 @@ namespace HL {
 #else
 
     NO_INLINE
-    void contendedLock (void) {
+    void contendedLock() {
       const int MAX_SPIN = 1000;
       while (true) {
 	if (MyInterlockedExchange (const_cast<size_t *>(&mutex), LOCKED)
