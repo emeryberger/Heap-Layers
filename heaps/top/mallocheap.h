@@ -31,6 +31,8 @@
 
 #if defined(__SVR4)
 extern "C" size_t malloc_usable_size (void *);
+#elif defined(__APPLE__)
+#include <malloc/malloc.h>
 #else
 extern "C" size_t malloc_usable_size (void *) throw ();
 #endif
@@ -65,13 +67,13 @@ namespace HL {
     inline size_t getSize (void * ptr) {
       return ::_msize (ptr);
     }
-#elif defined(__GNUC__) && !defined(__SVR4)
-    inline size_t getSize (void * ptr) {
-      return ::malloc_usable_size (ptr);
-    }
 #elif defined(__APPLE__)
     inline size_t getSize (void * ptr) {
       return ::malloc_size (ptr);
+    }
+#elif defined(__GNUC__) && !defined(__SVR4)
+    inline size_t getSize (void * ptr) {
+      return ::malloc_usable_size (ptr);
     }
 #endif
   
