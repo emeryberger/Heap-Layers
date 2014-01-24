@@ -86,24 +86,25 @@ namespace HL {
 
   class SpinLockType {
   private:
-    std::atomic_flag _mutex;
+    std::atomic<bool> _mutex;
+    //    std::atomic_flag _mutex;
   public:
   
     SpinLockType (void)
-      : _mutex (ATOMIC_FLAG_INIT)
+      : _mutex (false)
     {}
   
     ~SpinLockType()
     {}
 
     inline void lock() {
-      if (_mutex.test_and_set(std::memory_order_acquire)) {
+      if (_mutex.exchange(true)) {
 	contendedLock();
       }
     }
 
     inline void unlock() {
-      _mutex.clear(std::memory_order_release);
+      _mutex = false;
     }
 
   private:
@@ -112,11 +113,11 @@ namespace HL {
     void contendedLock() {
       const int MAX_SPIN = 1000;
       while (true) {
-	if (!_mutex.test_and_set(std::memory_order_acquire)) {
+	if (!_mutex.exchange(true)) {
 	  return;
 	}
 	int count = 0;
-	while ((_mutex.test_and_set(std::memory_order_acquire)) && (count < MAX_SPIN)) {
+	while (_mutex && (count < MAX_SPIN)) {
 	  _MM_PAUSE;
 	  count++;
 	}
