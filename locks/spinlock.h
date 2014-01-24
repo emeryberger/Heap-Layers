@@ -27,20 +27,14 @@
 #ifndef HL_SPINLOCK_H
 #define HL_SPINLOCK_H
 
+#include <atomic> // C++11
+
 #if defined(unix)
 #include <sched.h>
 #endif
 
 #if defined(__SVR4)
 #include <thread.h>
-#endif
-
-#if defined(__sgi)
-#include <mutex.h>
-#endif
-
-#if defined(__APPLE__)
-#include <libkern/OSAtomic.h>
 #endif
 
 #include "threads/cpuinfo.h"
@@ -59,17 +53,15 @@
 #endif // defined(_MSC_VER)
 
 
-#if defined(__SUNPRO_CC)
-// x86-interchange.il, x86_64-interchange.il contributed by Markus Bernhardt.
-extern "C" size_t MyInterlockedExchange (size_t * oldval,
-						size_t newval);
-#endif
-
 #if defined(_WIN32) && !defined(_WIN64)
 
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0500
 #endif
+
+#endif
+
+#if defined(_WIN32) // includes WIN64
 
 // NOTE: Below is the new "pause" instruction, which is inocuous for
 // previous architectures, but crucial for Intel chips with
@@ -77,7 +69,7 @@ extern "C" size_t MyInterlockedExchange (size_t * oldval,
 // http://www.usenix.org/events/wiess02/tech/full_papers/nakajima/nakajima.pdf
 // for discussion.
 
-#define _MM_PAUSE  {__asm{_emit 0xf3};__asm {_emit 0x90}}
+#define _MM_PAUSE YieldProcessor() // {__asm{_emit 0xf3};__asm {_emit 0x90}}
 #include <windows.h>
 
 #elif defined(__GNUC__)
@@ -88,76 +80,43 @@ extern "C" size_t MyInterlockedExchange (size_t * oldval,
 
 #define _MM_PAUSE
 
-#endif // defined(_WIN32) && !defined(_WIN64)
-
-//extern volatile bool anyThreadCreated;
+#endif
 
 namespace HL {
 
   class SpinLockType {
   private:
-
-    enum { UNLOCKED = 0, LOCKED = 1 };
-
+    std::atomic_flag _mutex;
   public:
   
     SpinLockType (void)
-#if defined(__APPLE__)
-      : mutex (OS_SPINLOCK_INIT)
-#else
-	: mutex (UNLOCKED)
-#endif
+      : _mutex (ATOMIC_FLAG_INIT)
     {}
   
     ~SpinLockType()
     {}
 
     inline void lock() {
-      if (true) { // anyThreadCreated) {
-	if (MyInterlockedExchange (const_cast<size_t *>(&mutex), LOCKED)
-	    != UNLOCKED) {
-	  contendedLock();
-	}
-      } else {
-	mutex = LOCKED;
+      if (_mutex.test_and_set(std::memory_order_acquire)) {
+	contendedLock();
       }
     }
-
-
 
     inline void unlock() {
-      if (true) { // anyThreadCreated) {
-#if defined(_WIN32) && !defined(_WIN64)
-	__asm {}
-#elif defined(__GNUC__)
-	asm volatile ("" : : : "memory");
-#endif
-      }
-      mutex = UNLOCKED;
+      _mutex.clear(std::memory_order_release);
     }
 
-
-#if !defined(__SUNPRO_CC)
-    inline static size_t MyInterlockedExchange (size_t *, size_t); 
-#endif
-
   private:
-
-#if 0 // defined(__APPLE__)
-    OSSpinLock mutex;
-
-#else
 
     NO_INLINE
     void contendedLock() {
       const int MAX_SPIN = 1000;
       while (true) {
-	if (MyInterlockedExchange (const_cast<size_t *>(&mutex), LOCKED)
-	    == UNLOCKED) {
+	if (!_mutex.test_and_set(std::memory_order_acquire)) {
 	  return;
 	}
 	int count = 0;
-	while ((mutex == LOCKED) && (count < MAX_SPIN)) {
+	while ((_mutex.test_and_set(std::memory_order_acquire)) && (count < MAX_SPIN)) {
 	  _MM_PAUSE;
 	  count++;
 	}
@@ -184,93 +143,7 @@ namespace HL {
     }
 
     enum { MAX_SPIN_LIMIT = 1024 };
-
-    volatile size_t mutex;
-#endif
-
   };
-
 }
-
-// Atomically:
-//   retval = *oldval;
-//   *oldval = newval;
-//   return retval;
-
-#if !defined(__SUNPRO_CC) // && !defined(__APPLE__)
-inline size_t 
-HL::SpinLockType::MyInterlockedExchange (size_t * oldval,
-					 size_t newval)
-{
-#if defined(_WIN32) && defined(_MSC_VER)
-  return InterlockedExchange ((volatile LONG *) oldval, newval);
-
-  //#elif (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) > 40100
-  //  return __sync_val_compare_and_swap(oldval, *oldval, newval);
-
-#elif defined(__sparc)
-  asm volatile ("swap [%1],%0"
-		:"=r" (newval)
-		:"r" (oldval), "0" (newval)
-		: "memory");
-  
-#elif defined(__i386__)
-  asm volatile ("lock; xchgl %0, %1"
-		: "=r" (newval)
-		: "m" (*oldval), "0" (newval)
-		: "memory");
-
-#elif defined(__sgi)
-  newval = test_and_set (oldval, newval);
-
-#elif defined(__x86_64__)
-  // Contributed by Kurt Roeckx.
-  asm volatile ("lock; xchgq %0, %1"
-		: "=r" (newval)
-		: "m" (*oldval), "0" (newval)
-		: "memory");
-
-#elif defined(__ppc) || defined(__powerpc__) || defined(PPC)
-  // PPC assembly contributed by Maged Michael.
-  int ret; 
-  asm volatile ( 
-		"La..%=0:    lwarx %0,0,%1 ;" 
-		"      cmpw  %0,%2;" 
-		"      beq La..%=1;" 
-		"      stwcx. %2,0,%1;" 
-		"      bne- La..%=0;" 
-		"La..%=1:    isync;" 
-                : "=&r"(ret) 
-                : "r"(oldval), "r"(newval) 
-                : "cr0", "memory"); 
-  return ret;
-
-#elif defined(__arm__)
-  // Contributed by Bo Granlund.
-  long result;
-  asm volatile (
-		"\n\t"
-		"swp     %0,%2,[%1] \n\t"
-		""
-		: "=&r"(result)
-		: "r"(oldval), "r"(newval)
-		: "memory");
-  return (result);
-#elif defined(__APPLE__)
-  size_t oldValue = *oldval;
-  bool swapped = OSAtomicCompareAndSwapLongBarrier (oldValue, newval, (volatile long *) oldval);
-  if (swapped) {
-    return newval;
-  } else {
-    return oldValue;
-  }
-#else
-#error "No spin lock implementation is available for this platform."
-#endif
-  return newval;
-}
-
-
-#endif
 
 #endif // _SPINLOCK_H_
