@@ -123,6 +123,8 @@ extern "C" {
 
 /***** generic malloc functions *****/
 
+#include <stdio.h>
+
 extern "C" void * MYCDECL CUSTOM_MALLOC(size_t sz)
 {
   if (sz >> (sizeof(size_t) * 8 - 1)) {
@@ -150,7 +152,10 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 #if !defined(_WIN32)
 extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size);
 
-extern "C" int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size) throw()
+extern "C" int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size)
+#if !defined(__FreeBSD__)
+ throw()
+#endif
 {
   // Check for non power-of-two alignment.
   if ((alignment == 0) ||
@@ -305,7 +310,7 @@ extern "C" int CUSTOM_MALLOC_SET_STATE (void * ptr) {
   return 0; // success.
 }
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__FreeBSD__)
 extern "C" struct mallinfo CUSTOM_MALLINFO(void) {
   // For now, we return useless stats.
   struct mallinfo m;
