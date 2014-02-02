@@ -30,10 +30,9 @@ namespace HL {
   }
 #elif defined(__GNUC__)
   // Just use the intrinsic.
-  static inline int ilog2 (size_t sz)
+  static inline int ilog2 (const size_t sz)
   {
-    sz = (sz << 1) - 1;
-    return (int) ((sizeof(size_t) * 8) - __builtin_clzl(sz) - 1);
+    return (int) ((sizeof(size_t) * 8) - __builtin_clzl((sz << 1) - 1) - 1);
   }
 #else
   static inline int ilog2 (size_t v) {

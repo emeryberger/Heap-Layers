@@ -4,7 +4,6 @@
 #define HL_OBSTACKREAP_H
 
 #include <assert.h>
-#include <iostream>
 
 /*
 
@@ -290,7 +289,6 @@ inline void * ObstackReap<ReapType>::grow (size_t sz) {
   const int requestedObjectSize = currentObjectSize + sz;
 
   if (requestedObjectSize > actualObjectSize) {
-    std::cout << "resize!\n";
     void * ptr = currentReap->realloc (currentObject, sz);
     currentObjectPosition = (char *) ptr + (currentObjectPosition - (char *) currentObject);
     if (isCurrentObjectExposed) {

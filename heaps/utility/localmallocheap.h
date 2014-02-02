@@ -29,7 +29,6 @@
 
 #include <cstddef>
 #include <cassert>
-#include <iostream>
 
 #if !defined(_WIN32) // not implemented for Windows
 
