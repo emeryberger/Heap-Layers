@@ -151,8 +151,6 @@ namespace HL {
       // printf ("Free: %x (%d bytes)\n", ptr, getSize(ptr));
       const size_t objectSize = getSize(ptr); // was bigheap.getSize(ptr)
       if (objectSize > _maxObjectSize) {
-	cout << objectSize << " > " << _maxObjectSize << endl;
-        // printf ("free up! (size class = %d)\n", objectSizeClass);
         bigheap.free (ptr);
       } else {
         int objectSizeClass = getSizeClass(objectSize);
