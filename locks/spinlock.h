@@ -72,7 +72,7 @@
 #define _MM_PAUSE YieldProcessor() // {__asm{_emit 0xf3};__asm {_emit 0x90}}
 #include <windows.h>
 
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
 #define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : :); }
 
