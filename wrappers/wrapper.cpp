@@ -148,7 +148,11 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 
 
 #if !defined(_WIN32)
-extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size);
+extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
+#if !defined(__FreeBSD__)
+  throw()
+#endif
+;
 
 extern "C" int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size)
 #if !defined(__FreeBSD__)
@@ -173,6 +177,9 @@ throw()
 
 
 extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
+#if !defined(__FreeBSD__)
+  throw()
+#endif
 {
   // NOTE: This function is deprecated.
   if (alignment == sizeof(double)) {
