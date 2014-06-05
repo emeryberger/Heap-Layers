@@ -85,6 +85,7 @@ extern "C" {
 
 #define CUSTOM_MALLOC(x)     CUSTOM_PREFIX(malloc)(x)
 #define CUSTOM_FREE(x)       CUSTOM_PREFIX(free)(x)
+#define CUSTOM_CFREE(x)      CUSTOM_PREFIX(cfree)(x)
 #define CUSTOM_REALLOC(x,y)  CUSTOM_PREFIX(realloc)(x,y)
 #define CUSTOM_CALLOC(x,y)   CUSTOM_PREFIX(calloc)(x,y)
 #define CUSTOM_MEMALIGN(x,y) CUSTOM_PREFIX(memalign)(x,y)
@@ -124,6 +125,11 @@ extern "C" {
 #endif
 
 /***** generic malloc functions *****/
+
+extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
+{
+  xxfree (ptr);
+}
 
 extern "C" void * MYCDECL CUSTOM_MALLOC(size_t sz)
 {
@@ -184,16 +190,31 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
 #endif
 {
   // NOTE: This function is deprecated.
+  // Check for non power-of-two alignment.
+  if ((alignment == 0) || (alignment & (alignment - 1)))
+    {
+      return NULL;
+    }
+
   if (alignment == sizeof(double)) {
     return CUSTOM_MALLOC (size);
   } else {
-    void * ptr = CUSTOM_MALLOC (size + 2 * alignment);
+    // Try to just allocate an object of the requested size.
+    // If it happens to be aligned properly, just return it.
+    void * ptr = CUSTOM_MALLOC(size);
+    if (((size_t) ptr & (alignment - 1)) == (size_t) ptr) {
+      // It is already aligned just fine; return it.
+      return ptr;
+    }
+    // It was not aligned as requested: free the object and allocate a big one.
+    CUSTOM_FREE(ptr);
+    ptr = CUSTOM_MALLOC (size + 2 * alignment);
     void * alignedPtr = (void *) (((size_t) ptr + alignment - 1) & ~(alignment - 1));
     return alignedPtr;
   }
 }
 
-extern "C" void * MYCDECL CUSTOM_ALIGNED_ALLOC (size_t alignment, size_t size)
+extern "C" void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t size)
 #if !defined(__FreeBSD__)
   throw()
 #endif
@@ -211,7 +232,7 @@ extern "C" size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
   return xxmalloc_usable_size (ptr);
 }
 
-extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
+extern "C" void MYCDECL CUSTOM_CFREE (void * ptr)
 {
   xxfree (ptr);
 }
@@ -231,7 +252,14 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
   }
   if (sz == 0) {
     CUSTOM_FREE (ptr);
+#if defined(__APPLE__)
+    // 0 size = free. We return a small object.  This behavior is
+    // apparently required under Mac OS X and optional under POSIX.
+    return CUSTOM_MALLOC(1);
+#else
+    // For POSIX, don't return anything.
     return NULL;
+#endif
   }
 
   size_t objSize = CUSTOM_GETSIZE (ptr);
@@ -315,25 +343,25 @@ extern "C"  char * MYCDECL CUSTOM_GETCWD(char * buf, size_t size)
 #endif
 
 
-extern "C" int  CUSTOM_MALLOPT (int param, int value) {
+extern "C" int  CUSTOM_MALLOPT (int /* param */, int /* value */) {
   // NOP.
   return 1; // success.
 }
 
-extern "C" int CUSTOM_MALLOC_TRIM (size_t pad) {
+extern "C" int CUSTOM_MALLOC_TRIM(size_t /* pad */) {
   // NOP.
   return 0; // no memory returned to OS.
 }
 
-extern "C" void CUSTOM_MALLOC_STATS(void) {
+extern "C" void CUSTOM_MALLOC_STATS() {
   // NOP.
 }
 
-extern "C" void * CUSTOM_MALLOC_GET_STATE(void) {
+extern "C" void * CUSTOM_MALLOC_GET_STATE() {
   return NULL; // always returns "error".
 }
 
-extern "C" int CUSTOM_MALLOC_SET_STATE (void * ptr) {
+extern "C" int CUSTOM_MALLOC_SET_STATE(void * /* ptr */) {
   return 0; // success.
 }
 
