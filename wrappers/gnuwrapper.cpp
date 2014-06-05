@@ -293,6 +293,16 @@ extern "C" {
     return valloc ((sz + HL::CPUInfo::PageSize - 1) & ~(HL::CPUInfo::PageSize - 1));
   }
 
+  void * aligned_alloc (size_t alignment, size_t size)
+  {
+    // Per the man page: "The function aligned_alloc() is the same as
+    // memalign(), except for the added restriction that size should be
+    // a multiple of alignment." Rather than check and potentially fail,
+    // we just enforce this by rounding up the size, if necessary.
+    size = size + alignment - (size % alignment);
+    return memalign(alignment, size);
+  }
+
 }
 
 

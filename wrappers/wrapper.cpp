@@ -4,7 +4,7 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2012 by Emery Berger
+  Copyright (C) 2000-2014 by Emery Berger
   http://www.cs.umass.edu/~emery
   emery@cs.umass.edu
   
@@ -89,6 +89,7 @@ extern "C" {
 #define CUSTOM_CALLOC(x,y)   CUSTOM_PREFIX(calloc)(x,y)
 #define CUSTOM_MEMALIGN(x,y) CUSTOM_PREFIX(memalign)(x,y)
 #define CUSTOM_POSIX_MEMALIGN(x,y,z) CUSTOM_PREFIX(posix_memalign)(x,y,z)
+#define CUSTOM_ALIGNED_ALLOC(x,y) CUSTOM_PREFIX(aligned_alloc)(x,y)
 #define CUSTOM_GETSIZE(x)    CUSTOM_PREFIX(malloc_usable_size)(x)
 #define CUSTOM_VALLOC(x)     CUSTOM_PREFIX(valloc)(x)
 #define CUSTOM_PVALLOC(x)    CUSTOM_PREFIX(pvalloc)(x)
@@ -189,6 +190,19 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
     void * alignedPtr = (void *) (((size_t) ptr + alignment - 1) & ~(alignment - 1));
     return alignedPtr;
   }
+}
+
+extern "C" void * MYCDECL CUSTOM_ALIGNED_ALLOC (size_t alignment, size_t size)
+#if !defined(__FreeBSD__)
+  throw()
+#endif
+{
+  // Per the man page: "The function aligned_alloc() is the same as
+  // memalign(), except for the added restriction that size should be
+  // a multiple of alignment." Rather than check and potentially fail,
+  // we just enforce this by rounding up the size, if necessary.
+  size = size + alignment - (size % alignment);
+  return CUSTOM_MEMALIGN(alignment, size);
 }
 
 extern "C" size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
