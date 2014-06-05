@@ -91,6 +91,7 @@ extern "C" {
 #define CUSTOM_POSIX_MEMALIGN(x,y,z) CUSTOM_PREFIX(posix_memalign)(x,y,z)
 #define CUSTOM_ALIGNED_ALLOC(x,y) CUSTOM_PREFIX(aligned_alloc)(x,y)
 #define CUSTOM_GETSIZE(x)    CUSTOM_PREFIX(malloc_usable_size)(x)
+#define CUSTOM_GOODSIZE(x)    CUSTOM_PREFIX(malloc_good_size)(x)
 #define CUSTOM_VALLOC(x)     CUSTOM_PREFIX(valloc)(x)
 #define CUSTOM_PVALLOC(x)    CUSTOM_PREFIX(pvalloc)(x)
 #define CUSTOM_RECALLOC(x,y,z)   CUSTOM_PREFIX(recalloc)(x,y,z)
@@ -213,6 +214,13 @@ extern "C" size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
 extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
 {
   xxfree (ptr);
+}
+
+extern "C" size_t MYCDECL CUSTOM_GOODSIZE (size_t sz) {
+  void * ptr = CUSTOM_MALLOC(sz);
+  size_t objSize = CUSTOM_GETSIZE(ptr);
+  CUSTOM_FREE(ptr);
+  return objSize;
 }
 
 extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)

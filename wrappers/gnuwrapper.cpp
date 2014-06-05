@@ -285,6 +285,13 @@ extern "C" {
     return xxmalloc_usable_size (p);
   }
 
+  size_t malloc_good_size (size_t sz) {
+    void * ptr = xxmalloc(sz);
+    size_t objSize = xxmalloc_usable_size(ptr);
+    xxfree(ptr);
+    return objSize;
+  }
+
   void * valloc (size_t sz) throw() {
     return my_memalign_hook (sz, HL::CPUInfo::PageSize, NULL);
   }
