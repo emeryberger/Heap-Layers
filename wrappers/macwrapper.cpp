@@ -491,6 +491,15 @@ public:
     theDefaultZone.free_definite_size = MACWRAPPER_PREFIX(malloc_zone_free_definite_size);
     theDefaultZone.pressure_relief = NULL;
     malloc_zone_register (&theDefaultZone);
+    // Unregister and reregister the default zone.  Unregistering swaps
+    // the specified zone with the last one registered which for the
+    // default zone makes the more recently registered zone the default
+    // zone.  The default zone is then re-registered to ensure that
+    // allocations made from it earlier will be handled correctly.
+    // Things are not guaranteed to work that way, but it's how they work now.
+    malloc_zone_t *default_zone = malloc_default_zone();
+    malloc_zone_unregister(default_zone);
+    malloc_zone_register(default_zone);
   }
 };
 
