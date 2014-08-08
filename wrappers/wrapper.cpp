@@ -393,9 +393,9 @@ extern "C" struct mallinfo CUSTOM_MALLINFO(void) {
 #define NEW_INCLUDED
 
 void * operator new (size_t sz)
-//#if defined(__APPLE__)
-  throw (std::bad_alloc)
-//#endif
+#if defined(__GNUC__)
+  _GLIBCXX_THROW (std::bad_alloc)
+#endif
 {
   void * ptr = CUSTOM_MALLOC (sz);
   if (ptr == NULL) {
@@ -406,9 +406,9 @@ void * operator new (size_t sz)
 }
 
 void operator delete (void * ptr)
-// #if defined(__APPLE__)
+#if !defined(linux_)
   throw ()
-//#endif
+#endif
 {
   CUSTOM_FREE (ptr);
 }
@@ -419,9 +419,9 @@ void * operator new (size_t sz, const std::nothrow_t&) throw() {
 } 
 
 void * operator new[] (size_t size) 
-//#if defined(__APPLE__)
-  throw (std::bad_alloc)
-//#endif
+#if defined(__GNUC__)
+  _GLIBCXX_THROW (std::bad_alloc)
+#endif
 {
   void * ptr = CUSTOM_MALLOC(size);
   if (ptr == NULL) {
@@ -438,9 +438,9 @@ void * operator new[] (size_t sz, const std::nothrow_t&)
 } 
 
 void operator delete[] (void * ptr)
-//#if defined(__APPLE__)
-  throw ()
-//#endif
+#if defined(__GNUC__)
+  _GLIBCXX_USE_NOEXCEPT
+#endif
 {
   CUSTOM_FREE (ptr);
 }
