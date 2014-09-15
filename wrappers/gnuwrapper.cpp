@@ -71,24 +71,4 @@ extern "C" {
   WEAK_REDEF1(size_t, malloc_usable_size, void *);
 }
 
-#if 0
-#define CUSTOM_GETSIZE(x)    CUSTOM_PREFIX(malloc_usable_size)(x)
-#define CUSTOM_GOODSIZE(x)    CUSTOM_PREFIX(malloc_good_size)(x)
-#define CUSTOM_VALLOC(x)     CUSTOM_PREFIX(valloc)(x)
-#define CUSTOM_PVALLOC(x)    CUSTOM_PREFIX(pvalloc)(x)
-#define CUSTOM_RECALLOC(x,y,z)   CUSTOM_PREFIX(recalloc)(x,y,z)
-#define CUSTOM_STRNDUP(s,sz) CUSTOM_PREFIX(strndup)(s,sz)
-#define CUSTOM_STRDUP(s)     CUSTOM_PREFIX(strdup)(s)
-#define CUSTOM_GETCWD(b,s)   CUSTOM_PREFIX(getcwd)(b,s)
-#define CUSTOM_GETENV(s)     CUSTOM_PREFIX(getenv)(s)
-
-// GNU-related routines:
-#define CUSTOM_MALLOPT(x,y)         CUSTOM_PREFIX(mallopt)(x,y)
-#define CUSTOM_MALLOC_TRIM(s)       CUSTOM_PREFIX(malloc_trim)(s)
-#define CUSTOM_MALLOC_STATS(a)      CUSTOM_PREFIX(malloc_stats)(a)
-#define CUSTOM_MALLOC_GET_STATE(p)  CUSTOM_PREFIX(malloc_get_state)(p)
-#define CUSTOM_MALLOC_SET_STATE(p)  CUSTOM_PREFIX(malloc_set_state)(p)
-#define CUSTOM_MALLINFO(a)          CUSTOM_PREFIX(mallinfo)(a)
-#endif
-
 #include "wrapper.cpp"
