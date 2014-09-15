@@ -41,20 +41,20 @@ namespace HL {
   class MacLockType {
   public:
 
-    MacLockType (void)
+    MacLockType()
       : mutex (0)
     {}
 
-    ~MacLockType (void)
+    ~MacLockType()
     {
       mutex = 0;
     }
 
-    inline void lock (void) {
+    inline void lock() {
       OSSpinLockLock (&mutex);
     }
 
-    inline void unlock (void) {
+    inline void unlock() {
       OSSpinLockUnlock (&mutex);
     }
 

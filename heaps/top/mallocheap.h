@@ -52,12 +52,9 @@ namespace HL {
 
     enum { Alignment = MallocInfo::Alignment };
 
-    ~MallocHeap (void) {}
-  
     inline void * malloc (size_t sz) {
       return ::malloc (sz);
     }
-  
   
     inline void free (void * ptr) {
       ::free (ptr);

@@ -41,7 +41,7 @@ template <class SuperHeap>
 class NestedHeap : public SuperHeap {
 public:
 
-  NestedHeap (void)
+  NestedHeap()
     : parent (NULL),
       child (NULL),
       prev (NULL),
@@ -49,7 +49,7 @@ public:
   {
   }
 
-  ~NestedHeap (void)
+  ~NestedHeap()
   {
     clear();
     if (parent != NULL) {
@@ -58,7 +58,7 @@ public:
     removeSibling (this);
   }
 
-  inline void clear (void) {
+  inline void clear() {
 
     // Clear this heap.
     SuperHeap::clear();

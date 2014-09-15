@@ -11,12 +11,12 @@ template <int numObjects, class Super>
 class BoundedFreeListHeap : public Super {
 public:
 
-  BoundedFreeListHeap (void)
+  BoundedFreeListHeap()
     : nObjects (0),
     myFreeList (NULL)
   {}
 
-  ~BoundedFreeListHeap (void)
+  ~BoundedFreeListHeap()
   {
     clear();
   }

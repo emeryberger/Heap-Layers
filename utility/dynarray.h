@@ -44,18 +44,18 @@ namespace HL {
   template <class ObjType>
     class DynamicArray {
   public:
-    DynamicArray (void)
+    DynamicArray()
       : internalArray (NULL),
       internalArrayLength (0)
 	{}
 
-    ~DynamicArray (void)
+    ~DynamicArray()
       {
 	clear();
       }
 
     /// Clear deletes everything in the array.
-    inline void clear (void) {
+    inline void clear() {
       if (internalArray != NULL) {
 	delete internalArray;
 	internalArray = NULL;

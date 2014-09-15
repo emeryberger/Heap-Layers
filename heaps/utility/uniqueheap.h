@@ -50,7 +50,7 @@ namespace HL {
      * Ensure that the super heap gets created,
      * and add a reference for every instance of unique heap.
      */
-    UniqueHeap (void) 
+    UniqueHeap() 
     {
       volatile SuperHeap * forceCreationOfSuperHeap = getSuperHeap();
       addRef();
@@ -61,7 +61,7 @@ namespace HL {
      * When the number of references goes to zero,
      * delete the super heap.
      */
-    ~UniqueHeap (void) {
+    ~UniqueHeap() {
       int r = delRef();
       if (r <= 0) {
 	getSuperHeap()->SuperHeap::~SuperHeap();
@@ -87,20 +87,20 @@ namespace HL {
       return getSuperHeap()->remove (ptr);
     }
 
-    inline void clear (void) {
+    inline void clear() {
       getSuperHeap()->clear();
     }
 
 #if 0
-    inline int getAllocated (void) {
+    inline int getAllocated() {
       return getSuperHeap()->getAllocated();
     }
 
-    inline int getMaxAllocated (void) {
+    inline int getMaxAllocated() {
       return getSuperHeap()->getMaxAllocated();
     }
 
-    inline int getMaxInUse (void) {
+    inline int getMaxInUse() {
       return getSuperHeap()->getMaxInUse();
     }
 #endif
@@ -108,23 +108,23 @@ namespace HL {
   private:
 
     /// Add one reference.
-    void addRef (void) {
+    void addRef() {
       getRefs() += 1;
     }
 
     /// Delete one reference count.
-    int delRef (void) {
+    int delRef() {
       getRefs() -= 1;
       return getRefs();
     }
 
     /// Internal accessor for reference count.
-    int& getRefs (void) {
+    int& getRefs() {
       static int numRefs = 0;
       return numRefs;
     }
 
-    SuperHeap * getSuperHeap (void) {
+    SuperHeap * getSuperHeap() {
       static char superHeapBuffer[sizeof(SuperHeap)];
       static SuperHeap * aSuperHeap = (SuperHeap *) (new ((char *) &superHeapBuffer) SuperHeap);
       return aSuperHeap;

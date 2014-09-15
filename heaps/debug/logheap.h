@@ -32,7 +32,7 @@ namespace HL {
   class Log {
   public:
 
-    Log (void) :
+    Log() :
       numEntries (0)
     {
 #if defined(unix)
@@ -42,18 +42,14 @@ namespace HL {
 #endif
     }
 
-    ~Log (void) {
-      //    writeLog();
-    }
-
-    void writeLog (void) {
+    void writeLog() {
       {
         ofstream outfile (filename, ios_base::app);
       }
       write(filename);
     }
 
-    void dump (void) {
+    void dump() {
       write (filename);
       numEntries = 0;
     }
@@ -87,7 +83,7 @@ namespace HL {
   class LogHeap : public SuperHeap {
   public:
 
-    LogHeap (void)
+    LogHeap()
       : allDone (false)
     {}
 
@@ -106,7 +102,7 @@ namespace HL {
       return ptr;
     }
 
-    void write (void) {
+    void write() {
       allDone = true;
       log.writeLog();
     }
@@ -125,7 +121,7 @@ namespace HL {
     class MemoryRequest {
     public:
 
-      MemoryRequest (void)
+      MemoryRequest()
         :
 #if 0
         _sec (LONG_MAX),
@@ -216,36 +212,36 @@ namespace HL {
 #endif
       }
 
-      int getType (void) {
+      int getType() {
         return _address & 7;
       }
 
-      int getAllocated (void) {
+      int getAllocated() {
         return _size;
       }
 
-      int getDeallocated (void) {
+      int getDeallocated() {
         return _size;
       }
 
-      unsigned long getAddress (void) {
+      unsigned long getAddress() {
         return _address & ~7;
       }
 
-      int getSize (void) {
+      int getSize() {
         return _size;
       }
 
 #if 0
-      double getTime (void) {
+      double getTime() {
         return (double) _sec + (double) _usec / 1000000.0;
       }
 
-      long getSeconds (void) {
+      long getSeconds() {
         return _sec;
       }
 
-      long getUseconds (void) {
+      long getUseconds() {
         return _usec;
       }
 

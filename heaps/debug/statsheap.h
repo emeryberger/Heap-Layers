@@ -13,7 +13,7 @@ namespace HL {
   private:
     typedef std::map<void *, int> mapType;
   public:
-    InUseHeap (void)
+    InUseHeap()
       : inUse (0),
 	maxInUse (0)
     {}
@@ -41,11 +41,11 @@ namespace HL {
       SuperHeap::free (ptr);
     }
 
-    int getInUse (void) const {
+    int getInUse () const {
       return inUse;
     }
 
-    int getMaxInUse (void) const {
+    int getMaxInUse () const {
       return maxInUse;
     }
 
@@ -59,7 +59,7 @@ namespace HL {
   template <class SuperHeap>
   class AllocatedHeap : public SuperHeap {
   public:
-    AllocatedHeap (void)
+    AllocatedHeap ()
       : allocated (0),
       maxAllocated (0)
     {}
@@ -79,10 +79,10 @@ namespace HL {
       SuperHeap::free (ptr);
     }
 
-    int getAllocated (void) const {
+    int getAllocated () const {
       return allocated;
     }
-    int getMaxAllocated (void) const {
+    int getMaxAllocated () const {
       return maxAllocated;
     }
 
@@ -95,7 +95,7 @@ namespace HL {
   template <class SuperHeap>
   class StatsHeap : public SuperHeap {
   public:
-    ~StatsHeap (void) {
+    ~StatsHeap () {
       printf ("In use = %d, allocated = %d\n", SuperHeap::getInUse(), SuperHeap::getAllocated());
       printf ("Max in use = %d, max allocated = %d\n", SuperHeap::getMaxInUse(), SuperHeap::getMaxAllocated());
     }
