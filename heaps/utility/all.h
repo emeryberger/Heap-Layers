@@ -1,3 +1,4 @@
+#include "exactlyoneheap.h"
 #include "exceptionheap.h"
 #include "nullheap.h"
 #include "perclassheap.h"

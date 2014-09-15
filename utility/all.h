@@ -7,6 +7,7 @@
 #include "checkpoweroftwo.h"
 #include "dllist.h"
 #include "dynarray.h"
+#include "exactlyone.h"
 #include "freesllist.h"
 #include "hash.h"
 #include "ilog2.h"
