@@ -27,6 +27,8 @@
 #ifndef HL_TIMER_H
 #define HL_TIMER_H
 
+#include <chrono>
+
 /**
  * @class Timer
  * @brief A portable class for high-resolution timing.
