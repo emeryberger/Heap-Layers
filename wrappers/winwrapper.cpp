@@ -76,11 +76,6 @@ extern "C" {
 
 #define WINWRAPPER_PREFIX(x) winwrapper_##x
 
-//static const int BytesToStore = 5;
-
-//#define IAX86_NEARJMP_OPCODE	  0xe9
-//#define MakeIAX86Offset(to,from)  ((unsigned)((char*)(to)-(char*)(from)) - BytesToStore)
-
 typedef struct
 {
   const char *import;		// import name of patch routine
@@ -223,6 +218,7 @@ static PATCH rls_patches[] =
     // FIX ME -- the exit procedures are not entirely correct.
     // See http://msdn.microsoft.com/en-us/library/zb3b443a(v=vs.80).aspx
 
+    
     // operator new, new[], delete, delete[].
     
 #ifdef _WIN64
@@ -293,10 +289,10 @@ static bool PatchMeIn (void)
   bool patchedIn = false;
 
   // Library names. We check all of these at runtime and link ourselves in.
-  static const char * RlsCRTLibraryName[] = {"MSVCR71.DLL", "MSVCR80.DLL", "MSVCR90.DLL", "MSVCR100.DLL", "MSVCP100.DLL", "MSVCR110.DLL", "MSVCP110.DLL", "MSVCR120.DLL", "MSVCP120.DLL", "MSVCRT.DLL" };
+  static const char * RlsCRTLibraryName[] = {"MSVCR71.DLL", "MSVCR80.DLL", "MSVCR90.DLL", "MSVCR100.DLL", "MSVCP100.DLL", "MSVCR110.DLL", "MSVCP110.DLL", "MSVCR120.DLL", "MSVCP120.DLL", "MSVCR140.DLL", "MSVCP140.DLL", "APPCRT140.DLL", "MSVCRT.DLL" };
   
   static const int RlsCRTLibraryNameLength = sizeof(RlsCRTLibraryName) / sizeof(const char *);
-  
+
   // Acquire the module handles for the CRT libraries.
   for (int i = 0; i < RlsCRTLibraryNameLength; i++) {
 
