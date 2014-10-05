@@ -52,13 +52,13 @@ namespace HL {
 
     enum { Alignment = SuperHeap::Alignment };
 
-    ZoneHeap (void)
+    ZoneHeap()
       : _sizeRemaining (-1),
 	_currentArena (NULL),
 	_pastArenas (NULL)
     {}
 
-    ~ZoneHeap (void)
+    ~ZoneHeap()
     {
       // printf ("deleting arenas!\n");
       // Delete all of our arenas.

@@ -46,7 +46,7 @@ namespace HL {
   class FileObject {
   public:
 
-    FileObject (void)
+    FileObject()
       : _isOpen (false),
 	_file (0)
     {}
@@ -62,7 +62,7 @@ namespace HL {
       return *this;
     }
 
-    ~FileObject (void) {
+    ~FileObject() {
       close();
     }
  
@@ -83,7 +83,7 @@ namespace HL {
       return _isOpen;
     }
  
-    void close (void)
+    void close()
     {
       if (_isOpen) {
 #if 1
@@ -152,7 +152,7 @@ namespace HL {
   class TraceHeap : public Super {
   public:
 
-    TraceHeap (void)
+    TraceHeap()
     {
       if (!theFile().is_open()) {
 	char fname[255];
@@ -163,7 +163,7 @@ namespace HL {
       getRefs()++;
     }
  
-    ~TraceHeap (void)
+    ~TraceHeap()
     {
       //                      theFile() << ::std::flush;
       --getRefs();
@@ -186,12 +186,12 @@ namespace HL {
  
   private:
  
-    FileObject& theFile (void) {
+    FileObject& theFile() {
       static FileObject f;
       return f;
     }
  
-    int& getRefs (void) {
+    int& getRefs() {
       static int refs = 0;
       return refs;
     }
@@ -215,7 +215,7 @@ template <class Super, int Number>
 class TraceHeap : public Super {
 public:
   
-  TraceHeap (void)
+  TraceHeap()
   {
     if (!theFile().is_open()) {
       printf ("OPEN\n");
@@ -223,7 +223,7 @@ public:
     }
     getRefs()++;
   }
-  ~TraceHeap (void)
+  ~TraceHeap()
   {
     theFile() << ::std::flush;
     --getRefs();
@@ -243,11 +243,11 @@ public:
     Super::free (ptr);
   }
 private:
-  std::ofstream& theFile (void) {
+  std::ofstream& theFile() {
     static std::ofstream f;
     return f;
   }
-  int& getRefs (void) {
+  int& getRefs() {
     static int refs = 0;
     return refs;
   }

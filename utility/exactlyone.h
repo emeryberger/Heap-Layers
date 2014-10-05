@@ -1,12 +1,14 @@
-/* -*- C++ -*- */
+#ifndef HL_EXACTLYONE_H
+#define HL_EXACTLYONE_H
 
 /*
 
-  Heap Layers: An Extensible Memory Allocation Infrastructure
-  
-  Copyright (C) 2000-2012 by Emery Berger
-  http://www.cs.umass.edu/~emery
-  emery@cs.umass.edu
+  The Hoard Multiprocessor Memory Allocator
+  www.hoard.org
+
+  Author: Emery Berger, http://www.cs.umass.edu/~emery
+ 
+  Copyright (c) 1998-2012 Emery Berger
   
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -24,43 +26,24 @@
 
 */
 
-#ifndef HL_MACLOCK_H
-#define HL_MACLOCK_H
-
-#if defined(__APPLE__)
-
-#include <libkern/OSAtomic.h>
-
 /**
- * @class MacLockType
- * @brief Locking using OS X spin locks.
+ * @class ExactlyOne
+ * @brief Creates a singleton of type CLASS, accessed through ().
+ * @author Emery Berger <http://www.cs.umass.edu/~emery>
  */
 
 namespace HL {
 
-  class MacLockType {
+  template <class CLASS>
+    class ExactlyOne {
   public:
 
-    MacLockType()
-      : mutex (0)
-    {}
-
-    ~MacLockType()
-    {
-      mutex = 0;
+    inline CLASS& operator() (void) {
+      // We store the singleton in a double buffer to force alignment.
+      static double buf[(sizeof(CLASS) + sizeof(double) - 1) / sizeof(double)];
+      static CLASS * theOneTrueInstancePtr = new (buf) CLASS;
+      return *theOneTrueInstancePtr;
     }
-
-    inline void lock() {
-      OSSpinLockLock (&mutex);
-    }
-
-    inline void unlock() {
-      OSSpinLockUnlock (&mutex);
-    }
-
-  private:
-
-    OSSpinLock mutex;
 
   };
 
@@ -68,4 +51,3 @@ namespace HL {
 
 #endif
 
-#endif

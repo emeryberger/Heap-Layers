@@ -90,7 +90,7 @@ namespace HL {
     //    std::atomic_flag _mutex;
   public:
   
-    SpinLockType (void)
+    SpinLockType()
       : _mutex (false)
     {}
   
