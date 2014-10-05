@@ -2,9 +2,9 @@
 
 /*
  * @file winwrapper.cpp
- * @brief Replaces malloc family on Windows with custom versions.
+ * @brief  Replaces malloc family on Windows with custom versions.
  * @author Emery Berger <http://www.cs.umass.edu/~emery>
- * @note   Copyright (C) 2011-2012 by Emery Berger, University of Massachusetts Amherst.
+ * @note   Copyright (C) 2011-2014 by Emery Berger, University of Massachusetts Amherst.
  */
 
 /*
@@ -84,7 +84,6 @@ typedef struct
   unsigned char codebytes[sizeof(X86Jump)];	// original code storage
 } PATCH;
 
-
 static bool PatchMeIn();
 
 #include <stdio.h>
@@ -101,29 +100,6 @@ extern "C" void FinalizeWinWrapper() {
 extern "C" {
 
   __declspec(dllexport) int ReferenceWinWrapperStub;
-
-  typedef void (*exitFunctionType) (void);
-
-  // Intercept the exit functions.
-  
-  static const int MAX_EXIT_FUNCTIONS = 255;
-  static int exitCount = 0;
-  exitFunctionType exitFunctionBuffer[MAX_EXIT_FUNCTIONS];
-
-  static void WINWRAPPER_PREFIX(onexit) (void (*function)(void)) {
-    if (exitCount < MAX_EXIT_FUNCTIONS) {
-      exitFunctionBuffer[exitCount] = function;
-      exitCount++;
-    }
-  }
-  
-  static void WINWRAPPER_PREFIX(exit) (int code) {
-    while (exitCount > 0) {
-      exitCount--;
-      (exitFunctionBuffer[exitCount])();
-    }
-    exit(code);
-  }
 
   void * WINWRAPPER_PREFIX(expand) (void * ptr) {
     return NULL;
@@ -167,10 +143,14 @@ extern "C" {
   }
 
   static void * WINWRAPPER_PREFIX(recalloc)(void * memblock, size_t num, size_t size) {
-    void * ptr = WINWRAPPER_PREFIX(realloc)(memblock, num * size);
-    if ((memblock == NULL) & (ptr != NULL)) {
-      // Clear out the memory.
-      memset (ptr, 0, xxmalloc_usable_size(ptr));
+    const auto requestedSize = num * size;
+    void * ptr = WINWRAPPER_PREFIX(realloc)(memblock, requestedSize);
+    if (ptr != nullptr) {
+      const auto actualSize = xxmalloc_usable_size(ptr);
+      if (actualSize > requestedSize) {
+	// Clear out any memory after the end of the requested chunk.
+	memset (static_cast<char *>(ptr) + requestedSize, 0, actualSize - requestedSize);
+      }
     }
     return ptr;
   }
@@ -206,19 +186,8 @@ extern "C" {
 static PATCH rls_patches[] = 
   {
     {"strdup",		(FARPROC) WINWRAPPER_PREFIX(strdup),   0},
+    {"_expand",		(FARPROC) WINWRAPPER_PREFIX(expand),   0},
 
-    // RELEASE CRT library routines supported by this memory manager.
-    
-    {"_expand",		(FARPROC) WINWRAPPER_PREFIX(expand),    0},
-    {"_onexit",         (FARPROC) WINWRAPPER_PREFIX(onexit),    0},
-    {"_exit",           (FARPROC) WINWRAPPER_PREFIX(exit),      0},
-    {"_cexit",          (FARPROC) WINWRAPPER_PREFIX(exit),      0},
-    {"_c_exit",         (FARPROC) WINWRAPPER_PREFIX(exit),      0},
-
-    // FIX ME -- the exit procedures are not entirely correct.
-    // See http://msdn.microsoft.com/en-us/library/zb3b443a(v=vs.80).aspx
-
-    
     // operator new, new[], delete, delete[].
     
 #ifdef _WIN64
@@ -251,11 +220,11 @@ static PATCH rls_patches[] =
     {"_realloc_crt",(FARPROC) WINWRAPPER_PREFIX(realloc),0},
     {"free",	(FARPROC) xxfree,                  	0},
     {"_free_crt",(FARPROC) xxfree,                  	0},
+    {"_free_base",(FARPROC) xxfree,                  	0},
     {"_recalloc", (FARPROC) WINWRAPPER_PREFIX(recalloc),0},
     {"_recalloc_crt", (FARPROC) WINWRAPPER_PREFIX(recalloc),0}
   };
 
-/* EDB NOTE: Not yet handled: the _aligned_* family of allocation functions. */
 
 static void PatchIt (PATCH *patch)
 {
@@ -274,8 +243,6 @@ static void PatchIt (PATCH *patch)
   memcpy (patch->codebytes, patch->original, sizeof(X86Jump));
   unsigned char *patchloc = (unsigned char*)patch->original;
   new (patchloc) X86Jump (patch->replacement);
-  //  *patchloc++ = IAX86_NEARJMP_OPCODE;
-  //  *(unsigned*)patchloc = MakeIAX86Offset(patch->replacement, patch->original);
 	
   // Reset CRT library code to original page protection.
 
@@ -300,16 +267,6 @@ static bool PatchMeIn (void)
 
     HMODULE DefCRTLibrary = 
       RlsCRTLibrary;
-
-#if 0
-    // assign function pointers for required CRT support functions
-    if (DefCRTLibrary) {
-      *WINWRAPPER_PREFIX(memcpy_ptr) = (void(*)(void*,const void*,size_t))
-	GetProcAddress(DefCRTLibrary, "memcpy");
-      *WINWRAPPER_PREFIX(memset_ptr) = (void(*)(void*,int,size_t))
-	GetProcAddress(DefCRTLibrary, "memset");
-    }
-#endif
 
     // Patch all relevant release CRT Library entry points.
     if (RlsCRTLibrary) {
