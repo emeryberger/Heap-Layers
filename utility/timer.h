@@ -83,5 +83,6 @@ namespace HL {
 
 }
 
-#endif
+#endif // version of C++
 
+#endif
