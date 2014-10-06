@@ -4,7 +4,7 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2012 by Emery Berger
+  Copyright (C) 2000-2014 by Emery Berger
   http://www.cs.umass.edu/~emery
   emery@cs.umass.edu
   
@@ -26,6 +26,10 @@
 
 #ifndef HL_SPINLOCK_H
 #define HL_SPINLOCK_H
+
+#if (__cplusplus < 201103)
+#include "spinlock-old.h"
+#else
 
 #include <atomic> // C++11
 
@@ -87,7 +91,6 @@ namespace HL {
   class SpinLockType {
   private:
     std::atomic<bool> _mutex;
-    //    std::atomic_flag _mutex;
   public:
   
     SpinLockType()
@@ -146,5 +149,7 @@ namespace HL {
     enum { MAX_SPIN_LIMIT = 1024 };
   };
 }
+
+#endif
 
 #endif // _SPINLOCK_H_
