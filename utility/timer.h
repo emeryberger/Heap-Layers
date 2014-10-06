@@ -27,8 +27,6 @@
 #ifndef HL_TIMER_H
 #define HL_TIMER_H
 
-#include <chrono>
-
 /**
  * @class Timer
  * @brief A portable class for high-resolution timing.
@@ -46,6 +44,12 @@
  */
 
 /* Updated to use new C++11 high-resolution timer classes. */
+
+#if (__cplusplus < 201103)
+#include "timer-old.h"
+#else
+
+#include <chrono>
 
 namespace HL {
 
@@ -80,3 +84,4 @@ namespace HL {
 }
 
 #endif
+
