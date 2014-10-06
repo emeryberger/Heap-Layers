@@ -213,17 +213,19 @@ static PATCH rls_patches[] =
     
     {"_msize",	(FARPROC) xxmalloc_usable_size,    	0},
     {"calloc",	(FARPROC) WINWRAPPER_PREFIX(calloc),	0},
+    {"_calloc_base",(FARPROC) WINWRAPPER_PREFIX(calloc),0},
     {"_calloc_crt",(FARPROC) WINWRAPPER_PREFIX(calloc),	0},
     {"malloc",	(FARPROC) xxmalloc,			0},
-    {"_malloc_crt",(FARPROC) xxmalloc,			0},
     {"_malloc_base",(FARPROC) xxmalloc,			0},
+    {"_malloc_crt",(FARPROC) xxmalloc,			0},
     {"realloc",	(FARPROC) WINWRAPPER_PREFIX(realloc),	0},
-    {"_realloc_crt",(FARPROC) WINWRAPPER_PREFIX(realloc),0},
     {"_realloc_base",(FARPROC) WINWRAPPER_PREFIX(realloc),0},
+    {"_realloc_crt",(FARPROC) WINWRAPPER_PREFIX(realloc),0},
     {"free",	(FARPROC) xxfree,                  	0},
-    {"_free_crt",(FARPROC) xxfree,                  	0},
     {"_free_base",(FARPROC) xxfree,                  	0},
+    {"_free_crt",(FARPROC) xxfree,                  	0},
     {"_recalloc", (FARPROC) WINWRAPPER_PREFIX(recalloc),0},
+    {"_recalloc_base", (FARPROC) WINWRAPPER_PREFIX(recalloc),0}
     {"_recalloc_crt", (FARPROC) WINWRAPPER_PREFIX(recalloc),0}
   };
 
