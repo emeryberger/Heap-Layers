@@ -35,6 +35,8 @@
 
 */
 
+#include <errno.h>
+
 #include "x86jump.h"
 
 extern "C" {
@@ -59,6 +61,7 @@ extern "C" {
 #endif	
 
 #include <windows.h>
+#include <stdio.h>
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -76,24 +79,27 @@ extern "C" {
 
 #define WINWRAPPER_PREFIX(x) winwrapper_##x
 
-typedef struct
-{
+class Patch {
+public:
   const char *import;		// import name of patch routine
   FARPROC replacement;		// pointer to replacement function
   FARPROC original;		// pointer to original function
+  bool patched;                 // did we actually execute this patch?
   unsigned char codebytes[sizeof(X86Jump)];	// original code storage
-} PATCH;
+};
 
-static bool PatchMeIn();
-
-#include <stdio.h>
+static bool PatchMe();
+static void UnpatchMe();
+extern "C" void executeRegisteredFunctions();
 
 extern "C" void InitializeWinWrapper() {
-  PatchMeIn();
+  PatchMe();
 }
 
 extern "C" void FinalizeWinWrapper() {
   HeapAlloc (GetProcessHeap(), 0, 1);
+  // For now, we don't execute the registered functions.
+  UnpatchMe();
 }
 
 
@@ -163,9 +169,6 @@ extern "C" {
     return ptr;
   }
 
-  // WINWRAPPER_PREFIX(putenv)
-  // WINWRAPPER_PREFIX(getenv)
-
   char * WINWRAPPER_PREFIX(strdup) (const char * s)
   {
     char * newString = NULL;
@@ -178,59 +181,91 @@ extern "C" {
     return newString;
   }
 
+  const int MAX_EXIT_FUNCTIONS = 256;
+  _onexit_t exitFunctions[MAX_EXIT_FUNCTIONS];
+  static int exitFunctionsRegistered = 0;
+
+  _onexit_t bogus_onexit(_onexit_t fn) {
+    if (exitFunctionsRegistered == MAX_EXIT_FUNCTIONS) {
+      return NULL;
+    } else {
+      exitFunctions[exitFunctionsRegistered] = fn;
+      exitFunctionsRegistered++;
+      return fn;
+    }
+  }
+
+  int bogus_atexit(void (*fn)(void)) {
+    if (bogus_onexit((_onexit_t) fn) == NULL) {
+      return ENOMEM;
+    } else {
+      return 0;
+    }
+  }
+
+  void executeRegisteredFunctions() {
+    for (int i = exitFunctionsRegistered; i >= 0; i--) {
+      //      printf ("running exit function %d\n", i);
+      (*exitFunctions[i])();
+    }
+  }
 }
 
 
 /* ------------------------------------------------------------------------ */
 
-static PATCH rls_patches[] = 
+static Patch rls_patches[] = 
   {
-    {"strdup",		(FARPROC) WINWRAPPER_PREFIX(strdup),   0},
-    {"_expand",		(FARPROC) WINWRAPPER_PREFIX(expand),   0},
-
     // operator new, new[], delete, delete[].
     
 #ifdef _WIN64
     
-    {"??2@YAPEAX_K@Z",  (FARPROC) xxmalloc,    0},
-    {"??_U@YAPEAX_K@Z", (FARPROC) xxmalloc,    0},
-    {"??3@YAXPEAX@Z",   (FARPROC) xxfree,      0},
-    {"??_V@YAXPEAX@Z",  (FARPROC) xxfree,      0},
+    {"??2@YAPEAX_K@Z",  (FARPROC) xxmalloc,    false, 0},
+    {"??_U@YAPEAX_K@Z", (FARPROC) xxmalloc,    false, 0},
+    {"??3@YAXPEAX@Z",   (FARPROC) xxfree,      false, 0},
+    {"??_V@YAXPEAX@Z",  (FARPROC) xxfree,      false, 0},
 
 #else
 
-    {"??2@YAPAXI@Z",    (FARPROC) xxmalloc,    0},
-    {"??_U@YAPAXI@Z",   (FARPROC) xxmalloc,    0},
-    {"??3@YAXPAX@Z",    (FARPROC) xxfree,      0},
-    {"??_V@YAXPAX@Z",   (FARPROC) xxfree,      0},
+    {"??2@YAPAXI@Z",    (FARPROC) xxmalloc,    false, 0},
+    {"??_U@YAPAXI@Z",   (FARPROC) xxmalloc,    false, 0},
+    {"??3@YAXPAX@Z",    (FARPROC) xxfree,      false, 0},
+    {"??_V@YAXPAX@Z",   (FARPROC) xxfree,      false, 0},
 
 #endif
 
     // the nothrow variants new, new[].
 
-    {"??2@YAPAXIABUnothrow_t@std@@@Z",  (FARPROC) xxmalloc, 0},
-    {"??_U@YAPAXIABUnothrow_t@std@@@Z", (FARPROC) xxmalloc, 0},
+    {"??2@YAPAXIABUnothrow_t@std@@@Z",  (FARPROC) xxmalloc, false, 0},
+    {"??_U@YAPAXIABUnothrow_t@std@@@Z", (FARPROC) xxmalloc, false, 0},
     
-    {"_msize",	(FARPROC) xxmalloc_usable_size,    	0},
-    {"calloc",	(FARPROC) WINWRAPPER_PREFIX(calloc),	0},
-    {"_calloc_base",(FARPROC) WINWRAPPER_PREFIX(calloc),0},
-    {"_calloc_crt",(FARPROC) WINWRAPPER_PREFIX(calloc),	0},
-    {"malloc",	(FARPROC) xxmalloc,			0},
-    {"_malloc_base",(FARPROC) xxmalloc,			0},
-    {"_malloc_crt",(FARPROC) xxmalloc,			0},
-    {"realloc",	(FARPROC) WINWRAPPER_PREFIX(realloc),	0},
-    {"_realloc_base",(FARPROC) WINWRAPPER_PREFIX(realloc),0},
-    {"_realloc_crt",(FARPROC) WINWRAPPER_PREFIX(realloc),0},
-    {"free",	(FARPROC) xxfree,                  	0},
-    {"_free_base",(FARPROC) xxfree,                  	0},
-    {"_free_crt",(FARPROC) xxfree,                  	0},
-    {"_recalloc", (FARPROC) WINWRAPPER_PREFIX(recalloc),0},
-    {"_recalloc_base", (FARPROC) WINWRAPPER_PREFIX(recalloc),0}
-    {"_recalloc_crt", (FARPROC) WINWRAPPER_PREFIX(recalloc),0}
+    {"_msize",	(FARPROC) xxmalloc_usable_size,    	false, 0},
+    {"calloc",	(FARPROC) WINWRAPPER_PREFIX(calloc),	false, 0},
+    {"_calloc_base",(FARPROC) WINWRAPPER_PREFIX(calloc),false, 0},
+    {"_calloc_crt",(FARPROC) WINWRAPPER_PREFIX(calloc),	false, 0},
+    {"malloc",	(FARPROC) xxmalloc,			false, 0},
+    {"_malloc_base",(FARPROC) xxmalloc,			false, 0},
+    {"_malloc_crt",(FARPROC) xxmalloc,			false, 0},
+    {"realloc",	(FARPROC) WINWRAPPER_PREFIX(realloc),	false, 0},
+    {"_realloc_base",(FARPROC) WINWRAPPER_PREFIX(realloc),false, 0},
+    {"_realloc_crt",(FARPROC) WINWRAPPER_PREFIX(realloc),false, 0},
+    {"free",	(FARPROC) xxfree,                  	false, 0},
+    {"_free_base",(FARPROC) xxfree,                  	false, 0},
+    {"_free_crt",(FARPROC) xxfree,                  	false, 0},
+    {"_recalloc", (FARPROC) WINWRAPPER_PREFIX(recalloc),false, 0},
+    {"_recalloc_base", (FARPROC) WINWRAPPER_PREFIX(recalloc),false, 0},
+    {"_recalloc_crt", (FARPROC) WINWRAPPER_PREFIX(recalloc),false, 0},
+
+    {"_onexit", (FARPROC) bogus_onexit, false, 0},
+    {"atexit", (FARPROC) bogus_atexit, false, 0},
+
+    {"_expand",		(FARPROC) WINWRAPPER_PREFIX(expand),   false, 0},
+    {"strdup",		(FARPROC) WINWRAPPER_PREFIX(strdup),   false, 0}
   };
 
 
-static void PatchIt (PATCH *patch)
+
+static void PatchIt (Patch *patch)
 {
   // Change rights on CRT Library module to execute/read/write.
 
@@ -254,8 +289,30 @@ static void PatchIt (PATCH *patch)
 		 mbi_thunk.Protect, &mbi_thunk.Protect);
 }
 
+static void UnpatchIt (Patch *patch)
+{
+  if (patch->patched) {
 
-static bool PatchMeIn (void)
+    // Change rights on CRT Library module to execute/read/write.
+    
+    MEMORY_BASIC_INFORMATION mbi_thunk;
+    VirtualQuery((void*)patch->original, &mbi_thunk, 
+		 sizeof(MEMORY_BASIC_INFORMATION));
+    VirtualProtect(mbi_thunk.BaseAddress, mbi_thunk.RegionSize, 
+		   PAGE_EXECUTE_READWRITE, &mbi_thunk.Protect);
+    
+    // Restore original CRT routine.
+    
+    memcpy (patch->original, patch->codebytes, sizeof(X86Jump));
+
+    // Reset CRT library code to original page protection.
+    
+    VirtualProtect(mbi_thunk.BaseAddress, mbi_thunk.RegionSize, 
+		   mbi_thunk.Protect, &mbi_thunk.Protect);
+  }
+}
+
+static bool PatchMe()
 {
   bool patchedIn = false;
 
@@ -277,11 +334,20 @@ static bool PatchMeIn (void)
       for (int j = 0; j < sizeof(rls_patches) / sizeof(*rls_patches); j++) {
 	if (rls_patches[j].original = GetProcAddress(RlsCRTLibrary, rls_patches[j].import)) {
 	  PatchIt(&rls_patches[j]);
+	  rls_patches[j].patched = true;
  	  patchedIn = true;
 	}
       }
     }
   }
   return patchedIn;
+}
+
+static void UnpatchMe()
+{
+  for (int i = 0; i < sizeof(rls_patches) / sizeof(*rls_patches); i++) {
+    //    printf ("unpatching %s\n", rls_patches[i].import);
+    UnpatchIt(&rls_patches[i]);
+  }
 }
 
