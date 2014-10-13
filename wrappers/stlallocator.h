@@ -158,10 +158,6 @@ public:
   
 #endif
 
-  void destroy (pointer p) {
-    p->~T();
-  }
-
   template <class U> STLAllocator (const STLAllocator<U, Super> &) throw() 
   {
   }
