@@ -60,10 +60,10 @@ extern "C" {
   size_t xxmalloc_usable_size (void *);
 
   // Locks the heap(s), used prior to any invocation of fork().
-  void xxmalloc_lock (void);
+  void xxmalloc_lock ();
 
   // Unlocks the heap(s), after fork().
-  void xxmalloc_unlock (void);
+  void xxmalloc_unlock ();
 
 }
 
@@ -267,9 +267,9 @@ extern "C" {
   // operator delete nothrow
   void _ZdaPvRKSt9nothrow_t (void *);
 
-  void _malloc_fork_prepare (void);
-  void _malloc_fork_parent (void);
-  void _malloc_fork_child (void);
+  void _malloc_fork_prepare ();
+  void _malloc_fork_parent ();
+  void _malloc_fork_child ();
 }
 
 static malloc_zone_t theDefaultZone;
@@ -334,8 +334,13 @@ extern "C" {
     return NULL;
   }
   
-  void * MACWRAPPER_PREFIX(malloc_default_zone) (void) {
+  void * MACWRAPPER_PREFIX(malloc_default_zone) () {
     return (void *) &theDefaultZone;
+  }
+
+  malloc_zone_t *
+  MACWRAPPER_PREFIX(malloc_default_purgeable_zone)() {
+    return &theDefaultZone;
   }
 
   void MACWRAPPER_PREFIX(malloc_zone_free_definite_size) (malloc_zone_t *, void * ptr, size_t) {
@@ -380,17 +385,17 @@ extern "C" {
     return MACWRAPPER_PREFIX(malloc_usable_size)((void *) ptr);
   }
 
-  void MACWRAPPER_PREFIX(_malloc_fork_prepare)(void) {
+  void MACWRAPPER_PREFIX(_malloc_fork_prepare)() {
     /* Prepare the malloc module for a fork by insuring that no thread is in a malloc critical section */
     xxmalloc_lock();
   }
 
-  void MACWRAPPER_PREFIX(_malloc_fork_parent)(void) {
+  void MACWRAPPER_PREFIX(_malloc_fork_parent)() {
     /* Called in the parent process after a fork() to resume normal operation. */
     xxmalloc_unlock();
   }
 
-  void MACWRAPPER_PREFIX(_malloc_fork_child)(void) {
+  void MACWRAPPER_PREFIX(_malloc_fork_child)() {
     /* Called in the child process after a fork() to resume normal operation.  In the MTASK case we also have to change memory inheritance so that the child does not share memory with the parent. */
     xxmalloc_unlock();
   }
@@ -413,6 +418,8 @@ MAC_INTERPOSE(macwrapper_malloc_good_size, malloc_good_size);
 MAC_INTERPOSE(macwrapper_strdup, strdup);
 MAC_INTERPOSE(macwrapper_posix_memalign, posix_memalign);
 MAC_INTERPOSE(macwrapper_malloc_default_zone, malloc_default_zone);
+MAC_INTERPOSE(macwrapper_malloc_default_purgeable_zone, malloc_default_purgeable_zone);
+
 
 #if 1
 // Zone allocation calls.
