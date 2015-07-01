@@ -106,6 +106,10 @@ namespace HL {
       }
     }
 
+    inline bool didLock() {
+      return !_mutex.exchange(true);
+    }
+
     inline void unlock() {
       _mutex = false;
     }
