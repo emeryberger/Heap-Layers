@@ -143,7 +143,7 @@ namespace HL {
       sz = Size * ((sz + Size - 1) / Size);
 
       void * ptr;
-      unsigned int mapFlag = 0;
+      int mapFlag = 0;
       char * startAddress = 0;
 
 #if defined(MAP_ALIGN) && defined(MAP_ANON)
@@ -158,7 +158,7 @@ namespace HL {
       mapFlag |= MAP_ANONYMOUS | MAP_PRIVATE;
 #endif
 
-      ptr = mmap (startAddress, sz, HL_MMAP_PROTECTION_MASK,  mapFlag, fd, 0);
+      ptr = mmap (startAddress, sz, HL_MMAP_PROTECTION_MASK, mapFlag, fd, 0);
 
       if (ptr == MAP_FAILED) {
 	return NULL;

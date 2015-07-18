@@ -11,7 +11,7 @@ namespace HL {
 
   /// Quickly calculate the CEILING of the log (base 2) of the argument.
 #if defined(_WIN32)
-  static inline int ilog2 (size_t sz)
+  static inline unsigned int ilog2 (size_t sz)
   {
     DWORD index;
     _BitScanReverse (&index, sz);
@@ -22,20 +22,20 @@ namespace HL {
     }
   }
 #elif defined(__GNUC__) && defined(__i386__)
-  static inline int ilog2 (size_t sz)
+  static inline unsigned int ilog2 (size_t sz)
   {
     sz = (sz << 1) - 1;
     asm ("bsrl %0, %0" : "=r" (sz) : "0" (sz));
-    return (int) sz;
+    return (unsigned int) sz;
   }
 #elif defined(__GNUC__)
   // Just use the intrinsic.
-  static inline int ilog2 (const size_t sz)
+  static inline unsigned int ilog2 (const size_t sz)
   {
-    return (int) ((sizeof(size_t) * 8) - __builtin_clzl((sz << 1) - 1) - 1);
+    return ((int) (sizeof(size_t) * 8) - (int) __builtin_clzl((sz << 1) - 1) - 1);
   }
 #else
-  static inline int ilog2 (size_t v) {
+  static inline unsigned int ilog2 (size_t v) {
     int log = 0;
     unsigned int value = 1;
     while (value < v) {

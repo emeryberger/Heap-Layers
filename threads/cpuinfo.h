@@ -93,7 +93,7 @@ class CPUInfo {
 public:
 
   // Good for practically all platforms.
-  enum { PageSize = 4096 };
+  enum { PageSize = 4096UL };
 
   inline static int getNumProcessors() {
     static int _numProcessors = computeNumProcessors();

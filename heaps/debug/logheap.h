@@ -194,7 +194,7 @@ namespace HL {
 
 
       // Set sec & usec to the current time.
-      void markTime (long& sec, long& usec)
+      void markTime (long& /* sec */, long& /* usec */)
       {
 #if 0
 #ifdef __SVR4 // Solaris

@@ -307,37 +307,12 @@ namespace DLBigHeapNS
     if (sz1 <= 513) {
       return (int) (sz1 >> 3);
     } else {
-#if 0
-      // size_t sz1 = sz - 1;
-      sz1 >>= 6;
-      if (sz1 <= 32) {
-        return 56 + sz1;
-      }
-      sz1 >>= 3;
-      if (sz1 <= 20) {
-        return 91 + sz1;
-      }
-      sz1 >>= 3;
-      if (sz1 <= 10) {
-        return 110 - 6 + sz1;
-      }
-      sz1 >>= 3;
-      if (sz1 <= 4) {
-        return 119 - 6 + sz1;
-      }
-      sz1 >>= 3;
-      if (sz1 <= 2) {
-        return 124 - 6 + sz1;
-      }
-      return 125 - 6 + log2(sz1 >> 2);
-#else
-      const size_t sz1 = sz - 1;
       return (int) ((((sz1 >>  6) <= 32)?  56 + (sz1 >>  6):
 		     ((sz1 >>  9) <= 20)?  91 + (sz1 >>  9):
 		     ((sz1 >> 12) <= 10)? 110 - 6 + (sz1 >> 12):
 		     ((sz1 >> 15) <=  4)? 119 - 6 + (sz1 >> 15):
-		     ((sz1 >> 18) <=  2)? 124 - 6 + (sz1 >> 18): 126 - 6 + log2(sz1>>19)));
-#endif
+		     ((sz1 >> 18) <=  2)? 124 - 6 + (sz1 >> 18):
+		     126 - 6 + (size_t) log2(sz1>>19)));
     }
   }
 
