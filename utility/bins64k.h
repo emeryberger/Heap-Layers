@@ -59,12 +59,12 @@ namespace HL {
       return HL::ilog2 (sz);
     }
 
-    static inline unsigned int getSizeClass (size_t sz) {
+    static inline int getSizeClass (size_t sz) {
       sz = (sz < sizeof(double)) ? sizeof(double) : sz;
       return log2ceil (sz) - 3;
     }
 
-    static inline size_t getClassSize (const unsigned int i) {
+    static inline size_t getClassSize (int i) {
       assert (i >= 0);
       return (sizeof(double) << i);
     }
