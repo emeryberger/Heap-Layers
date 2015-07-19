@@ -45,9 +45,9 @@
 
 namespace HL {
 
-  template <int ChunkSize,
+  template <size_t ChunkSize,
 	    class SuperHeap,
-	    int Alignment_ = 1>
+	    size_t Alignment_ = 1UL>
   class BumpAlloc : public SuperHeap {
   public:
 
@@ -70,7 +70,7 @@ namespace HL {
 
     inline void * malloc (size_t sz) {
       // Round up the size if necessary.
-      size_t newSize = (sz + Alignment - 1) & ~(Alignment - 1);
+      size_t newSize = (sz + Alignment - 1UL) & ~(Alignment - 1UL);
 
       // If there's not enough space left to fulfill this request, get
       // another chunk.

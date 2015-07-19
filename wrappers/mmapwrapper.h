@@ -64,18 +64,18 @@ namespace HL {
 #if defined(_WIN32) 
   
     // Microsoft Windows has 4K pages aligned to a 64K boundary.
-    enum { Size = 4 * 1024 };
-    enum { Alignment = 64 * 1024 };
+    enum { Size = 4 * 1024UL };
+    enum { Alignment = 64 * 1024UL };
 
 #elif defined(__SVR4)
     // Solaris aligns 8K pages to a 64K boundary.
-    enum { Size = 8 * 1024 };
-    enum { Alignment = 64 * 1024 };
+    enum { Size = 8 * 1024UL };
+    enum { Alignment = 64 * 1024UL };
 
 #else
     // Linux and most other operating systems align memory to a 4K boundary.
-    enum { Size = 4 * 1024 };
-    enum { Alignment = 4 * 1024 };
+    enum { Size = 4 * 1024UL };
+    enum { Alignment = 4 * 1024UL };
 
 #endif
 
