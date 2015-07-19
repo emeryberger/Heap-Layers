@@ -454,7 +454,7 @@ void operator delete[] (void * ptr)
 
 extern "C" void * MYCDECL CUSTOM_VALLOC (size_t sz)
 {
-  return CUSTOM_MEMALIGN (8192, sz);
+  return CUSTOM_MEMALIGN (8192UL, sz);
 }
 
 
@@ -462,7 +462,7 @@ extern "C" void * MYCDECL CUSTOM_PVALLOC (size_t sz)
 {
   // Rounds up to the next pagesize and then calls valloc. Hoard
   // doesn't support aligned memory requests.
-  return CUSTOM_VALLOC ((sz + 8191) & ~8191);
+  return CUSTOM_VALLOC ((sz + 8191UL) & ~8191UL);
 }
 
 // The wacky recalloc function, for Windows.
