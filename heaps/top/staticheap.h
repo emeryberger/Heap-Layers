@@ -41,20 +41,20 @@ namespace HL {
   class StaticHeap {
   public:
 
-    StaticHeap (void)
-      : ptr (&buf[0]),
-	remaining (MemorySize)
+    StaticHeap()
+      : _ptr (&_buf[0]),
+	_remaining (MemorySize)
     {}
 
     enum { Alignment = 1 };
 
     inline void * malloc (size_t sz) {
-      if (remaining < sz) {
+      if (_remaining < sz) {
 	return NULL;
       }
-      void * p = ptr;
-      ptr += sz;
-      remaining -= sz;
+      void * p = _ptr;
+      _ptr += sz;
+      _remaining -= sz;
       return p;
     }
 
@@ -62,8 +62,8 @@ namespace HL {
     int remove (void *) { return 0; }
 
     int isValid (void * ptr) {
-      return (((size_t) ptr >= (size_t) buf) &&
-	      ((size_t) ptr < (size_t) buf));
+      return (((size_t) ptr >= (size_t) _buf) &&
+	      ((size_t) ptr < (size_t) _buf));
     }
 
   private:
@@ -72,9 +72,9 @@ namespace HL {
     StaticHeap (const StaticHeap&);
     StaticHeap& operator= (const StaticHeap&);
 
-    char buf[MemorySize];
-    char * ptr;
-    size_t remaining;
+    char _buf[MemorySize];
+    char * _ptr;
+    size_t _remaining;
   };
 
 }
