@@ -37,8 +37,8 @@ namespace HL {
     enum { MaxSize = UINT_MAX / 2 };
 
 #if defined(__LP64__) || defined(_LP64) || defined(__APPLE__) || defined(_WIN64) || defined(__x86_64__)
-    enum { MinSize = 16 };
-    enum { Alignment = 16 };
+    enum { MinSize = 16UL };
+    enum { Alignment = 16UL };
 #else
     enum { MinSize   = sizeof(double) };
     enum { Alignment = sizeof(double) };
