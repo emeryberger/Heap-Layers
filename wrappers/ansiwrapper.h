@@ -47,7 +47,8 @@ namespace HL {
       powTwo = powTwo;
 
       // Enforce alignment.
-      sz = (sz + HL::MallocInfo::Alignment - 1) & ~(HL::MallocInfo::Alignment - 1);
+      sz = (sz + HL::MallocInfo::Alignment - 1UL) &
+	~(HL::MallocInfo::Alignment - 1UL);
 
       auto * ptr = SuperHeap::malloc (sz);
       assert ((size_t) ptr % HL::MallocInfo::Alignment == 0);

@@ -97,7 +97,7 @@ extern "C" {
     if (ptr == NULL) {
       return 0;
     }
-    size_t objSize = xxmalloc_usable_size (ptr);
+    auto objSize = xxmalloc_usable_size (ptr);
     return objSize;
   }
 
@@ -106,8 +106,8 @@ extern "C" {
   }
 
   size_t MACWRAPPER_PREFIX(malloc_good_size) (size_t sz) {
-    void * ptr = MACWRAPPER_PREFIX(malloc)(sz);
-    size_t objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
+    auto * ptr = MACWRAPPER_PREFIX(malloc)(sz);
+    auto objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
     MACWRAPPER_PREFIX(free)(ptr);
     return objSize;
   }
@@ -126,7 +126,7 @@ extern "C" {
       return MACWRAPPER_PREFIX(malloc)(1);
     }
 
-    size_t objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
+    auto objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
 
     // Custom logic here to ensure we only do a logarithmic number of
     // reallocations (with a constant space overhead).
@@ -143,13 +143,13 @@ extern "C" {
     }
 #endif
 
-    void * buf = MACWRAPPER_PREFIX(malloc)((size_t) (sz));
+    auto * buf = MACWRAPPER_PREFIX(malloc)((size_t) (sz));
 
     if (buf != NULL) {
       // Successful malloc.
       // Copy the contents of the original object
       // up to the size of the new block.
-      size_t minSize = (objSize < sz) ? objSize : sz;
+      auto minSize = (objSize < sz) ? objSize : sz;
       memcpy (buf, ptr, minSize);
       MACWRAPPER_PREFIX(free) (ptr);
     } else {
@@ -173,11 +173,11 @@ extern "C" {
   }
 
   void * MACWRAPPER_PREFIX(calloc) (size_t elsize, size_t nelems) {
-    size_t n = nelems * elsize;
+    auto n = nelems * elsize;
     if (n == 0) {
       n = 1;
     }
-    void * ptr = MACWRAPPER_PREFIX(malloc) (n);
+    auto * ptr = MACWRAPPER_PREFIX(malloc) (n);
     if (ptr) {
       memset (ptr, 0, n);
     }
@@ -188,7 +188,7 @@ extern "C" {
   {
     char * newString = NULL;
     if (s != NULL) {
-      int len = strlen(s) + 1;
+      auto len = strlen(s) + 1UL;
       if ((newString = (char *) MACWRAPPER_PREFIX(malloc)(len))) {
 	memcpy (newString, s, len);
       }
@@ -206,7 +206,7 @@ extern "C" {
       }
     // Try to just allocate an object of the requested size.
     // If it happens to be aligned properly, just return it.
-    void * ptr = MACWRAPPER_PREFIX(malloc)(size);
+    auto * ptr = MACWRAPPER_PREFIX(malloc)(size);
     if (((size_t) ptr & (alignment - 1)) == (size_t) ptr) {
       // It is already aligned just fine; return it.
       return ptr;
@@ -216,8 +216,8 @@ extern "C" {
     // Now get a big chunk of memory and align the object within it.
     // NOTE: this assumes that the underlying allocator will be able
     // to free the aligned object, or ignore the free request.
-    void * buf = MACWRAPPER_PREFIX(malloc)(2 * alignment + size);
-    void * alignedPtr = (void *) (((size_t) buf + alignment - 1) & ~(alignment - 1));
+    auto * buf = MACWRAPPER_PREFIX(malloc)(2 * alignment + size);
+    auto * alignedPtr = (void *) (((size_t) buf + alignment - 1) & ~(alignment - 1));
     return alignedPtr;
   }
 
@@ -229,7 +229,7 @@ extern "C" {
       {
 	return EINVAL;
       }
-    void * ptr = MACWRAPPER_PREFIX(memalign) (alignment, size);
+    auto * ptr = MACWRAPPER_PREFIX(memalign) (alignment, size);
     if (!ptr) {
       return ENOMEM;
     } else {
