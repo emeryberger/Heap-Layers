@@ -32,7 +32,7 @@ namespace HL {
   // Just use the intrinsic.
   static inline unsigned int ilog2 (const size_t sz)
   {
-    return ((int) (sizeof(size_t) * 8) - (int) __builtin_clzl((sz << 1) - 1) - 1);
+    return ((unsigned int) (sizeof(size_t) * 8UL) - (unsigned int) __builtin_clzl((sz << 1) - 1UL) - 1);
   }
 #else
   static inline unsigned int ilog2 (size_t v) {
