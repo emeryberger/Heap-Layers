@@ -115,7 +115,7 @@ namespace HL {
 	}
 	_currentArena->arenaSpace = (char *) (_currentArena + 1);
 	_currentArena->nextArena = NULL;
-	_sizeRemaining = ChunkSize;
+	_sizeRemaining = allocSize;
       }
       // Bump the pointer and update the amount of memory remaining.
       _sizeRemaining -= sz;
