@@ -4,7 +4,7 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2012 by Emery Berger
+  Copyright (C) 2000-2015 by Emery Berger
   http://www.cs.umass.edu/~emery
   emery@cs.umass.edu
   
@@ -53,7 +53,7 @@ namespace HL {
     enum { Alignment = SuperHeap::Alignment };
 
     ZoneHeap()
-      : _sizeRemaining (-1),
+      : _sizeRemaining (0),
 	_currentArena (NULL),
 	_pastArenas (NULL)
     {}
@@ -97,7 +97,7 @@ namespace HL {
       // Round up size to an aligned value.
       sz = HL::align<HL::MallocInfo::Alignment>(sz);
       // Get more space in our arena if there's not enough room in this one.
-      if ((_currentArena == NULL) || (_sizeRemaining < (int) sz)) {
+      if ((_currentArena == NULL) || (_sizeRemaining < sz)) {
 	// First, add this arena to our past arena list.
 	if (_currentArena != NULL) {
 	  _currentArena->nextArena = _pastArenas;
@@ -137,7 +137,7 @@ namespace HL {
     };
     
     /// Space left in the current arena.
-    long _sizeRemaining;
+    size_t _sizeRemaining;
 
     /// The current arena.
     Arena * _currentArena;
