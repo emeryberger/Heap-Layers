@@ -35,7 +35,10 @@
 
 */
 
+#include <windows.h>
 #include <errno.h>
+#include <psapi.h>
+#include <tchar.h>
 
 #include "x86jump.h"
 
@@ -101,7 +104,6 @@ extern "C" void FinalizeWinWrapper() {
   // For now, we don't execute the registered functions.
   UnpatchMe();
 }
-
 
 extern "C" {
 
@@ -209,6 +211,39 @@ extern "C" {
       (*exitFunctions[i])();
     }
   }
+
+  void * WINWRAPPER_PREFIX(_calloc_dbg)(size_t num,
+					size_t size,
+					int blockType,
+					const char *filename,
+					int linenumber) 
+  {
+    return WINWRAPPER_PREFIX(calloc)(num, size);
+  }
+
+  void * WINWRAPPER_PREFIX(_malloc_dbg)(size_t size,
+					int blockType,
+					const char *filename,
+					int linenumber)
+  {
+    return xxmalloc(size);
+  }
+
+  void * WINWRAPPER_PREFIX(_realloc_dbg)(void *userData,
+					 size_t newSize,
+					 int blockType,
+					 const char *filename,
+					 int linenumber)
+  {
+    return WINWRAPPER_PREFIX(realloc)(userData, newSize);
+  }
+
+  void WINWRAPPER_PREFIX(_free_dbg)(void *userData,
+				    int blockType)
+  {
+    xxfree(userData);
+  }
+
 }
 
 
@@ -218,27 +253,35 @@ static Patch rls_patches[] =
   {
     // operator new, new[], delete, delete[].
     
-#ifdef _WIN64
+    //#ifdef _WIN64
     
     {"??2@YAPEAX_K@Z",  (FARPROC) xxmalloc,    false, 0},
     {"??_U@YAPEAX_K@Z", (FARPROC) xxmalloc,    false, 0},
     {"??3@YAXPEAX@Z",   (FARPROC) xxfree,      false, 0},
     {"??_V@YAXPEAX@Z",  (FARPROC) xxfree,      false, 0},
 
-#else
+    //#else
 
     {"??2@YAPAXI@Z",    (FARPROC) xxmalloc,    false, 0},
     {"??_U@YAPAXI@Z",   (FARPROC) xxmalloc,    false, 0},
     {"??3@YAXPAX@Z",    (FARPROC) xxfree,      false, 0},
     {"??_V@YAXPAX@Z",   (FARPROC) xxfree,      false, 0},
 
-#endif
+    //#endif
 
-    // the nothrow variants new, new[].
+    // Debug versions.
+    {"_calloc_dbg",(FARPROC) WINWRAPPER_PREFIX(_calloc_dbg),	false, 0},
+    {"_malloc_dbg",(FARPROC) WINWRAPPER_PREFIX(_malloc_dbg),	false, 0},
+    {"_realloc_dbg",(FARPROC) WINWRAPPER_PREFIX(_realloc_dbg),  false, 0},
+    {"_free_dbg",(FARPROC) WINWRAPPER_PREFIX(_free_dbg),      	false, 0},
+
+    // the nothrow variants new, new[], delete, delete[]
 
     {"??2@YAPAXIABUnothrow_t@std@@@Z",  (FARPROC) xxmalloc, false, 0},
     {"??_U@YAPAXIABUnothrow_t@std@@@Z", (FARPROC) xxmalloc, false, 0},
-    
+    {"??3@YAXPAXABUnothrow_t@std@@@Z",  (FARPROC) xxfree, false, 0},
+    {"??_V@YAXPAXABUnothrow_t@std@@@Z", (FARPROC) xxfree, false, 0},
+  
     {"_msize",	(FARPROC) xxmalloc_usable_size,    	false, 0},
     {"calloc",	(FARPROC) WINWRAPPER_PREFIX(calloc),	false, 0},
     {"_calloc_base",(FARPROC) WINWRAPPER_PREFIX(calloc),false, 0},
@@ -291,6 +334,7 @@ static void PatchIt (Patch *patch)
 
 static void UnpatchIt (Patch *patch)
 {
+  return; // FIX ME
   if (patch->patched) {
 
     // Change rights on CRT Library module to execute/read/write.
@@ -317,25 +361,37 @@ static bool PatchMe()
   bool patchedIn = false;
 
   // Library names. We check all of these at runtime and link ourselves in.
-  static const char * RlsCRTLibraryName[] = {"MSVCR71.DLL", "MSVCR80.DLL", "MSVCR90.DLL", "MSVCR100.DLL", "MSVCP100.DLL", "MSVCR110.DLL", "MSVCP110.DLL", "MSVCR120.DLL", "MSVCP120.DLL", "MSVCR140.DLL", "MSVCP140.DLL", "APPCRT140.DLL", "MSVCRT.DLL" };
+  //  static const char * RlsCRTLibraryName[] = {"MSVCR71.DLL", "MSVCR80.DLL", "MSVCR90.DLL", "MSVCR100.DLL", "MSVCP100.DLL", "MSVCR110.DLL", "MSVCP110.DLL", "MSVCR120.DLL", "MSVCP120.DLL", "MSVCR140.DLL", "MSVCP140.DLL", "APPCRT140.DLL", "api-ms-win-crt-heap-l1-1-0.dll", "MSVCRT.DLL" };
   
-  static const int RlsCRTLibraryNameLength = sizeof(RlsCRTLibraryName) / sizeof(const char *);
+  //  static const int RlsCRTLibraryNameLength = sizeof(RlsCRTLibraryName) / sizeof(const char *);
 
   // Acquire the module handles for the CRT libraries.
-  for (int i = 0; i < RlsCRTLibraryNameLength; i++) {
+  auto pid = GetCurrentProcessId();
+  auto hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
+			      PROCESS_VM_READ,
+			      FALSE, pid);
+  DWORD cbNeeded;
+  const int MaxModules = 8192;
+  HMODULE hMods[MaxModules];
+  if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
+    for (auto i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
+      
+      TCHAR szModName[MAX_PATH] = { 0 };
+      LPTSTR pszBuffer = szModName;
+      if (GetModuleFileName(hMods[i], pszBuffer,
+			    sizeof(szModName) / sizeof(TCHAR))) {
+	HMODULE RlsCRTLibrary = GetModuleHandle(pszBuffer);
 
-    HMODULE RlsCRTLibrary = GetModuleHandleA(RlsCRTLibraryName[i]);
-
-    HMODULE DefCRTLibrary = 
-      RlsCRTLibrary;
-
-    // Patch all relevant release CRT Library entry points.
-    if (RlsCRTLibrary) {
-      for (int j = 0; j < sizeof(rls_patches) / sizeof(*rls_patches); j++) {
-	if (rls_patches[j].original = GetProcAddress(RlsCRTLibrary, rls_patches[j].import)) {
-	  PatchIt(&rls_patches[j]);
-	  rls_patches[j].patched = true;
- 	  patchedIn = true;
+	// Patch all relevant release CRT Library entry points.
+	if (RlsCRTLibrary) {
+	  for (int j = 0; j < sizeof(rls_patches) / sizeof(*rls_patches); j++) {
+	    if (rls_patches[j].original = GetProcAddress(RlsCRTLibrary, rls_patches[j].import)) {
+	      _tprintf(TEXT("\t%s\n"), szModName);
+	      PatchIt(&rls_patches[j]);
+	      rls_patches[j].patched = true;
+	      patchedIn = true;
+	    }
+	  }
 	}
       }
     }
