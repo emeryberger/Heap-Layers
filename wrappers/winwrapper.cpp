@@ -96,13 +96,14 @@ static void UnpatchMe();
 extern "C" void executeRegisteredFunctions();
 
 extern "C" void InitializeWinWrapper() {
+  // Allocate (and leak) something from the old Windows heap.
+  HeapAlloc (GetProcessHeap(), 0, 1);
   PatchMe();
+  // Allocations after this point are from the replaced heap.
 }
 
 extern "C" void FinalizeWinWrapper() {
-  //  HeapAlloc (GetProcessHeap(), 0, 1);
   // For now, we don't execute the registered functions.
-  UnpatchMe();
 }
 
 extern "C" {
@@ -244,7 +245,6 @@ extern "C" {
     xxfree(userData);
   }
 
-  // NOTE: this potentially leaks memory...
   LPVOID WINWRAPPER_PREFIX(HeapAlloc)(HANDLE hHeap,
 				      DWORD dwFlags,
 				      SIZE_T dwBytes)
@@ -280,7 +280,7 @@ extern "C" {
 					      DWORD   dwFlags,
 					      LPCVOID lpMem) 
   {
-    // TO DO - something more than just this :).
+    // A stub that says the heap is fine.
     return TRUE;
   }
 
@@ -290,7 +290,30 @@ extern "C" {
   {
     return xxmalloc_usable_size((void *) lpMem);
   }
-  
+
+  BOOL WINAPI WINWRAPPER_PREFIX(HeapWalk)(HANDLE hHeap,
+					  LPPROCESS_HEAP_ENTRY lpEntry)
+  {
+    // A stub that prevents actually walking the heap.
+    return FALSE;
+  }
+
+  HANDLE WINAPI WINWRAPPER_PREFIX(HeapCreate)(DWORD  flOptions,
+					      SIZE_T dwInitialSize,
+					      SIZE_T dwMaximumSize)
+  {
+    // Ignore all options and just return a bogus (non-null) handle.
+    return (HANDLE) 0x1;
+  }
+
+  BOOL WINAPI WINWRAPPER_PREFIX(HeapDestroy)(HANDLE hHeap) 
+  {
+    // For now, do nothing and claim we destroyed the heap.
+    // NOTE: this potentially leaks memory if the user is creating
+    // and destroying heaps rather than explicitly freeing objects.
+    return TRUE;
+  }
+
 }
 
 
@@ -356,7 +379,10 @@ static Patch rls_patches[] =
     {"HeapFree",	(FARPROC) WINWRAPPER_PREFIX(HeapFree),false, 0},
     {"HeapReAlloc",	(FARPROC) WINWRAPPER_PREFIX(HeapReAlloc),false, 0},
     {"HeapValidate",	(FARPROC) WINWRAPPER_PREFIX(HeapValidate),false, 0},
-    {"HeapSize",	(FARPROC) WINWRAPPER_PREFIX(HeapSize),false, 0}
+    {"HeapSize",	(FARPROC) WINWRAPPER_PREFIX(HeapSize),false, 0},
+    {"HeapWalk",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0},
+    {"HeapCreate",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0},
+    {"HeapDestroy",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0}
 
   };
 
@@ -388,7 +414,7 @@ static void PatchIt (Patch *patch)
 
 static void UnpatchIt (Patch *patch)
 {
-  return;
+  //  return;
   if (patch->patched) {
 
     // Change rights on CRT Library module to execute/read/write.
@@ -414,18 +440,13 @@ static bool PatchMe()
 {
   bool patchedIn = false;
 
-  // Library names. We check all of these at runtime and link ourselves in.
-  //  static const char * RlsCRTLibraryName[] = {"MSVCR71.DLL", "MSVCR80.DLL", "MSVCR90.DLL", "MSVCR100.DLL", "MSVCP100.DLL", "MSVCR110.DLL", "MSVCP110.DLL", "MSVCR120.DLL", "MSVCP120.DLL", "MSVCR140.DLL", "MSVCP140.DLL", "APPCRT140.DLL", "api-ms-win-crt-heap-l1-1-0.dll", "MSVCRT.DLL" };
-  
-  //  static const int RlsCRTLibraryNameLength = sizeof(RlsCRTLibraryName) / sizeof(const char *);
-
-  // Acquire the module handles for the CRT libraries.
+  // We walk through all modules loaded by the process and patch the relevant entry points.
   auto pid = GetCurrentProcessId();
   auto hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
 			      PROCESS_VM_READ,
 			      FALSE, pid);
   DWORD cbNeeded;
-  const int MaxModules = 8192;
+  const auto MaxModules = 8192;
   HMODULE hMods[MaxModules];
   if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
     for (auto i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
@@ -438,10 +459,9 @@ static bool PatchMe()
 
 	// Patch all relevant release CRT Library entry points.
 	if (RlsCRTLibrary) {
-	  for (int j = 0; j < sizeof(rls_patches) / sizeof(*rls_patches); j++) {
+	  for (auto j = 0; j < sizeof(rls_patches) / sizeof(*rls_patches); j++) {
 	    if (rls_patches[j].original = GetProcAddress(RlsCRTLibrary, rls_patches[j].import)) {
-	      //	      printf("patching %s in ", rls_patches[j].import);
-	      //	      _tprintf(TEXT("\t%s\n"), szModName);
+	      // Got one: patch it.
 	      PatchIt(&rls_patches[j]);
 	      rls_patches[j].patched = true;
 	      patchedIn = true;
