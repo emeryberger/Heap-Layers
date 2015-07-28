@@ -100,7 +100,7 @@ extern "C" void InitializeWinWrapper() {
 }
 
 extern "C" void FinalizeWinWrapper() {
-  HeapAlloc (GetProcessHeap(), 0, 1);
+  //  HeapAlloc (GetProcessHeap(), 0, 1);
   // For now, we don't execute the registered functions.
   UnpatchMe();
 }
@@ -244,6 +244,53 @@ extern "C" {
     xxfree(userData);
   }
 
+  // NOTE: this potentially leaks memory...
+  LPVOID WINWRAPPER_PREFIX(HeapAlloc)(HANDLE hHeap,
+				      DWORD dwFlags,
+				      SIZE_T dwBytes)
+  {
+    if (hHeap == NULL) {
+      return NULL;
+    }
+    if (dwFlags & HEAP_ZERO_MEMORY) {
+      return WINWRAPPER_PREFIX(calloc)(1, dwBytes);
+    } else {
+      return xxmalloc(dwBytes);
+    }
+  }
+
+  LPVOID WINAPI WINWRAPPER_PREFIX(HeapReAlloc)(HANDLE hHeap,
+					       DWORD  dwFlags,
+					       LPVOID lpMem,
+					       SIZE_T dwBytes)
+  {
+    // TO DO: implement HEAP_REALLOC_IN_PLACE_ONLY and HEAP_ZERO_MEMORY.
+    return WINWRAPPER_PREFIX(realloc)(lpMem, dwBytes);
+  }
+  
+  BOOL WINWRAPPER_PREFIX(HeapFree)(HANDLE hHeap,
+				   DWORD dwFlags,
+				   LPVOID lpMem)
+  {
+    xxfree(lpMem);
+    return true;
+  }
+
+  BOOL WINAPI WINWRAPPER_PREFIX(HeapValidate)(HANDLE  hHeap,
+					      DWORD   dwFlags,
+					      LPCVOID lpMem) 
+  {
+    // TO DO - something more than just this :).
+    return TRUE;
+  }
+
+  SIZE_T WINAPI WINWRAPPER_PREFIX(HeapSize)(HANDLE  hHeap,
+					    DWORD   dwFlags,
+					    LPCVOID lpMem)
+  {
+    return xxmalloc_usable_size((void *) lpMem);
+  }
+  
 }
 
 
@@ -303,7 +350,14 @@ static Patch rls_patches[] =
     {"atexit", (FARPROC) bogus_atexit, false, 0},
 
     {"_expand",		(FARPROC) WINWRAPPER_PREFIX(expand),   false, 0},
-    {"strdup",		(FARPROC) WINWRAPPER_PREFIX(strdup),   false, 0}
+    {"strdup",		(FARPROC) WINWRAPPER_PREFIX(strdup),   false, 0},
+
+    {"HeapAlloc",	(FARPROC) WINWRAPPER_PREFIX(HeapAlloc),false, 0},
+    {"HeapFree",	(FARPROC) WINWRAPPER_PREFIX(HeapFree),false, 0},
+    {"HeapReAlloc",	(FARPROC) WINWRAPPER_PREFIX(HeapReAlloc),false, 0},
+    {"HeapValidate",	(FARPROC) WINWRAPPER_PREFIX(HeapValidate),false, 0},
+    {"HeapSize",	(FARPROC) WINWRAPPER_PREFIX(HeapSize),false, 0}
+
   };
 
 
@@ -334,7 +388,7 @@ static void PatchIt (Patch *patch)
 
 static void UnpatchIt (Patch *patch)
 {
-  return; // FIX ME
+  return;
   if (patch->patched) {
 
     // Change rights on CRT Library module to execute/read/write.
@@ -386,7 +440,8 @@ static bool PatchMe()
 	if (RlsCRTLibrary) {
 	  for (int j = 0; j < sizeof(rls_patches) / sizeof(*rls_patches); j++) {
 	    if (rls_patches[j].original = GetProcAddress(RlsCRTLibrary, rls_patches[j].import)) {
-	      _tprintf(TEXT("\t%s\n"), szModName);
+	      //	      printf("patching %s in ", rls_patches[j].import);
+	      //	      _tprintf(TEXT("\t%s\n"), szModName);
 	      PatchIt(&rls_patches[j]);
 	      rls_patches[j].patched = true;
 	      patchedIn = true;
