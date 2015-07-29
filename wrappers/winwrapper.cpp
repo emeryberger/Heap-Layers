@@ -128,8 +128,8 @@ extern "C" {
       return xxmalloc(1);
     }
 
-    size_t originalSize = xxmalloc_usable_size (ptr);
-    size_t minSize = (originalSize < sz) ? originalSize : sz;
+    auto originalSize = xxmalloc_usable_size (ptr);
+    auto minSize = (originalSize < sz) ? originalSize : sz;
 
     // Don't change size if the object is shrinking by less than half.
     if ((originalSize / 2 < sz) && (sz <= originalSize)) {
@@ -137,7 +137,7 @@ extern "C" {
       return ptr;
     }
 
-    void * buf = xxmalloc (sz);
+    auto * buf = xxmalloc (sz);
 
     if (buf != NULL) {
       // Successful malloc.
@@ -153,7 +153,7 @@ extern "C" {
 
   static void * WINWRAPPER_PREFIX(recalloc)(void * memblock, size_t num, size_t size) {
     const auto requestedSize = num * size;
-    void * ptr = WINWRAPPER_PREFIX(realloc)(memblock, requestedSize);
+    auto * ptr = WINWRAPPER_PREFIX(realloc)(memblock, requestedSize);
     if (ptr != nullptr) {
       const auto actualSize = xxmalloc_usable_size(ptr);
       if (actualSize > requestedSize) {
@@ -165,7 +165,7 @@ extern "C" {
   }
 
   static void * WINWRAPPER_PREFIX(calloc)(size_t num, size_t size) {
-    void * ptr = xxmalloc (num * size);
+    auto * ptr = xxmalloc (num * size);
     if (ptr) {
       memset (ptr, 0, xxmalloc_usable_size(ptr));
     }
@@ -176,7 +176,7 @@ extern "C" {
   {
     char * newString = NULL;
     if (s != NULL) {
-      int len = strlen(s) + 1;
+      auto len = strlen(s) + 1;
       if ((newString = (char *) xxmalloc(len))) {
 	memcpy (newString, s, len);
       }
@@ -208,7 +208,6 @@ extern "C" {
 
   void executeRegisteredFunctions() {
     for (int i = exitFunctionsRegistered; i >= 0; i--) {
-      //      printf ("running exit function %d\n", i);
       (*exitFunctions[i])();
     }
   }
