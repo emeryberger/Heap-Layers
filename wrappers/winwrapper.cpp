@@ -3,8 +3,8 @@
 /*
  * @file winwrapper.cpp
  * @brief  Replaces malloc family on Windows with custom versions.
- * @author Emery Berger <http://www.cs.umass.edu/~emery>
- * @note   Copyright (C) 2011-2014 by Emery Berger, University of Massachusetts Amherst.
+ * @author Emery Berger <http://www.emeryberger.org>
+ * @note   Copyright (C) 2011-2015 by Emery Berger, University of Massachusetts Amherst.
  */
 
 /*
@@ -38,7 +38,12 @@
 #include <windows.h>
 #include <errno.h>
 #include <psapi.h>
-#include <tchar.h>
+#include <stdio.h>
+//#include <string.h>
+//#include <strsafe.h>
+//#include <tchar.h>
+//#include <ntddk.h>
+//#include <cwchar>
 
 #include "x86jump.h"
 
@@ -99,11 +104,10 @@ extern "C" void InitializeWinWrapper() {
   // Allocate (and leak) something from the old Windows heap.
   HeapAlloc (GetProcessHeap(), 0, 1);
   PatchMe();
-  // Allocations after this point are from the replaced heap.
 }
 
 extern "C" void FinalizeWinWrapper() {
-  // For now, we don't execute the registered functions.
+  // UnpatchMe();
 }
 
 extern "C" {
@@ -258,6 +262,37 @@ extern "C" {
     }
   }
 
+  SIZE_T WINAPI WINWRAPPER_PREFIX(HeapCompact)(HANDLE hHeap,
+					       DWORD  dwFlags)
+  {
+    // Stub: 4GB malloc should be enough for anyone :).
+    return (1UL << 31);
+  }
+
+  HANDLE WINAPI WINWRAPPER_PREFIX(HeapCreate)(DWORD  flOptions,
+					      SIZE_T dwInitialSize,
+					      SIZE_T dwMaximumSize)
+  {
+    // Ignore all options and just return a bogus (non-null) handle.
+    return (HANDLE) 0x1;
+  }
+
+  BOOL WINAPI WINWRAPPER_PREFIX(HeapDestroy)(HANDLE hHeap) 
+  {
+    // For now, do nothing and claim we destroyed the heap.
+    // NOTE: this potentially leaks memory if the user is creating
+    // and destroying heaps rather than explicitly freeing objects.
+    return TRUE;
+  }
+
+  BOOL WINWRAPPER_PREFIX(HeapFree)(HANDLE hHeap,
+				   DWORD dwFlags,
+				   LPVOID lpMem)
+  {
+    xxfree(lpMem);
+    return true;
+  }
+
   LPVOID WINAPI WINWRAPPER_PREFIX(HeapReAlloc)(HANDLE hHeap,
 					       DWORD  dwFlags,
 					       LPVOID lpMem,
@@ -267,14 +302,6 @@ extern "C" {
     return WINWRAPPER_PREFIX(realloc)(lpMem, dwBytes);
   }
   
-  BOOL WINWRAPPER_PREFIX(HeapFree)(HANDLE hHeap,
-				   DWORD dwFlags,
-				   LPVOID lpMem)
-  {
-    xxfree(lpMem);
-    return true;
-  }
-
   BOOL WINAPI WINWRAPPER_PREFIX(HeapValidate)(HANDLE  hHeap,
 					      DWORD   dwFlags,
 					      LPCVOID lpMem) 
@@ -297,21 +324,45 @@ extern "C" {
     return FALSE;
   }
 
-  HANDLE WINAPI WINWRAPPER_PREFIX(HeapCreate)(DWORD  flOptions,
-					      SIZE_T dwInitialSize,
-					      SIZE_T dwMaximumSize)
+  PVOID WINWRAPPER_PREFIX(RtlAllocateHeap)(PVOID  HeapHandle,
+					   ULONG  Flags,
+					   SIZE_T Size)
   {
-    // Ignore all options and just return a bogus (non-null) handle.
-    return (HANDLE) 0x1;
+    return (PVOID) xxmalloc(Size);
   }
 
-  BOOL WINAPI WINWRAPPER_PREFIX(HeapDestroy)(HANDLE hHeap) 
+  ULONG
+  WINWRAPPER_PREFIX(RtlSizeHeap)(PVOID                HeapHandle,
+				 ULONG                Flags,
+				 PVOID                MemoryPointer )
   {
-    // For now, do nothing and claim we destroyed the heap.
-    // NOTE: this potentially leaks memory if the user is creating
-    // and destroying heaps rather than explicitly freeing objects.
+    return xxmalloc_usable_size(MemoryPointer);
+  }
+
+  PVOID WINWRAPPER_PREFIX(RtlCreateHeap)(ULONG                Flags,
+					 PVOID                HeapBase,
+					 SIZE_T               ReserveSize,
+					 SIZE_T               CommitSize,
+					 PVOID                Lock,
+					 PVOID /* PRTL_HEAP_PARAMETERS */ Parameters)
+  {
+    // FIX ME: right now, it's just a bogus number.
+    return (PVOID) 0x1;
+  }
+
+  BOOLEAN WINWRAPPER_PREFIX(RtlFreeHeap)(PVOID HeapHandle,
+					 ULONG Flags,
+					 PVOID HeapBase) 
+  {
+    xxfree(HeapBase);
     return TRUE;
   }
+
+  PVOID WINWRAPPER_PREFIX(RtlDestroyHeap)(PVOID HeapHandle)
+  {
+    return NULL;
+  }
+
 
 }
 
@@ -322,23 +373,22 @@ static Patch rls_patches[] =
   {
     // operator new, new[], delete, delete[].
     
-    //#ifdef _WIN64
+    // _WIN64
     
     {"??2@YAPEAX_K@Z",  (FARPROC) xxmalloc,    false, 0},
     {"??_U@YAPEAX_K@Z", (FARPROC) xxmalloc,    false, 0},
     {"??3@YAXPEAX@Z",   (FARPROC) xxfree,      false, 0},
     {"??_V@YAXPEAX@Z",  (FARPROC) xxfree,      false, 0},
 
-    //#else
+    // non _WIN64
 
     {"??2@YAPAXI@Z",    (FARPROC) xxmalloc,    false, 0},
     {"??_U@YAPAXI@Z",   (FARPROC) xxmalloc,    false, 0},
     {"??3@YAXPAX@Z",    (FARPROC) xxfree,      false, 0},
     {"??_V@YAXPAX@Z",   (FARPROC) xxfree,      false, 0},
 
-    //#endif
-
     // Debug versions.
+
     {"_calloc_dbg",(FARPROC) WINWRAPPER_PREFIX(_calloc_dbg),	false, 0},
     {"_malloc_dbg",(FARPROC) WINWRAPPER_PREFIX(_malloc_dbg),	false, 0},
     {"_realloc_dbg",(FARPROC) WINWRAPPER_PREFIX(_realloc_dbg),  false, 0},
@@ -350,7 +400,9 @@ static Patch rls_patches[] =
     {"??_U@YAPAXIABUnothrow_t@std@@@Z", (FARPROC) xxmalloc, false, 0},
     {"??3@YAXPAXABUnothrow_t@std@@@Z",  (FARPROC) xxfree, false, 0},
     {"??_V@YAXPAXABUnothrow_t@std@@@Z", (FARPROC) xxfree, false, 0},
-  
+
+    // Other malloc API friends.
+
     {"_msize",	(FARPROC) xxmalloc_usable_size,    	false, 0},
     {"calloc",	(FARPROC) WINWRAPPER_PREFIX(calloc),	false, 0},
     {"_calloc_base",(FARPROC) WINWRAPPER_PREFIX(calloc),false, 0},
@@ -368,20 +420,37 @@ static Patch rls_patches[] =
     {"_recalloc_base", (FARPROC) WINWRAPPER_PREFIX(recalloc),false, 0},
     {"_recalloc_crt", (FARPROC) WINWRAPPER_PREFIX(recalloc),false, 0},
 
+#if 0
     {"_onexit", (FARPROC) bogus_onexit, false, 0},
     {"atexit", (FARPROC) bogus_atexit, false, 0},
+#endif
 
     {"_expand",		(FARPROC) WINWRAPPER_PREFIX(expand),   false, 0},
     {"strdup",		(FARPROC) WINWRAPPER_PREFIX(strdup),   false, 0},
 
+    // RTL Heap API
+
+    {"RtlAllocateHeap",  (FARPROC) WINWRAPPER_PREFIX(RtlAllocateHeap),   false, 0},
+    {"RtlCreateHeap",  (FARPROC) WINWRAPPER_PREFIX(RtlCreateHeap),   false, 0},
+    {"RtlDestroyHeap", (FARPROC) WINWRAPPER_PREFIX(RtlDestroyHeap),   false, 0},
+    {"RtlFreeHeap",    (FARPROC) WINWRAPPER_PREFIX(RtlFreeHeap),   false, 0},
+    {"RtlSizeHeap",    (FARPROC) WINWRAPPER_PREFIX(RtlSizeHeap),   false, 0},
+
+    // Windows Heap API
+
     {"HeapAlloc",	(FARPROC) WINWRAPPER_PREFIX(HeapAlloc),false, 0},
-    {"HeapFree",	(FARPROC) WINWRAPPER_PREFIX(HeapFree),false, 0},
-    {"HeapReAlloc",	(FARPROC) WINWRAPPER_PREFIX(HeapReAlloc),false, 0},
-    {"HeapValidate",	(FARPROC) WINWRAPPER_PREFIX(HeapValidate),false, 0},
-    {"HeapSize",	(FARPROC) WINWRAPPER_PREFIX(HeapSize),false, 0},
-    {"HeapWalk",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0},
+    {"HeapCompact",	(FARPROC) WINWRAPPER_PREFIX(HeapCompact),false, 0},
     {"HeapCreate",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0},
-    {"HeapDestroy",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0}
+    {"HeapDestroy",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0},
+    {"HeapFree",	(FARPROC) WINWRAPPER_PREFIX(HeapFree),false, 0},
+    // HeapLock
+    // HeapQueryInformation
+    {"HeapReAlloc",	(FARPROC) WINWRAPPER_PREFIX(HeapReAlloc),false, 0},
+    // HeapSetInformation
+    {"HeapSize",	(FARPROC) WINWRAPPER_PREFIX(HeapSize),false, 0},
+    // HeapUnlock
+    {"HeapValidate",	(FARPROC) WINWRAPPER_PREFIX(HeapValidate),false, 0},
+    {"HeapWalk",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0}
 
   };
 
@@ -397,23 +466,25 @@ static void PatchIt (Patch *patch)
   VirtualProtect(mbi_thunk.BaseAddress, mbi_thunk.RegionSize, 
 		 PAGE_EXECUTE_READWRITE, &mbi_thunk.Protect);
 
+  //  printf ("PATCHING %s.\n", patch->import);
   // Patch CRT library original routine:
   // 	save original code bytes for exit restoration
   //		write jmp <patch_routine> (at least 5 bytes long) to original.
 
   memcpy (patch->codebytes, patch->original, sizeof(X86Jump));
-  unsigned char *patchloc = (unsigned char*)patch->original;
+  auto * patchloc = (unsigned char*)patch->original;
   new (patchloc) X86Jump (patch->replacement);
 	
   // Reset CRT library code to original page protection.
 
   VirtualProtect(mbi_thunk.BaseAddress, mbi_thunk.RegionSize, 
 		 mbi_thunk.Protect, &mbi_thunk.Protect);
+
+  //  printf("patched %s.\n", patch->import);
 }
 
 static void UnpatchIt (Patch *patch)
 {
-  //  return;
   if (patch->patched) {
 
     // Change rights on CRT Library module to execute/read/write.
@@ -435,6 +506,7 @@ static void UnpatchIt (Patch *patch)
   }
 }
 
+
 static bool PatchMe()
 {
   bool patchedIn = false;
@@ -449,13 +521,11 @@ static bool PatchMe()
   HMODULE hMods[MaxModules];
   if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded)) {
     for (auto i = 0; i < (cbNeeded / sizeof(HMODULE)); i++) {
-      
       TCHAR szModName[MAX_PATH] = { 0 };
       LPTSTR pszBuffer = szModName;
       if (GetModuleFileName(hMods[i], pszBuffer,
 			    sizeof(szModName) / sizeof(TCHAR))) {
 	HMODULE RlsCRTLibrary = GetModuleHandle(pszBuffer);
-
 	// Patch all relevant release CRT Library entry points.
 	if (RlsCRTLibrary) {
 	  for (auto j = 0; j < sizeof(rls_patches) / sizeof(*rls_patches); j++) {
