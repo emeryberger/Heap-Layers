@@ -107,6 +107,7 @@ extern "C" void InitializeWinWrapper() {
 }
 
 extern "C" void FinalizeWinWrapper() {
+  TerminateProcess(GetCurrentProcess(), 0);
   // UnpatchMe();
 }
 
@@ -114,7 +115,16 @@ extern "C" {
 
   __declspec(dllexport) int ReferenceWinWrapperStub;
 
-  void * WINWRAPPER_PREFIX(expand) (void * ptr) {
+  void * WINWRAPPER_PREFIX(_expand) (void * ptr) {
+    return NULL;
+  }
+
+  void * WINWRAPPER_PREFIX(_expand_dbg)(void *userData,
+					size_t newSize,
+					int blockType,
+					const char *filename,
+					int linenumber)
+  {
     return NULL;
   }
 
@@ -155,7 +165,7 @@ extern "C" {
     return buf;
   }
 
-  static void * WINWRAPPER_PREFIX(recalloc)(void * memblock, size_t num, size_t size) {
+  static void * WINWRAPPER_PREFIX(_recalloc)(void * memblock, size_t num, size_t size) {
     const auto requestedSize = num * size;
     auto * ptr = WINWRAPPER_PREFIX(realloc)(memblock, requestedSize);
     if (ptr != nullptr) {
@@ -188,12 +198,23 @@ extern "C" {
     return newString;
   }
 
-  const int MAX_EXIT_FUNCTIONS = 256;
+  //// Exit handling.
+
+  const int MAX_EXIT_FUNCTIONS = 2048;
   _onexit_t exitFunctions[MAX_EXIT_FUNCTIONS];
   static int exitFunctionsRegistered = 0;
 
-  _onexit_t bogus_onexit(_onexit_t fn) {
-    if (exitFunctionsRegistered == MAX_EXIT_FUNCTIONS) {
+  void WINWRAPPER_PREFIX(exit)(int status) {
+    executeRegisteredFunctions();
+    TerminateProcess(GetCurrentProcess(), status);
+  }
+
+  void WINWRAPPER_PREFIX(_exit)(int status) {
+    TerminateProcess(GetCurrentProcess(), status);
+  }
+
+  _onexit_t WINWRAPPER_PREFIX(_onexit)(_onexit_t fn) {
+    if (exitFunctionsRegistered >= MAX_EXIT_FUNCTIONS) {
       return NULL;
     } else {
       exitFunctions[exitFunctionsRegistered] = fn;
@@ -202,18 +223,26 @@ extern "C" {
     }
   }
 
-  int bogus_atexit(void (*fn)(void)) {
-    if (bogus_onexit((_onexit_t) fn) == NULL) {
+  int WINWRAPPER_PREFIX(atexit)(void (*fn)(void)) {
+    if (WINWRAPPER_PREFIX(_onexit)((_onexit_t) fn) == NULL) {
       return ENOMEM;
     } else {
       return 0;
     }
   }
 
+  void WINWRAPPER_PREFIX(_cexit)() {
+    executeRegisteredFunctions();
+  }
+
+  void WINWRAPPER_PREFIX(_c_exit)() {
+  }
+
   void executeRegisteredFunctions() {
-    for (int i = exitFunctionsRegistered; i >= 0; i--) {
-      (*exitFunctions[i])();
+    for (int i = exitFunctionsRegistered; i > 0; i--) {
+      (*exitFunctions[i-1])();
     }
+    exitFunctionsRegistered = 0;
   }
 
   void * WINWRAPPER_PREFIX(_calloc_dbg)(size_t num,
@@ -246,6 +275,12 @@ extern "C" {
 				    int blockType)
   {
     xxfree(userData);
+  }
+
+  size_t WINWRAPPER_PREFIX(_msize_dbg)(void *userData,
+				       int blockType)
+  {
+    return xxmalloc_usable_size(userData);
   }
 
   LPVOID WINWRAPPER_PREFIX(HeapAlloc)(HANDLE hHeap,
@@ -369,16 +404,19 @@ extern "C" {
 
 /* ------------------------------------------------------------------------ */
 
+#define INTERPOSE(x) {#x, (FARPROC) winwrapper_##x, false, 0}
+#define INTERPOSE2(x,y) {x, (FARPROC) y, false, 0}
+
 static Patch rls_patches[] = 
   {
     // operator new, new[], delete, delete[].
     
     // _WIN64
     
-    {"??2@YAPEAX_K@Z",  (FARPROC) xxmalloc,    false, 0},
-    {"??_U@YAPEAX_K@Z", (FARPROC) xxmalloc,    false, 0},
-    {"??3@YAXPEAX@Z",   (FARPROC) xxfree,      false, 0},
-    {"??_V@YAXPEAX@Z",  (FARPROC) xxfree,      false, 0},
+    INTERPOSE2("??2@YAPEAX_K@Z", xxmalloc),
+    INTERPOSE2("??_U@YAPEAX_K@Z", xxmalloc),
+    INTERPOSE2("??3@YAXPEAX@Z", xxfree),
+    INTERPOSE2("??_V@YAXPEAX@Z", xxfree),
 
     // non _WIN64
 
@@ -389,10 +427,12 @@ static Patch rls_patches[] =
 
     // Debug versions.
 
-    {"_calloc_dbg",(FARPROC) WINWRAPPER_PREFIX(_calloc_dbg),	false, 0},
-    {"_malloc_dbg",(FARPROC) WINWRAPPER_PREFIX(_malloc_dbg),	false, 0},
-    {"_realloc_dbg",(FARPROC) WINWRAPPER_PREFIX(_realloc_dbg),  false, 0},
-    {"_free_dbg",(FARPROC) WINWRAPPER_PREFIX(_free_dbg),      	false, 0},
+    INTERPOSE(_calloc_dbg),
+    INTERPOSE(_expand_dbg),
+    INTERPOSE(_free_dbg),
+    INTERPOSE(_malloc_dbg),
+    INTERPOSE(_msize_dbg),
+    INTERPOSE(_realloc_dbg),
 
     // the nothrow variants new, new[], delete, delete[]
 
@@ -404,44 +444,56 @@ static Patch rls_patches[] =
     // Other malloc API friends.
 
     {"_msize",	(FARPROC) xxmalloc_usable_size,    	false, 0},
-    {"calloc",	(FARPROC) WINWRAPPER_PREFIX(calloc),	false, 0},
+    INTERPOSE(calloc),
     {"_calloc_base",(FARPROC) WINWRAPPER_PREFIX(calloc),false, 0},
     {"_calloc_crt",(FARPROC) WINWRAPPER_PREFIX(calloc),	false, 0},
-    {"malloc",	(FARPROC) xxmalloc,			false, 0},
-    {"_malloc_base",(FARPROC) xxmalloc,			false, 0},
-    {"_malloc_crt",(FARPROC) xxmalloc,			false, 0},
-    {"realloc",	(FARPROC) WINWRAPPER_PREFIX(realloc),	false, 0},
+    {"_calloc_impl",(FARPROC) WINWRAPPER_PREFIX(calloc),	false, 0},
+    INTERPOSE(_expand),
+    INTERPOSE2("malloc", xxmalloc),
+    INTERPOSE2("_malloc_base", xxmalloc),
+    INTERPOSE2("_malloc_crt", xxmalloc),
+    INTERPOSE2("_malloc_impl", xxmalloc),
+    INTERPOSE(realloc),
     {"_realloc_base",(FARPROC) WINWRAPPER_PREFIX(realloc),false, 0},
     {"_realloc_crt",(FARPROC) WINWRAPPER_PREFIX(realloc),false, 0},
-    {"free",	(FARPROC) xxfree,                  	false, 0},
-    {"_free_base",(FARPROC) xxfree,                  	false, 0},
-    {"_free_crt",(FARPROC) xxfree,                  	false, 0},
-    {"_recalloc", (FARPROC) WINWRAPPER_PREFIX(recalloc),false, 0},
-    {"_recalloc_base", (FARPROC) WINWRAPPER_PREFIX(recalloc),false, 0},
-    {"_recalloc_crt", (FARPROC) WINWRAPPER_PREFIX(recalloc),false, 0},
+    {"_realloc_impl",(FARPROC) WINWRAPPER_PREFIX(realloc),false, 0},
+    INTERPOSE2("free", xxfree),
+    INTERPOSE2("_free_base", xxfree),
+    INTERPOSE2("_free_crt", xxfree),
+    INTERPOSE2("_free_impl", xxfree),
+    INTERPOSE(_recalloc),
+    {"_recalloc_base", (FARPROC) WINWRAPPER_PREFIX(_recalloc),false, 0},
+    {"_recalloc_crt", (FARPROC) WINWRAPPER_PREFIX(_recalloc),false, 0},
+    {"_recalloc_impl", (FARPROC) WINWRAPPER_PREFIX(_recalloc),false, 0},
 
-#if 0
-    {"_onexit", (FARPROC) bogus_onexit, false, 0},
-    {"atexit", (FARPROC) bogus_atexit, false, 0},
+#if 1
+    INTERPOSE(exit),
+    INTERPOSE(_exit),
+    INTERPOSE(_onexit),
+    INTERPOSE(atexit),
+    INTERPOSE(_cexit),
+    INTERPOSE(_c_exit),
 #endif
 
-    {"_expand",		(FARPROC) WINWRAPPER_PREFIX(expand),   false, 0},
-    {"strdup",		(FARPROC) WINWRAPPER_PREFIX(strdup),   false, 0},
+    INTERPOSE(strdup)
 
+#if 1
     // RTL Heap API
 
-    {"RtlAllocateHeap",  (FARPROC) WINWRAPPER_PREFIX(RtlAllocateHeap),   false, 0},
-    {"RtlCreateHeap",  (FARPROC) WINWRAPPER_PREFIX(RtlCreateHeap),   false, 0},
-    {"RtlDestroyHeap", (FARPROC) WINWRAPPER_PREFIX(RtlDestroyHeap),   false, 0},
+    ,{"RtlAllocateHeap",  (FARPROC) WINWRAPPER_PREFIX(RtlAllocateHeap),   false, 0},
+    //    {"RtlCreateHeap",  (FARPROC) WINWRAPPER_PREFIX(RtlCreateHeap),   false, 0},
+    //    {"RtlDestroyHeap", (FARPROC) WINWRAPPER_PREFIX(RtlDestroyHeap),   false, 0},
     {"RtlFreeHeap",    (FARPROC) WINWRAPPER_PREFIX(RtlFreeHeap),   false, 0},
-    {"RtlSizeHeap",    (FARPROC) WINWRAPPER_PREFIX(RtlSizeHeap),   false, 0},
+    {"RtlSizeHeap",    (FARPROC) WINWRAPPER_PREFIX(RtlSizeHeap),   false, 0}
+#endif
 
+#if 1
     // Windows Heap API
 
-    {"HeapAlloc",	(FARPROC) WINWRAPPER_PREFIX(HeapAlloc),false, 0},
+    ,{"HeapAlloc",	(FARPROC) WINWRAPPER_PREFIX(HeapAlloc),false, 0},
     {"HeapCompact",	(FARPROC) WINWRAPPER_PREFIX(HeapCompact),false, 0},
-    {"HeapCreate",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0},
-    {"HeapDestroy",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0},
+    //    {"HeapCreate",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0},
+    //    {"HeapDestroy",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0},
     {"HeapFree",	(FARPROC) WINWRAPPER_PREFIX(HeapFree),false, 0},
     // HeapLock
     // HeapQueryInformation
@@ -451,6 +503,7 @@ static Patch rls_patches[] =
     // HeapUnlock
     {"HeapValidate",	(FARPROC) WINWRAPPER_PREFIX(HeapValidate),false, 0},
     {"HeapWalk",	(FARPROC) WINWRAPPER_PREFIX(HeapWalk),false, 0}
+#endif
 
   };
 
@@ -466,7 +519,8 @@ static void PatchIt (Patch *patch)
   VirtualProtect(mbi_thunk.BaseAddress, mbi_thunk.RegionSize, 
 		 PAGE_EXECUTE_READWRITE, &mbi_thunk.Protect);
 
-  //  printf ("PATCHING %s.\n", patch->import);
+  ///  printf ("PATCHING %s.\n", patch->import);
+
   // Patch CRT library original routine:
   // 	save original code bytes for exit restoration
   //		write jmp <patch_routine> (at least 5 bytes long) to original.
@@ -480,7 +534,6 @@ static void PatchIt (Patch *patch)
   VirtualProtect(mbi_thunk.BaseAddress, mbi_thunk.RegionSize, 
 		 mbi_thunk.Protect, &mbi_thunk.Protect);
 
-  //  printf("patched %s.\n", patch->import);
 }
 
 static void UnpatchIt (Patch *patch)
@@ -525,6 +578,9 @@ static bool PatchMe()
       LPTSTR pszBuffer = szModName;
       if (GetModuleFileName(hMods[i], pszBuffer,
 			    sizeof(szModName) / sizeof(TCHAR))) {
+
+	///	printf("%ls\n", pszBuffer);
+
 	HMODULE RlsCRTLibrary = GetModuleHandle(pszBuffer);
 	// Patch all relevant release CRT Library entry points.
 	if (RlsCRTLibrary) {
