@@ -39,11 +39,6 @@
 #include <errno.h>
 #include <psapi.h>
 #include <stdio.h>
-//#include <string.h>
-//#include <strsafe.h>
-//#include <tchar.h>
-//#include <ntddk.h>
-//#include <cwchar>
 
 #include "x86jump.h"
 
@@ -68,10 +63,11 @@ extern "C" {
 #error "This library must be compiled in release mode."
 #endif	
 
-#include <windows.h>
-#include <stdio.h>
-
 #define WIN32_LEAN_AND_MEAN
+
+#if !defined(_M_IX86) && !defined(_M_X64)
+#error "Hoard currently only supports x86-based architectures on Windows."
+#endif
 
 #if (_WIN32_WINNT < 0x0500)
 #define _WIN32_WINNT 0x0500
@@ -116,7 +112,7 @@ extern "C" {
   __declspec(dllexport) int ReferenceWinWrapperStub;
 
   void * WINWRAPPER_PREFIX(_expand) (void * ptr) {
-    return NULL;
+    return nullptr;
   }
 
   void * WINWRAPPER_PREFIX(_expand_dbg)(void *userData,
@@ -125,13 +121,13 @@ extern "C" {
 					const char *filename,
 					int linenumber)
   {
-    return NULL;
+    return nullptr;
   }
 
   static void * WINWRAPPER_PREFIX(realloc) (void * ptr, size_t sz) 
   {
-    // NULL ptr = malloc.
-    if (ptr == NULL) {
+    // null ptr = act like a malloc.
+    if (ptr == nullptr) {
       return xxmalloc(sz);
     }
 
@@ -153,7 +149,7 @@ extern "C" {
 
     auto * buf = xxmalloc (sz);
 
-    if (buf != NULL) {
+    if (buf != nullptr) {
       // Successful malloc.
       // Copy the contents of the original object
       // up to the size of the new block.
@@ -188,8 +184,8 @@ extern "C" {
 
   char * WINWRAPPER_PREFIX(strdup) (const char * s)
   {
-    char * newString = NULL;
-    if (s != NULL) {
+    char * newString = nullptr;
+    if (s != nullptr) {
       auto len = strlen(s) + 1;
       if ((newString = (char *) xxmalloc(len))) {
 	memcpy (newString, s, len);
@@ -215,7 +211,7 @@ extern "C" {
 
   _onexit_t WINWRAPPER_PREFIX(_onexit)(_onexit_t fn) {
     if (exitFunctionsRegistered >= MAX_EXIT_FUNCTIONS) {
-      return NULL;
+      return nullptr;
     } else {
       exitFunctions[exitFunctionsRegistered] = fn;
       exitFunctionsRegistered++;
@@ -224,7 +220,7 @@ extern "C" {
   }
 
   int WINWRAPPER_PREFIX(atexit)(void (*fn)(void)) {
-    if (WINWRAPPER_PREFIX(_onexit)((_onexit_t) fn) == NULL) {
+    if (WINWRAPPER_PREFIX(_onexit)((_onexit_t) fn) == nullptr) {
       return ENOMEM;
     } else {
       return 0;
@@ -287,8 +283,8 @@ extern "C" {
 				      DWORD dwFlags,
 				      SIZE_T dwBytes)
   {
-    if (hHeap == NULL) {
-      return NULL;
+    if (hHeap == nullptr) {
+      return nullptr;
     }
     if (dwFlags & HEAP_ZERO_MEMORY) {
       return WINWRAPPER_PREFIX(calloc)(1, dwBytes);
@@ -333,7 +329,14 @@ extern "C" {
 					       LPVOID lpMem,
 					       SIZE_T dwBytes)
   {
-    // TO DO: implement HEAP_REALLOC_IN_PLACE_ONLY and HEAP_ZERO_MEMORY.
+    // Immediately fail if we are asked to realloc in place (since we can't guarantee it).
+    if (dwFlags & HEAP_REALLOC_IN_PLACE_ONLY) {
+      return nullptr;
+    }
+    // Use _recalloc to handle requests with HEAP_ZERO_MEMORY.
+    if (dwFlags & HEAP_ZERO_MEMORY) {
+      return WINWRAPPER_PREFIX(_recalloc)(lpMem, 1, dwBytes);
+    }
     return WINWRAPPER_PREFIX(realloc)(lpMem, dwBytes);
   }
   
@@ -395,7 +398,7 @@ extern "C" {
 
   PVOID WINWRAPPER_PREFIX(RtlDestroyHeap)(PVOID HeapHandle)
   {
-    return NULL;
+    return nullptr;
   }
 
 
