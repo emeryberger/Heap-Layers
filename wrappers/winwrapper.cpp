@@ -181,7 +181,7 @@ extern "C" {
   static void * WINWRAPPER_PREFIX(calloc)(size_t num, size_t size) {
     auto * ptr = xxmalloc (num * size);
     if (ptr) {
-      memset (ptr, 0, xxmalloc_usable_size(ptr));
+      memset (ptr, 0, num * size);
     }
     return ptr;
   }
@@ -363,7 +363,7 @@ extern "C" {
 					   ULONG  Flags,
 					   SIZE_T Size)
   {
-    return (PVOID) xxmalloc(Size);
+    return (PVOID) WINWRAPPER_PREFIX(HeapAlloc)(HeapHandle, Flags, Size);
   }
 
   ULONG
