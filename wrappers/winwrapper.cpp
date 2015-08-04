@@ -366,7 +366,8 @@ extern "C" {
 					   ULONG  Flags,
 					   SIZE_T Size)
   {
-    return (PVOID) WINWRAPPER_PREFIX(HeapAlloc)(HeapHandle, Flags, Size);
+    DWORD fl = (DWORD) Flags;
+    return (PVOID) WINWRAPPER_PREFIX(HeapAlloc)(HeapHandle, fl, Size);
   }
 
   ULONG
