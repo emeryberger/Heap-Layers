@@ -43,7 +43,7 @@
 namespace Kingsley {
 
   inline size_t class2Size (const int i) {
-    auto sz = (size_t) (1UL << (i+3));
+    auto sz = (size_t) (1ULL << (i+3));
     return sz;
   }
 

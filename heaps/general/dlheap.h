@@ -4,8 +4,8 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2003 by Emery Berger
-  http://www.cs.umass.edu/~emery
+  Copyright (C) 2000-2015 by Emery Berger
+  http://www.emeryberger.org
   emery@cs.umass.edu
   
   This program is free software; you can redistribute it and/or modify
@@ -332,7 +332,7 @@ namespace DLSmallHeapNS {
   inline size_t getClassSize (const int i) {
     assert (i >= 0);
     assert (i < NUMBINS);
-    return (size_t) ((i+1) << 3);
+    return (size_t) (((long) i+1ULL) << 3);
   }
 }
 
