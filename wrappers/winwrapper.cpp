@@ -96,15 +96,16 @@ static bool PatchMe();
 static void UnpatchMe();
 extern "C" void executeRegisteredFunctions();
 
+/// Initialize everything.
 extern "C" void InitializeWinWrapper() {
   // Allocate (and leak) something from the old Windows heap.
   HeapAlloc (GetProcessHeap(), 0, 1);
   PatchMe();
 }
 
+/// Mr. Gorbachev, tear down this process.
 extern "C" void FinalizeWinWrapper() {
   TerminateProcess(GetCurrentProcess(), 0);
-  // UnpatchMe();
 }
 
 extern "C" {
@@ -234,6 +235,7 @@ extern "C" {
   void WINWRAPPER_PREFIX(_c_exit)() {
   }
 
+  /// Execute all registered functions in LIFO order.
   void executeRegisteredFunctions() {
     for (int i = exitFunctionsRegistered; i > 0; i--) {
       (*exitFunctions[i-1])();
