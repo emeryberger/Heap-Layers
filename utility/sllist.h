@@ -24,8 +24,8 @@
 
 */
 
-#ifndef _SLLIST_H_
-#define _SLLIST_H_
+#ifndef HL_SLLIST_H_
+#define HL_SLLIST_H_
 
 #include <assert.h>
 

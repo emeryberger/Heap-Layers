@@ -24,8 +24,8 @@
 
 */
 
-#ifndef _NESTEDHEAP_H_
-#define _NESTEDHEAP_H_
+#ifndef HL_NESTEDHEAP_H_
+#define HL_NESTEDHEAP_H_
 
 #include <assert.h>
 

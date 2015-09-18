@@ -1,7 +1,7 @@
 // -*- C++ -*-
 
-#ifndef _FREESLLIST_H_
-#define _FREESLLIST_H_
+#ifndef HL_FREESLLIST_H_
+#define HL_FREESLLIST_H_
 
 #include <assert.h>
 
