@@ -1,7 +1,7 @@
 /* -*- C++ -*- */
 
-#ifndef _BOUNDEDFREELISTHEAP_H_
-#define _BOUNDEDFREELISTHEAP_H_
+#ifndef HL_BOUNDEDFREELISTHEAP_H_
+#define HL_BOUNDEDFREELISTHEAP_H_
 
 // Beware -- this is for one "size class" only!!
 
