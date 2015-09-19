@@ -4,8 +4,8 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2014 by Emery Berger
-  http://www.cs.umass.edu/~emery
+  Copyright (C) 2000-2015 by Emery Berger
+  http://www.emeryberger.com
   emery@cs.umass.edu
   
   This program is free software; you can redistribute it and/or modify
@@ -157,13 +157,13 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 
 #if !defined(_WIN32)
 extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
-#if !defined(__FreeBSD__)
+#if !defined(__FreeBSD__) && !defined(__SVR4)
   throw()
 #endif
 ;
 
 extern "C" int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size)
-#if !defined(__FreeBSD__)
+#if !defined(__FreeBSD__) && !defined(__SVR4)
 throw()
 #endif
 {
@@ -185,7 +185,7 @@ throw()
 
 
 extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
-#if !defined(__FreeBSD__)
+#if !defined(__FreeBSD__) && !defined(__SVR4)
   throw()
 #endif
 {
@@ -353,11 +353,11 @@ extern "C" int CUSTOM_MALLOC_TRIM(size_t /* pad */) {
   return 0; // no memory returned to OS.
 }
 
-extern "C" void CUSTOM_MALLOC_STATS() {
+extern "C" void CUSTOM_MALLOC_STATS(void) {
   // NOP.
 }
 
-extern "C" void * CUSTOM_MALLOC_GET_STATE() {
+extern "C" void * CUSTOM_MALLOC_GET_STATE(void) {
   return NULL; // always returns "error".
 }
 

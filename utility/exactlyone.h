@@ -32,6 +32,8 @@
  * @author Emery Berger <http://www.emeryberger.org>
  */
 
+#include <new>
+
 namespace HL {
 
   template <class CLASS>
