@@ -332,7 +332,7 @@ namespace DLSmallHeapNS {
   inline size_t getClassSize (const int i) {
     assert (i >= 0);
     assert (i < NUMBINS);
-    return (size_t) (((long) i+1ULL) << 3);
+    return (size_t) (((long) i+1) << 3);
   }
 }
 
