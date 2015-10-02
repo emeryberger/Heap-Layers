@@ -167,7 +167,8 @@ namespace HL {
     inline void * malloc (size_t sz) {
       void * ptr = PrivateMmapHeap::malloc (sz);
       MyMapLock.lock();
-      MyMap.set (ptr, sz);
+      // Round up to the size of a page.
+      MyMap.set (ptr, (sz + CPUInfo::PageSize - 1) & (size_t) ~(CPUInfo::PageSize - 1));
       MyMapLock.unlock();
       assert (reinterpret_cast<size_t>(ptr) % Alignment == 0);
       return const_cast<void *>(ptr);
