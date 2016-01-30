@@ -82,7 +82,7 @@ extern "C" size_t MyInterlockedExchange (size_t * oldval,
 
 #elif defined(__GNUC__)
 
-#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : :); }
+#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : : "memory"); }
 
 #else
 

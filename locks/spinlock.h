@@ -78,7 +78,7 @@
 
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : :); }
+#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : : "memory"); }
 
 #else
 
