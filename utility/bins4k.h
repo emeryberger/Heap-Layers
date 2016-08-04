@@ -1,7 +1,7 @@
 // -*- C++ -*-
 
-#if !defined(_BINS4K_H_)
-#define _BINS4K_H_
+#if !defined(HL_BINS4K_H_)
+#define HL_BINS4K_H_
 
 #include <cassert>
 

@@ -60,10 +60,10 @@ extern "C" {
   size_t xxmalloc_usable_size (void *);
 
   // Locks the heap(s), used prior to any invocation of fork().
-  void xxmalloc_lock (void);
+  void xxmalloc_lock ();
 
   // Unlocks the heap(s), after fork().
-  void xxmalloc_unlock (void);
+  void xxmalloc_unlock ();
 
 }
 
@@ -97,7 +97,7 @@ extern "C" {
     if (ptr == NULL) {
       return 0;
     }
-    size_t objSize = xxmalloc_usable_size (ptr);
+    auto objSize = xxmalloc_usable_size (ptr);
     return objSize;
   }
 
@@ -106,8 +106,8 @@ extern "C" {
   }
 
   size_t MACWRAPPER_PREFIX(malloc_good_size) (size_t sz) {
-    void * ptr = MACWRAPPER_PREFIX(malloc)(sz);
-    size_t objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
+    auto * ptr = MACWRAPPER_PREFIX(malloc)(sz);
+    auto objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
     MACWRAPPER_PREFIX(free)(ptr);
     return objSize;
   }
@@ -126,7 +126,7 @@ extern "C" {
       return MACWRAPPER_PREFIX(malloc)(1);
     }
 
-    size_t objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
+    auto objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
 
     // Custom logic here to ensure we only do a logarithmic number of
     // reallocations (with a constant space overhead).
@@ -143,13 +143,13 @@ extern "C" {
     }
 #endif
 
-    void * buf = MACWRAPPER_PREFIX(malloc)((size_t) (sz));
+    auto * buf = MACWRAPPER_PREFIX(malloc)((size_t) (sz));
 
     if (buf != NULL) {
       // Successful malloc.
       // Copy the contents of the original object
       // up to the size of the new block.
-      size_t minSize = (objSize < sz) ? objSize : sz;
+      auto minSize = (objSize < sz) ? objSize : sz;
       memcpy (buf, ptr, minSize);
       MACWRAPPER_PREFIX(free) (ptr);
     } else {
@@ -173,11 +173,11 @@ extern "C" {
   }
 
   void * MACWRAPPER_PREFIX(calloc) (size_t elsize, size_t nelems) {
-    size_t n = nelems * elsize;
+    auto n = nelems * elsize;
     if (n == 0) {
       n = 1;
     }
-    void * ptr = MACWRAPPER_PREFIX(malloc) (n);
+    auto * ptr = MACWRAPPER_PREFIX(malloc) (n);
     if (ptr) {
       memset (ptr, 0, n);
     }
@@ -188,7 +188,7 @@ extern "C" {
   {
     char * newString = NULL;
     if (s != NULL) {
-      int len = strlen(s) + 1;
+      auto len = strlen(s) + 1UL;
       if ((newString = (char *) MACWRAPPER_PREFIX(malloc)(len))) {
 	memcpy (newString, s, len);
       }
@@ -206,7 +206,7 @@ extern "C" {
       }
     // Try to just allocate an object of the requested size.
     // If it happens to be aligned properly, just return it.
-    void * ptr = MACWRAPPER_PREFIX(malloc)(size);
+    auto * ptr = MACWRAPPER_PREFIX(malloc)(size);
     if (((size_t) ptr & (alignment - 1)) == (size_t) ptr) {
       // It is already aligned just fine; return it.
       return ptr;
@@ -216,8 +216,8 @@ extern "C" {
     // Now get a big chunk of memory and align the object within it.
     // NOTE: this assumes that the underlying allocator will be able
     // to free the aligned object, or ignore the free request.
-    void * buf = MACWRAPPER_PREFIX(malloc)(2 * alignment + size);
-    void * alignedPtr = (void *) (((size_t) buf + alignment - 1) & ~(alignment - 1));
+    auto * buf = MACWRAPPER_PREFIX(malloc)(2 * alignment + size);
+    auto * alignedPtr = (void *) (((size_t) buf + alignment - 1) & ~(alignment - 1));
     return alignedPtr;
   }
 
@@ -229,7 +229,7 @@ extern "C" {
       {
 	return EINVAL;
       }
-    void * ptr = MACWRAPPER_PREFIX(memalign) (alignment, size);
+    auto * ptr = MACWRAPPER_PREFIX(memalign) (alignment, size);
     if (!ptr) {
       return ENOMEM;
     } else {
@@ -267,9 +267,9 @@ extern "C" {
   // operator delete nothrow
   void _ZdaPvRKSt9nothrow_t (void *);
 
-  void _malloc_fork_prepare (void);
-  void _malloc_fork_parent (void);
-  void _malloc_fork_child (void);
+  void _malloc_fork_prepare ();
+  void _malloc_fork_parent ();
+  void _malloc_fork_child ();
 }
 
 static malloc_zone_t theDefaultZone;
@@ -334,8 +334,13 @@ extern "C" {
     return NULL;
   }
   
-  void * MACWRAPPER_PREFIX(malloc_default_zone) (void) {
+  void * MACWRAPPER_PREFIX(malloc_default_zone) () {
     return (void *) &theDefaultZone;
+  }
+
+  malloc_zone_t *
+  MACWRAPPER_PREFIX(malloc_default_purgeable_zone)() {
+    return &theDefaultZone;
   }
 
   void MACWRAPPER_PREFIX(malloc_zone_free_definite_size) (malloc_zone_t *, void * ptr, size_t) {
@@ -380,17 +385,17 @@ extern "C" {
     return MACWRAPPER_PREFIX(malloc_usable_size)((void *) ptr);
   }
 
-  void MACWRAPPER_PREFIX(_malloc_fork_prepare)(void) {
+  void MACWRAPPER_PREFIX(_malloc_fork_prepare)() {
     /* Prepare the malloc module for a fork by insuring that no thread is in a malloc critical section */
     xxmalloc_lock();
   }
 
-  void MACWRAPPER_PREFIX(_malloc_fork_parent)(void) {
+  void MACWRAPPER_PREFIX(_malloc_fork_parent)() {
     /* Called in the parent process after a fork() to resume normal operation. */
     xxmalloc_unlock();
   }
 
-  void MACWRAPPER_PREFIX(_malloc_fork_child)(void) {
+  void MACWRAPPER_PREFIX(_malloc_fork_child)() {
     /* Called in the child process after a fork() to resume normal operation.  In the MTASK case we also have to change memory inheritance so that the child does not share memory with the parent. */
     xxmalloc_unlock();
   }
@@ -413,6 +418,8 @@ MAC_INTERPOSE(macwrapper_malloc_good_size, malloc_good_size);
 MAC_INTERPOSE(macwrapper_strdup, strdup);
 MAC_INTERPOSE(macwrapper_posix_memalign, posix_memalign);
 MAC_INTERPOSE(macwrapper_malloc_default_zone, malloc_default_zone);
+MAC_INTERPOSE(macwrapper_malloc_default_purgeable_zone, malloc_default_purgeable_zone);
+
 
 #if 1
 // Zone allocation calls.

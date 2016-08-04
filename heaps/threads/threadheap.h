@@ -60,21 +60,21 @@ namespace HL {
     enum { Alignment = PerThreadHeap::Alignment };
 
     inline void * malloc (size_t sz) {
-      unsigned int tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
+      auto tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
       assert (tid >= 0);
       assert (tid < NumHeaps);
       return getHeap(tid)->malloc (sz);
     }
 
     inline void free (void * ptr) {
-      unsigned int tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
+      auto tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
       assert (tid >= 0);
       assert (tid < NumHeaps);
       getHeap(tid)->free (ptr);
     }
 
     inline size_t getSize (void * ptr) {
-      unsigned int tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
+      auto tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
       assert (tid >= 0);
       assert (tid < NumHeaps);
       return getHeap(tid)->getSize (ptr);
@@ -84,10 +84,11 @@ namespace HL {
   private:
 
     // Access the given heap within the buffer.
-    inline PerThreadHeap * getHeap (int index) {
-      assert (index >= 0);
-      assert (index < NumHeaps);
-      return &ptHeaps[index];
+    inline PerThreadHeap * getHeap (unsigned int index) {
+      int ind = (int) index;
+      assert (ind >= 0);
+      assert (ind < NumHeaps);
+      return &ptHeaps[ind];
     }
 
     PerThreadHeap ptHeaps[NumHeaps];

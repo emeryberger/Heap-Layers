@@ -4,8 +4,8 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2014 by Emery Berger
-  http://www.cs.umass.edu/~emery
+  Copyright (C) 2000-2015 by Emery Berger
+  http://www.emeryberger.com
   emery@cs.umass.edu
   
   This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 #ifndef HL_SPINLOCK_H
 #define HL_SPINLOCK_H
 
-#if (__cplusplus < 201103)
+#if (__cplusplus < 201103) || defined(__SUNPRO_CC) // Still no support for atomic...
 #include "spinlock-old.h"
 #else
 
@@ -78,7 +78,7 @@
 
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : :); }
+#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : : "memory"); }
 
 #else
 
@@ -104,6 +104,10 @@ namespace HL {
       if (_mutex.exchange(true)) {
 	contendedLock();
       }
+    }
+
+    inline bool didLock() {
+      return !_mutex.exchange(true);
     }
 
     inline void unlock() {

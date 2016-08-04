@@ -48,7 +48,7 @@ namespace HL {
     {}
 
     inline void lock() {
-      int currthread = CPUInfo::getThreadId();
+      auto currthread = CPUInfo::getThreadId();
       if (_tid == currthread) {
 	_recursiveDepth++;
       } else {
@@ -59,7 +59,7 @@ namespace HL {
     }
 
     inline void unlock (void) {
-      int currthread = CPUInfo::getThreadId();
+      auto currthread = (int) CPUInfo::getThreadId();
       if (_tid == currthread) {
 	_recursiveDepth--;
 	if (_recursiveDepth == 0) {
