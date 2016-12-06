@@ -29,12 +29,19 @@
 
 #if defined(__APPLE__)
 
-#include <libkern/OSAtomic.h>
-
 /**
  * @class MacLockType
  * @brief Locking using OS X spin locks.
  */
+
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1012
+#define USE_UNFAIR_LOCKS 1
+#include <os/lock.h>
+#else
+#define USE_UNFAIR_LOCKS 0
+#include <libkern/OSAtomic.h>
+#endif
+
 
 namespace HL {
 
@@ -42,25 +49,46 @@ namespace HL {
   public:
 
     MacLockType()
-      : mutex (0)
-    {}
+    {
+#if USE_UNFAIR_LOCKS
+      mutex = OS_UNFAIR_LOCK_INIT;
+#else
+      mutex = OS_SPINLOCK_INIT;
+#endif      
+    }
 
     ~MacLockType()
     {
-      mutex = 0;
+#if USE_UNFAIR_LOCKS
+      mutex = OS_UNFAIR_LOCK_INIT;
+#else
+      mutex = OS_SPINLOCK_INIT;
+#endif      
     }
 
     inline void lock() {
+#if USE_UNFAIR_LOCKS
+      os_unfair_lock_lock(&mutex);
+#else
       OSSpinLockLock (&mutex);
+#endif
     }
 
     inline void unlock() {
+#if USE_UNFAIR_LOCKS
+      os_unfair_lock_unlock(&mutex);
+#else
       OSSpinLockUnlock (&mutex);
+#endif
     }
 
   private:
 
+#if USE_UNFAIR_LOCKS
+    os_unfair_lock mutex;
+#else
     OSSpinLock mutex;
+#endif
 
   };
 
