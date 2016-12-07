@@ -3,21 +3,21 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-  
+
   Copyright (C) 2000-2015 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-  
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -330,7 +330,7 @@ extern "C"  char * MYCDECL CUSTOM_GETCWD(char * buf, size_t size)
   static getcwdFunction * real_getcwd
     = reinterpret_cast<getcwdFunction *>
     (reinterpret_cast<uintptr_t>(dlsym (RTLD_NEXT, "getcwd")));
-  
+
   if (!buf) {
     if (size == 0) {
       size = PATH_MAX;
@@ -393,7 +393,7 @@ extern "C" struct mallinfo CUSTOM_MALLINFO(void) {
 #define NEW_INCLUDED
 
 void * operator new (size_t sz)
-#if defined(__GNUC__)
+#if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
 {
@@ -416,10 +416,10 @@ void operator delete (void * ptr)
 #if !defined(__SUNPRO_CC) || __SUNPRO_CC > 0x420
 void * operator new (size_t sz, const std::nothrow_t&) throw() {
   return CUSTOM_MALLOC(sz);
-} 
+}
 
-void * operator new[] (size_t size) 
-#if defined(__GNUC__)
+void * operator new[] (size_t size)
+#if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
 {
@@ -435,11 +435,16 @@ void * operator new[] (size_t sz, const std::nothrow_t&)
   throw()
  {
   return CUSTOM_MALLOC(sz);
-} 
+}
 
 void operator delete[] (void * ptr)
-#if defined(__GNUC__)
+#if defined(_GLIBCXX_USE_NOEXCEPT)
   _GLIBCXX_USE_NOEXCEPT
+#else
+#if defined(__GNUC__)
+  // clang + libcxx on linux
+  _NOEXCEPT
+#endif
 #endif
 {
   CUSTOM_FREE (ptr);
