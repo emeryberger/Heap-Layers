@@ -52,9 +52,7 @@
 #define __THROW
 #endif
 
-#if !defined(CUSTOM_PREFIX)
 #define CUSTOM_PREFIX(x) custom##x
-#endif
 
 #define WEAK_REDEF1(type,fname,arg1) type fname(arg1) __THROW WEAK(custom##fname)
 #define WEAK_REDEF2(type,fname,arg1,arg2) type fname(arg1,arg2) __THROW WEAK(custom##fname)
