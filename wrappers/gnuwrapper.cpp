@@ -47,17 +47,18 @@
 
 */
 
-
 #define WEAK(x) __attribute__ ((weak, alias(#x)))
 #ifndef __THROW
 #define __THROW
 #endif
 
-#define CUSTOM_PREFIX(x) hoard_##x
+#if !defined(CUSTOM_PREFIX)
+#define CUSTOM_PREFIX(x) custom##x
+#endif
 
-#define WEAK_REDEF1(type,fname,arg1) type fname(arg1) __THROW WEAK(hoard_##fname)
-#define WEAK_REDEF2(type,fname,arg1,arg2) type fname(arg1,arg2) __THROW WEAK(hoard_##fname)
-#define WEAK_REDEF3(type,fname,arg1,arg2,arg3) type fname(arg1,arg2,arg3) __THROW WEAK(hoard_##fname)
+#define WEAK_REDEF1(type,fname,arg1) type fname(arg1) __THROW WEAK(custom##fname)
+#define WEAK_REDEF2(type,fname,arg1,arg2) type fname(arg1,arg2) __THROW WEAK(custom##fname)
+#define WEAK_REDEF3(type,fname,arg1,arg2,arg3) type fname(arg1,arg2,arg3) __THROW WEAK(custom##fname)
 
 extern "C" {
   WEAK_REDEF1(void *, malloc, size_t);
@@ -72,3 +73,4 @@ extern "C" {
 }
 
 #include "wrapper.cpp"
+#include "gnuwrapper-hooks.cpp"
