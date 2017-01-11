@@ -445,6 +445,25 @@ void operator delete[] (void * ptr)
   CUSTOM_FREE (ptr);
 }
 
+#if __cpp_sized_deallocation >= 201309
+
+void operator delete(void * ptr, size_t)
+#if !defined(linux_)
+  throw ()
+#endif
+{
+  CUSTOM_FREE (ptr);
+}
+
+void operator delete[](void * ptr, size_t)
+#if defined(__GNUC__)
+  _GLIBCXX_USE_NOEXCEPT
+#endif
+{
+  CUSTOM_FREE (ptr);
+}
+#endif
+
 #endif
 #endif
 
