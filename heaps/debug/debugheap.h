@@ -37,7 +37,7 @@ namespace HL {
         ((char *) ptr)[i] = 'A';
       }
       size_t * canaryLocation =
-	(size_t *) ((char *) ptr + realSize - sizeof(size_t));
+	(size_t *) ((intptr_t) ptr + realSize - sizeof(size_t));
       *canaryLocation = (size_t) CANARY;
       return ptr;
     }
@@ -48,7 +48,7 @@ namespace HL {
 	size_t realSize = Super::getSize(ptr);
 	// Check for the canary.
 	size_t * canaryLocation =
-	  (size_t *) ((char *) ptr + realSize - sizeof(size_t));
+	  (size_t *) ((intptr_t) ptr + realSize - sizeof(size_t));
 	size_t storedCanary = *canaryLocation;
 	if (storedCanary != CANARY) {
 	  abort();
