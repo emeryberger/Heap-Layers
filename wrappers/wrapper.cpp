@@ -286,7 +286,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
   return buf;
 }
 
-#if defined(linux)
+#if defined(__linux)
 
 extern "C" char * MYCDECL CUSTOM_STRNDUP(const char * s, size_t sz)
 {
