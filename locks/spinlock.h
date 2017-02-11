@@ -4,8 +4,8 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2012 by Emery Berger
-  http://www.cs.umass.edu/~emery
+  Copyright (C) 2000-2015 by Emery Berger
+  http://www.emeryberger.com
   emery@cs.umass.edu
   
   This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,10 @@
 
 #ifndef HL_SPINLOCK_H
 #define HL_SPINLOCK_H
+
+#if (__cplusplus < 201103) || defined(__SUNPRO_CC) // Still no support for atomic...
+#include "spinlock-old.h"
+#else
 
 #include <atomic> // C++11
 
@@ -72,9 +76,9 @@
 #define _MM_PAUSE YieldProcessor() // {__asm{_emit 0xf3};__asm {_emit 0x90}}
 #include <windows.h>
 
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : :); }
+#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : : "memory"); }
 
 #else
 
@@ -87,10 +91,9 @@ namespace HL {
   class SpinLockType {
   private:
     std::atomic<bool> _mutex;
-    //    std::atomic_flag _mutex;
   public:
   
-    SpinLockType (void)
+    SpinLockType()
       : _mutex (false)
     {}
   
@@ -101,6 +104,10 @@ namespace HL {
       if (_mutex.exchange(true)) {
 	contendedLock();
       }
+    }
+
+    inline bool didLock() {
+      return !_mutex.exchange(true);
     }
 
     inline void unlock() {
@@ -146,5 +153,7 @@ namespace HL {
     enum { MAX_SPIN_LIMIT = 1024 };
   };
 }
+
+#endif
 
 #endif // _SPINLOCK_H_

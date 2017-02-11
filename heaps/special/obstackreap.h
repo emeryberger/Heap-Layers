@@ -4,7 +4,6 @@
 #define HL_OBSTACKREAP_H
 
 #include <assert.h>
-#include <iostream>
 
 /*
 
@@ -24,19 +23,19 @@ namespace ObstackReapNS {
 	template <class ObjType>
   class DynamicArray {
   public:
-    DynamicArray (void)
+    DynamicArray()
       : internalArray (0),
 	internalArrayLength (0)
     {}
 
-    ~DynamicArray (void)
+    ~DynamicArray()
     {
       clear();
     }
 
     // clear deletes everything in the array.
 
-    inline void clear (void) {
+    inline void clear() {
       if (internalArray) {
         delete [] internalArray;
         internalArray = 0;
@@ -129,20 +128,20 @@ namespace ObstackReapNS {
   template <class OBJTYPE>
   class DynStack {
   public:
-    DynStack (void)
+    DynStack()
       : numItems (0)
     {
       items[0] = 0;
     }
 
-    int length (void) const { return numItems; }
+    int length() const { return numItems; }
 
     inline void push (OBJTYPE * ptr) {
       numItems++;
       items[numItems] = ptr;
     }
 
-    inline OBJTYPE * pop (void) {
+    inline OBJTYPE * pop() {
       OBJTYPE * ptr = 0;
       if (numItems > 0) {
         ptr = items[numItems];
@@ -153,7 +152,7 @@ namespace ObstackReapNS {
       return ptr;
     }
 
-    inline OBJTYPE * top (void) {
+    inline OBJTYPE * top() {
       OBJTYPE * ptr = NULL;
       if (numItems > 0) {
         ptr = items[numItems];
@@ -161,7 +160,7 @@ namespace ObstackReapNS {
       return ptr;
     }
 
-    inline void clear (void) {
+    inline void clear() {
       items.clear();
     }
 
@@ -188,13 +187,13 @@ template <class ReapType>
 class ObstackReap {
 public:
 
-  ObstackReap (void)
+  ObstackReap()
   {
     currentReap = new ReapType;
     initCurrentObject();
   }
 
-  ~ObstackReap (void) {
+  ~ObstackReap() {
     ReapType * r;
     while ((r = reapStack.pop())) {
       delete r;
@@ -205,14 +204,14 @@ public:
 
   inline void * malloc (size_t sz);
   inline void freeAfter (void * ptr);
-  inline void freeAll (void);
-  inline void * getObjectBase (void);
-  inline void finalize (void);
+  inline void freeAll();
+  inline void * getObjectBase();
+  inline void finalize();
   inline void * grow (size_t sz);
 
 private:
 
-  inline void initCurrentObject (void);
+  inline void initCurrentObject();
 
   // Hide free.
   void free (void *);
@@ -230,7 +229,7 @@ private:
 
 
 template <class ReapType>
-void ObstackReap<ReapType>::initCurrentObject (void) {
+void ObstackReap<ReapType>::initCurrentObject() {
   currentObject = currentReap->malloc (INITIAL_OBJECT_SIZE);
   currentObjectPosition = (char *) currentObject;
   currentObjectSize = 0;
@@ -260,7 +259,7 @@ void ObstackReap<ReapType>::freeAfter (void * ptr) {
 }
 
 template <class ReapType>
-void ObstackReap<ReapType>::freeAll (void) {
+void ObstackReap<ReapType>::freeAll() {
   while (currentReap) {
     delete currentReap;
     currentReap = reapStack.pop();
@@ -270,13 +269,13 @@ void ObstackReap<ReapType>::freeAll (void) {
 
 
 template <class ReapType>
-inline void * ObstackReap<ReapType>::getObjectBase (void) {
+inline void * ObstackReap<ReapType>::getObjectBase() {
   isCurrentObjectExposed = true;
   return currentObject;
 }
 
 template <class ReapType>
-inline void ObstackReap<ReapType>::finalize (void) {
+inline void ObstackReap<ReapType>::finalize() {
   if (isCurrentObjectExposed) {
     reapStack.push (currentReap);
     currentReap = new ReapType;
@@ -290,7 +289,6 @@ inline void * ObstackReap<ReapType>::grow (size_t sz) {
   const int requestedObjectSize = currentObjectSize + sz;
 
   if (requestedObjectSize > actualObjectSize) {
-    std::cout << "resize!\n";
     void * ptr = currentReap->realloc (currentObject, sz);
     currentObjectPosition = (char *) ptr + (currentObjectPosition - (char *) currentObject);
     if (isCurrentObjectExposed) {

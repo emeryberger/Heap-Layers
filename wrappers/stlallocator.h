@@ -134,12 +134,29 @@ public:
     Super::free (p);
   }
   
+#if __cplusplus >= 201103L  
+  // Updated API from C++11 to work with move constructors
+  template<class U, class... Args>
+  void construct (U* p, Args&&... args) {
+    new((void *) p) U(std::forward<Args>(args)...);
+  }
+  
+  template<class U>
+  void destroy (U* p) {
+    p->~U();
+  }
+
+#else
+  // Legacy API for pre-C++11
   void construct (pointer p, const T& val) { 
     new ((void *) p) T (val);
   }
+  
   void destroy (pointer p) {
-    p->~T();
+    ((T*)p)->~T();
   }
+  
+#endif
 
   template <class U> STLAllocator (const STLAllocator<U, Super> &) throw() 
   {

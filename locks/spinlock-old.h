@@ -24,8 +24,8 @@
 
 */
 
-#ifndef HL_SPINLOCK_H
-#define HL_SPINLOCK_H
+#ifndef HL_SPINLOCKOLD_H
+#define HL_SPINLOCKOLD_H
 
 #if defined(unix)
 #include <sched.h>

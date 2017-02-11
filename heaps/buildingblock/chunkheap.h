@@ -1,7 +1,7 @@
 /* -*- C++ -*- */
 
-#ifndef _CHUNKHEAP_H_
-#define _CHUNKHEAP_H_
+#ifndef HL_CHUNKHEAP_H_
+#define HL_CHUNKHEAP_H_
 
 /*
 

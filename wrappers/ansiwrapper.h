@@ -36,7 +36,7 @@ namespace HL {
       // currently does) provide more than enough slack to compensate for any
       // rounding below (in the alignment section).
       if (sz > HL::MallocInfo::MaxSize) {
-	return NULL;
+	return 0;
       }
       if (sz < HL::MallocInfo::MinSize) {
       	sz = HL::MallocInfo::MinSize;
@@ -47,21 +47,22 @@ namespace HL {
       powTwo = powTwo;
 
       // Enforce alignment.
-      sz = (sz + HL::MallocInfo::Alignment - 1) & ~(HL::MallocInfo::Alignment - 1);
+      sz = (sz + HL::MallocInfo::Alignment - 1UL) &
+	~(HL::MallocInfo::Alignment - 1UL);
 
-      void * ptr = SuperHeap::malloc (sz);
+      auto * ptr = SuperHeap::malloc (sz);
       assert ((size_t) ptr % HL::MallocInfo::Alignment == 0);
       return ptr;
     }
  
     inline void free (void * ptr) {
       if (ptr != 0) {
-      	SuperHeap::free (ptr);
+	SuperHeap::free (ptr);
       }
     }
 
-    inline void * calloc (const size_t s1, const size_t s2) {
-      char * ptr = (char *) malloc (s1 * s2);
+    inline void * calloc (size_t s1, size_t s2) {
+      auto * ptr = (char *) malloc (s1 * s2);
       if (ptr) {
       	memset (ptr, 0, s1 * s2);
       }
@@ -77,18 +78,18 @@ namespace HL {
       	return 0;
       }
 
-      size_t objSize = getSize (ptr);
+      auto objSize = getSize (ptr);
       if (objSize == sz) {
     	return ptr;
       }
 
       // Allocate a new block of size sz.
-      void * buf = malloc (sz);
+      auto * buf = malloc (sz);
 
       // Copy the contents of the original object
       // up to the size of the new block.
 
-      size_t minSize = (objSize < sz) ? objSize : sz;
+      auto minSize = (objSize < sz) ? objSize : sz;
       if (buf) {
 	memcpy (buf, ptr, minSize);
       }

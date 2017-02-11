@@ -1,12 +1,14 @@
-// -*- C++ -*-
+#ifndef HL_EXACTLYONE_H
+#define HL_EXACTLYONE_H
 
 /*
 
-  Heap Layers: An Extensible Memory Allocation Infrastructure
-  
-  Copyright (C) 2000-2012 by Emery Berger
-  http://www.cs.umass.edu/~emery
-  emery@cs.umass.edu
+  The Hoard Multiprocessor Memory Allocator
+  www.hoard.org
+
+  Author: Emery Berger, http://www.emeryberger.org
+ 
+  Copyright (c) 1998-2015 Emery Berger
   
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -24,27 +26,30 @@
 
 */
 
-#ifndef HL_MALLOCINFO_H
-#define HL_MALLOCINFO_H
+/**
+ * @class ExactlyOne
+ * @brief Creates a singleton of type CLASS, accessed through ().
+ * @author Emery Berger <http://www.emeryberger.org>
+ */
 
-#include <limits.h>
+#include <new>
 
 namespace HL {
-  
-  class MallocInfo {
-  public:
-    // Prevent integer overflows by restricting allocation size (usually 2GB).
-    enum { MaxSize = UINT_MAX / 2 };
 
-#if defined(__LP64__) || defined(_LP64) || defined(__APPLE__) || defined(_WIN64) || defined(__x86_64__)
-    enum { MinSize = 16UL };
-    enum { Alignment = 16UL };
-#else
-    enum { MinSize   = sizeof(double) };
-    enum { Alignment = sizeof(double) };
-#endif
+  template <class CLASS>
+    class ExactlyOne {
+  public:
+
+    inline CLASS& operator()() {
+      // We store the singleton in a double buffer to force alignment.
+      static double buf[(sizeof(CLASS) + sizeof(double) - 1) / sizeof(double)];
+      static CLASS * theOneTrueInstancePtr = new (buf) CLASS;
+      return *theOneTrueInstancePtr;
+    }
+
   };
 
 }
 
 #endif
+

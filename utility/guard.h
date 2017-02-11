@@ -38,7 +38,7 @@ namespace HL {
 	_lock.lock();
       }
 
-    inline ~Guard (void) {
+    inline ~Guard() {
       _lock.unlock();
     }
   private:

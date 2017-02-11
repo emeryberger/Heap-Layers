@@ -114,7 +114,7 @@ namespace HL {
 
     static inline void * malloc (size_t sz) {
       // Round up to the size of a page.
-      sz = (sz + CPUInfo::PageSize - 1) & ~(CPUInfo::PageSize - 1);
+      sz = (sz + CPUInfo::PageSize - 1) & (size_t) ~(CPUInfo::PageSize - 1);
 #if defined(MAP_ALIGN) && defined(MAP_ANON)
       // Request memory aligned to the Alignment value above.
       void * ptr = mmap ((char *) Alignment, sz, HL_MMAP_PROTECTION_MASK, MAP_PRIVATE | MAP_ALIGN | MAP_ANON, -1, 0);

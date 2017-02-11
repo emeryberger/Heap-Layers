@@ -44,7 +44,7 @@ namespace HL {
     {
     }
     
-    ~ProfileHeap (void)
+    ~ProfileHeap()
     {
       if (maxMemRequested > 0) {
 	stats();

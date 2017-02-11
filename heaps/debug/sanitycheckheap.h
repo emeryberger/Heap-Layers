@@ -27,7 +27,7 @@ namespace HL {
     /// This approach lets us use SanityCheckHeaps when we're replacing malloc.
 
     // The objects are pairs, mapping void * pointers to sizes.
-    typedef std::pair<const void *, size_t> objType;
+    typedef std::pair<const intptr_t, size_t> objType;
 
     // The heap is a simple freelist heap.
     typedef HL::FreelistHeap<HL::ZoneHeap<HL::MmapHeap, 16384> > heapType;
@@ -35,10 +35,10 @@ namespace HL {
     // And we wrap it up so it can be used as an STL allocator.
     typedef HL::STLAllocator<objType, heapType> localAllocator;
 
-    typedef std::less<void *> localComparator;
+    typedef std::less<intptr_t> localComparator;
 
     /// A map of pointers to objects and their allocated sizes.
-    typedef std::map<void *, size_t, localComparator, localAllocator> mapType;
+    typedef std::map<intptr_t, size_t, localComparator, localAllocator> mapType;
 
     /// A freed object has a special size, -1.
     enum { FREED = -1 };
@@ -63,11 +63,11 @@ namespace HL {
       // Record this object as allocated.
       mapType::iterator i;
       // Look for this object in the map of allocated objects.
-      i = allocatedObjects.find (ptr);
+      i = allocatedObjects.find ((intptr_t)ptr);
       if (i == allocatedObjects.end()) {
         // We didn't find it (this is good).
         // Add the tuple (ptr, sz).
-        allocatedObjects.insert (std::pair<void *, int>(ptr, sz));
+        allocatedObjects.insert (std::pair<intptr_t, int>((intptr_t)ptr, sz));
       } else {
       // We found it.
       // It really should have been freed.
@@ -86,7 +86,7 @@ namespace HL {
     inline void free (void * ptr) {
       // Look for this object in the list of allocated objects.
       mapType::iterator i;
-      i = allocatedObjects.find (ptr);
+      i = allocatedObjects.find ((intptr_t)ptr);
       if (i == allocatedObjects.end()) {
         assert ( FREE_CALLED_ON_OBJECT_I_NEVER_ALLOCATED );
         return;

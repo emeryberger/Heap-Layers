@@ -4,8 +4,8 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2012 by Emery Berger
-  http://www.cs.umass.edu/~emery
+  Copyright (C) 2000-2015 by Emery Berger
+  http://www.emeryberger.com
   emery@cs.umass.edu
   
   This program is free software; you can redistribute it and/or modify
@@ -43,12 +43,12 @@
 namespace Kingsley {
 
   inline size_t class2Size (const int i) {
-    size_t sz = (size_t) (1UL << (i+3));
+    auto sz = (size_t) (1ULL << (i+3));
     return sz;
   }
 
   inline int size2Class (const size_t sz) {
-    int cl = HL::ilog2 ((sz < 8) ? 8 : sz) - 3;
+    auto cl = (int) HL::ilog2 ((sz < 8) ? 8 : sz) - 3;
     return cl;
   }
 

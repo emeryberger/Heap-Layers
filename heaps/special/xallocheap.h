@@ -37,14 +37,14 @@ namespace HL {
 
   public:
 
-    inline XallocHeap (void) {
+    inline XallocHeap() {
       start_of_array = (char *) SuperHeap::malloc (ArenaSize);
       end_of_array = start_of_array + HL::align<sizeof(double)>(sizeof(Nuggie));
       size_lval(end_of_array) = 0;
       last_block = NULL;
     }
 
-    inline ~XallocHeap (void) {
+    inline ~XallocHeap() {
       SuperHeap::free (start_of_array);
     }
 

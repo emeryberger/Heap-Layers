@@ -1,7 +1,7 @@
 // -*- C++ -*-
 
-#if !defined(_BINS16K_H_)
-#define _BINS16K_H_
+#if !defined(HL_BINS16K_H_)
+#define HL_BINS16K_H_
 
 #include <cstdlib>
 #include <assert.h>

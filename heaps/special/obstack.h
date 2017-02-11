@@ -48,7 +48,7 @@ namespace HL {
   class ObstackHeap : public SuperHeap {
   public:
 
-    ObstackHeap (void)
+    ObstackHeap()
     {
       // Get one chunk and set the current position marker.
       currentChunk = makeChunk (NULL, ChunkSize);
@@ -56,7 +56,7 @@ namespace HL {
       assert (isValid());
     }
 
-    ~ObstackHeap (void) {
+    ~ObstackHeap() {
       // Free every chunk.
       assert (isValid());
       ChunkHeader * ch = currentChunk;
@@ -155,13 +155,13 @@ namespace HL {
     }
 
 
-    inline void * getObjectBase (void) {
+    inline void * getObjectBase() {
       assert (isValid());
       return currentBase;
     }
 
 
-    inline void finalize (void) {
+    inline void finalize() {
       assert (isValid());
       nextPos = (char *) HL::align<HL::MallocInfo::Alignment>((int) nextPos);
       currentBase = nextPos;
@@ -172,14 +172,14 @@ namespace HL {
   private:
 
 
-    inline int objectSize (void) {
+    inline int objectSize() {
       int diff = (int) (nextPos - currentBase);
       assert (diff >= 0);
       return diff;
     }
 
 
-    int isValid (void) {
+    int isValid() {
       // Verify class invariants.
 #ifndef NDEBUG
       bool c1 = (currentBase <= nextPos);
@@ -209,10 +209,10 @@ namespace HL {
       {}
 
       // Return the end of the current chunk.
-      inline char * getLimit (void) { return _pastEnd; }
+      inline char * getLimit() { return _pastEnd; }
 
       // Return the previous chunk.
-      inline ChunkHeader * getPrevChunk (void) { return _prevChunk; }
+      inline ChunkHeader * getPrevChunk() { return _prevChunk; }
 
     private:
       // Just past the end of this chunk.

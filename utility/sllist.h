@@ -24,8 +24,8 @@
 
 */
 
-#ifndef _SLLIST_H_
-#define _SLLIST_H_
+#ifndef HL_SLLIST_H_
+#define HL_SLLIST_H_
 
 #include <assert.h>
 
@@ -79,7 +79,8 @@ namespace HL {
   public:
 
     /// Inserts an entry into the head of the list.
-    inline void insert (Entry * e) {
+    inline void insert (void * ePtr) {
+      Entry * e = (Entry *) ePtr;
       e->next = head.next;
       head.next = e;
     }
