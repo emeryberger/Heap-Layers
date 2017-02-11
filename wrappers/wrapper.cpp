@@ -126,6 +126,8 @@ extern "C" {
 
 /***** generic malloc functions *****/
 
+#include <stdio.h>
+
 extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
 {
   xxfree (ptr);
