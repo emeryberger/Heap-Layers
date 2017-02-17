@@ -38,6 +38,10 @@ namespace HL {
 
     enum { Alignment = Heap::Alignment };
 
+    inline Heap &getSuperHeap() {
+      return (*this)();
+    }
+
     inline void * malloc (size_t sz) {
       return (*this)().malloc (sz);
     }
