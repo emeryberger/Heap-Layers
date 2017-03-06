@@ -5,11 +5,8 @@
 
 #include <assert.h>
 #include <string.h>
-
-#include "utility/gcd.h"
-#include "utility/istrue.h"
-#include "utility/sassert.h"
-#include "mallocinfo.h"
+#include <stddef.h>
+#include <stdalign.h>
 
 
 /*
@@ -24,34 +21,42 @@ namespace HL {
 
   template <class SuperHeap>
   class ANSIWrapper : public SuperHeap {
+  private:
+    static constexpr int gcd(int a, int b) {
+      if (b == 0) {
+	return a;
+      }
+      return gcd(b, a % b);
+    }
+
   public:
   
     ANSIWrapper() {
-      sassert<(gcd<SuperHeap::Alignment, HL::MallocInfo::Alignment>::value == HL::MallocInfo::Alignment)> checkAlignment;
-      checkAlignment = checkAlignment;
+      static_assert(gcd(SuperHeap::Alignment, alignof(max_align_t)) == alignof(max_align_t),
+		    "Alignment mismatch");
     }
 
     inline void * malloc (size_t sz) {
       // Prevent integer underflows. This maximum should (and
       // currently does) provide more than enough slack to compensate for any
       // rounding below (in the alignment section).
-      if (sz > HL::MallocInfo::MaxSize) {
+      if (sz > INT_MAX) {
 	return 0;
       }
-      if (sz < HL::MallocInfo::MinSize) {
-      	sz = HL::MallocInfo::MinSize;
+      if (sz < alignof(max_align_t)) {
+      	sz = alignof(max_align_t);
       }
       // Enforce alignment requirements: round up allocation sizes if needed.
       // NOTE: Alignment needs to be a power of two.
-      sassert<(HL::MallocInfo::Alignment & (HL::MallocInfo::Alignment - 1)) == 0> powTwo;
-      powTwo = powTwo;
+      static_assert((alignof(max_align_t) & (alignof(max_align_t) - 1)) == 0,
+		    "Alignment not a power of two.");
 
       // Enforce alignment.
-      sz = (sz + HL::MallocInfo::Alignment - 1UL) &
-	~(HL::MallocInfo::Alignment - 1UL);
+      sz = (sz + alignof(max_align_t) - 1UL) &
+	~(alignof(max_align_t) - 1UL);
 
       auto * ptr = SuperHeap::malloc (sz);
-      assert ((size_t) ptr % HL::MallocInfo::Alignment == 0);
+      assert ((size_t) ptr % alignof(max_align_t) == 0);
       return ptr;
     }
  
@@ -107,7 +112,6 @@ namespace HL {
       }
     }
   };
-
 }
 
 #endif
