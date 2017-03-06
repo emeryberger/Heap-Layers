@@ -29,17 +29,25 @@
 
 #include <new>
 
-//class std::bad_alloc;
+// explicit throw lists are deprecated in C++11 and higher, and GCC
+// complains about them
+#if __cplusplus >= 201103L
+#define HL_THROW_BAD_ALLOC
+#else
+class std::bad_alloc;
+#define HL_THROW_BAD_ALLOC throw (std::bad_alloc)
+#endif
+
 
 namespace HL {
 
   template <class Super>
   class ExceptionHeap : public Super {
   public:
-    inline void * malloc (size_t sz) throw (std::bad_alloc) {
+    inline void * malloc (size_t sz) HL_THROW_BAD_ALLOC {
       void * ptr = Super::malloc (sz);
       if (ptr == NULL) {
-	throw new std::bad_alloc;
+        throw new std::bad_alloc;
       }
       return ptr;
     }
