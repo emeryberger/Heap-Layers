@@ -27,8 +27,8 @@
 #ifndef HL_LOCKEDHEAP_H
 #define HL_LOCKEDHEAP_H
 
+#include <mutex>
 #include <cstddef>
-#include "utility/guard.h"
 
 namespace HL {
 
@@ -39,22 +39,22 @@ namespace HL {
     enum { Alignment = Super::Alignment };
 
     inline void * malloc (size_t sz) {
-      Guard<LockType> l (thelock);
+      std::lock_guard<LockType> l (thelock);
       return Super::malloc (sz);
     }
 
     inline void free (void * ptr) {
-      Guard<LockType> l (thelock);
+      std::lock_guard<LockType> l (thelock);
       Super::free (ptr);
     }
 
     inline size_t getSize (void * ptr) const {
-      Guard<LockType> l (thelock);
+      std::lock_guard<LockType> l (thelock);
       return Super::getSize (ptr);
     }
 
     inline size_t getSize (void * ptr) {
-      Guard<LockType> l (thelock);
+      std::lock_guard<LockType> l (thelock);
       return Super::getSize (ptr);
     }
 
