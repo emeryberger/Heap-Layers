@@ -19,7 +19,6 @@ namespace HL {
   inline size_t align (size_t v) {
     static_assert((Alignment & (Alignment-1)) == 0,
 		  "Alignment must be a power of two.");
-    isPowerOfTwo = isPowerOfTwo;
     return ((v + (Alignment-1)) & ~(Alignment-1));
   }
 
