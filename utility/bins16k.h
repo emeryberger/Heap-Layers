@@ -7,7 +7,6 @@
 #include <assert.h>
 
 #include "bins.h"
-#include "sassert.h"
 
 namespace HL {
 
@@ -15,8 +14,10 @@ template <class Header>
 class bins<Header, 16384> {
 public:
 
-  bins (void)
+  bins()
   {
+    static_assert(BIG_OBJECT > 0,
+		  "Big object must be positive.");
   }
 
   enum { NUM_BINS = 24 };
@@ -38,10 +39,6 @@ public:
     assert (i < NUM_BINS);
     return _bins[i];
   }
-
-private:
-
-  sassert<(BIG_OBJECT > 0)> verifyHeaderSize;
 
 };
 

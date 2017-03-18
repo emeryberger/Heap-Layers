@@ -5,8 +5,6 @@
 
 #include <stdlib.h>
 
-#include "sassert.h"
-
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
@@ -19,7 +17,8 @@ namespace HL {
   /// @note  Argument must be a power of two.
   template <size_t Alignment>
   inline size_t align (size_t v) {
-    sassert<((Alignment & (Alignment-1)) == 0)> isPowerOfTwo;
+    static_assert((Alignment & (Alignment-1)) == 0,
+		  "Alignment must be a power of two.");
     isPowerOfTwo = isPowerOfTwo;
     return ((v + (Alignment-1)) & ~(Alignment-1));
   }

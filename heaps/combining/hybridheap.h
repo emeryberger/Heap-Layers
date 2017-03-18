@@ -45,6 +45,7 @@ namespace HL {
 
     HybridHeap (void)
     {
+      static_assert(BigSize > 0, "Large object size must be positive.");
     }
 
     enum { Alignment = gcd<(int) SmallHeap::Alignment, (int) BigHeap::Alignment>::value };
@@ -82,8 +83,6 @@ namespace HL {
       return bm.malloc (sz);
     }
 
-
-    HL::sassert<(BigSize > 0)> checkBigSizeNonZero;
 
     BigHeap bm;
   };
