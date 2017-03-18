@@ -48,7 +48,6 @@
 #include "locks/posixlock.h"
 #include "threads/cpuinfo.h"
 #include "utility/myhashmap.h"
-#include "utility/sassert.h"
 #include "wrappers/mmapwrapper.h"
 #include "wrappers/stlallocator.h"
 

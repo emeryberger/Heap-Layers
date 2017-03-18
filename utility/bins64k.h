@@ -32,7 +32,6 @@
 
 #include "bins.h"
 #include "./ilog2.h"
-#include "sassert.h"
 
 namespace HL {
 
@@ -40,8 +39,10 @@ namespace HL {
   class bins<Header, 65536> {
   public:
 
-    bins (void)
+    bins()
     {
+      static_assert(BIG_OBJECT > 0, "BIG_OBJECT must be positive.");
+      
 #ifndef NDEBUG
       for (int i = sizeof(double); i < BIG_OBJECT; i++) {
 	int sc = getSizeClass(i);
@@ -64,10 +65,6 @@ namespace HL {
       assert (i >= 0);
       return (sizeof(double) << i);
     }
-
-  private:
-
-    sassert<(BIG_OBJECT > 0)> verifyHeaderSize;
   };
 
 }

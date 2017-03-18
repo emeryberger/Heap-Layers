@@ -16,7 +16,6 @@
 #include "lcm.h"
 #include "modulo.h"
 #include "myhashmap.h"
-#include "sassert.h"
 #include "sllist.h"
 #include "timer.h"
 

@@ -42,7 +42,6 @@
 
 #include "utility/align.h"
 #include "wrappers/mallocinfo.h"
-#include "utility/sassert.h"
 
 namespace HL {
 
@@ -129,7 +128,8 @@ namespace HL {
     class Arena {
     public:
       Arena() {
-	sassert<(sizeof(Arena) % HL::MallocInfo::Alignment == 0)> verifyAlignment;
+	static_assert((sizeof(Arena) % HL::MallocInfo::Alignment == 0),
+		      "Alignment must match Arena size.");
       }
 
       Arena * nextArena;

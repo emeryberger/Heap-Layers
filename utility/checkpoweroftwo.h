@@ -12,8 +12,6 @@
 #ifndef HL_CHECKPOWEROFTWO_H
 #define HL_CHECKPOWEROFTWO_H
 
-#include "sassert.h"
-
 /**
  * @class IsPowerOfTwo
  * @brief Sets value to 1 iff the template argument is a power of two.
@@ -35,7 +33,11 @@ namespace HL {
    **/
   template <unsigned long V>
   class CheckPowerOfTwo {
-    enum { Verify = HL::sassert<IsPowerOfTwo<V>::VALUE>::VALUE };
+  public:
+    CheckPowerOfTwo() {
+      static_assert(IsPowerOfTwo<V>::VALUE, "Argument must be a power of two.");
+    }
+    //    enum { Verify = HL::sassert<IsPowerOfTwo<V>::VALUE>::VALUE };
   };
   
 }
