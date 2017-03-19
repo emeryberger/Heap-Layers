@@ -38,11 +38,11 @@
 
 extern "C" {
 
-  void * xxmalloc (size_t);
-  void   xxfree (void *);
+  void * xxmalloc (size_t) __attribute__((always_inline));
+  void   xxfree (void *) __attribute__((always_inline));
 
   // Takes a pointer and returns how much space it holds.
-  size_t xxmalloc_usable_size (void *);
+  size_t xxmalloc_usable_size (void *) __attribute__((always_inline));
 
   // Locks the heap(s), used prior to any invocation of fork().
   void xxmalloc_lock (void);
@@ -128,6 +128,10 @@ extern "C" {
 
 #include <stdio.h>
 
+extern "C" void MYCDECL CUSTOM_FREE(void *)     __attribute__((always_inline));
+extern "C" void * MYCDECL CUSTOM_MALLOC(size_t) __attribute__((always_inline));
+extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute__((always_inline));
+
 extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
 {
   xxfree (ptr);
@@ -135,9 +139,6 @@ extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
 
 extern "C" void * MYCDECL CUSTOM_MALLOC(size_t sz)
 {
-  if (sz >> (sizeof(size_t) * 8 - 1)) {
-    return NULL;
-  }
   void * ptr = xxmalloc(sz);
   return ptr;
 }
@@ -148,7 +149,7 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
   if (!elsize) {
     return NULL;
   }
-  void * ptr = CUSTOM_MALLOC(n);
+  void * ptr = xxmalloc(n);
   // Zero out the malloc'd block.
   if (ptr != NULL) {
     memset (ptr, 0, n);
