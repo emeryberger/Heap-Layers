@@ -79,16 +79,6 @@ extern "C" {
 extern "C" {
 
   void * MACWRAPPER_PREFIX(malloc) (size_t sz) {
-#if defined(__APPLE__)
-    // Mac OS ABI requires 16-byte alignment, so we round up the size
-    // to the next multiple of 16.
-    if (sz < 16) {
-      sz = 16;
-    }
-    if (sz % 16 != 0) {
-      sz += 16 - (sz % 16);
-    }
-#endif
     void * ptr = xxmalloc(sz);
     return ptr;
   }
@@ -106,9 +96,9 @@ extern "C" {
   }
 
   size_t MACWRAPPER_PREFIX(malloc_good_size) (size_t sz) {
-    auto * ptr = MACWRAPPER_PREFIX(malloc)(sz);
-    auto objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
-    MACWRAPPER_PREFIX(free)(ptr);
+    auto * ptr = xxmalloc(sz);
+    auto objSize = xxmalloc_usable_size(ptr);
+    xxfree(ptr);
     return objSize;
   }
 
@@ -116,17 +106,17 @@ extern "C" {
   {
     // NULL ptr = malloc.
     if (ptr == NULL) {
-      return MACWRAPPER_PREFIX(malloc)(sz);
+      return xxmalloc(sz);
     }
 
     // 0 size = free. We return a small object.  This behavior is
     // apparently required under Mac OS X and optional under POSIX.
     if (sz == 0) {
-      MACWRAPPER_PREFIX(free)(ptr);
-      return MACWRAPPER_PREFIX(malloc)(1);
+      xxfree(ptr);
+      return xxmalloc(1);
     }
 
-    auto objSize = MACWRAPPER_PREFIX(malloc_usable_size)(ptr);
+    auto objSize = xxmalloc_usable_size(ptr);
 
     // Custom logic here to ensure we only do a logarithmic number of
     // reallocations (with a constant space overhead).
@@ -143,7 +133,7 @@ extern "C" {
     }
 #endif
 
-    auto * buf = MACWRAPPER_PREFIX(malloc)((size_t) (sz));
+    auto * buf = xxmalloc((size_t) sz);
 
     if (buf != NULL) {
       // Successful malloc.
@@ -151,12 +141,12 @@ extern "C" {
       // up to the size of the new block.
       auto minSize = (objSize < sz) ? objSize : sz;
       memcpy (buf, ptr, minSize);
-      MACWRAPPER_PREFIX(free) (ptr);
+      xxfree(ptr);
     } else {
       if (isReallocf) {
 	// Free the old block if the new allocation failed.
 	// Specific behavior for Mac OS X reallocf().
-	MACWRAPPER_PREFIX(free) (ptr);
+	xxfree(ptr);
       }
     }
 
@@ -177,7 +167,7 @@ extern "C" {
     if (n == 0) {
       n = 1;
     }
-    auto * ptr = MACWRAPPER_PREFIX(malloc) (n);
+    auto * ptr = xxmalloc(n);
     if (ptr) {
       memset (ptr, 0, n);
     }
