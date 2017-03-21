@@ -150,7 +150,6 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
     return NULL;
   }
   void * ptr = xxmalloc(n);
-  ptr = __builtin_assume_aligned (ptr, 16);
 
   // Zero out the malloc'd block.
   if (ptr != NULL) {
