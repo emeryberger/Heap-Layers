@@ -38,11 +38,11 @@
 
 extern "C" {
 
-  void * xxmalloc (size_t);
-  void   xxfree (void *);
+  void * xxmalloc (size_t) __attribute__((always_inline));
+  void   xxfree (void *) __attribute__((always_inline));
 
   // Takes a pointer and returns how much space it holds.
-  size_t xxmalloc_usable_size (void *);
+  size_t xxmalloc_usable_size (void *) __attribute__((always_inline));
 
   // Locks the heap(s), used prior to any invocation of fork().
   void xxmalloc_lock (void);
@@ -128,6 +128,10 @@ extern "C" {
 
 #include <stdio.h>
 
+extern "C" void MYCDECL CUSTOM_FREE(void *)     __attribute__((always_inline));
+extern "C" void * MYCDECL CUSTOM_MALLOC(size_t) __attribute__((always_inline));
+extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute__((always_inline));
+
 extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
 {
   xxfree (ptr);
@@ -135,9 +139,6 @@ extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
 
 extern "C" void * MYCDECL CUSTOM_MALLOC(size_t sz)
 {
-  if (sz >> (sizeof(size_t) * 8 - 1)) {
-    return NULL;
-  }
   void * ptr = xxmalloc(sz);
   return ptr;
 }
@@ -148,7 +149,8 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
   if (!elsize) {
     return NULL;
   }
-  void * ptr = CUSTOM_MALLOC(n);
+  void * ptr = xxmalloc(n);
+
   // Zero out the malloc'd block.
   if (ptr != NULL) {
     memset (ptr, 0, n);
@@ -199,18 +201,18 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
     }
 
   if (alignment == sizeof(double)) {
-    return CUSTOM_MALLOC (size);
+    return xxmalloc (size);
   } else {
     // Try to just allocate an object of the requested size.
     // If it happens to be aligned properly, just return it.
-    void * ptr = CUSTOM_MALLOC(size);
+    void * ptr = xxmalloc(size);
     if (((size_t) ptr & (alignment - 1)) == (size_t) ptr) {
       // It is already aligned just fine; return it.
       return ptr;
     }
     // It was not aligned as requested: free the object and allocate a big one.
     CUSTOM_FREE(ptr);
-    ptr = CUSTOM_MALLOC (size + 2 * alignment);
+    ptr = xxmalloc (size + 2 * alignment);
     void * alignedPtr = (void *) (((size_t) ptr + alignment - 1) & ~(alignment - 1));
     return alignedPtr;
   }
@@ -240,7 +242,7 @@ extern "C" void MYCDECL CUSTOM_CFREE (void * ptr)
 }
 
 extern "C" size_t MYCDECL CUSTOM_GOODSIZE (size_t sz) {
-  void * ptr = CUSTOM_MALLOC(sz);
+  void * ptr = xxmalloc(sz);
   size_t objSize = CUSTOM_GETSIZE(ptr);
   CUSTOM_FREE(ptr);
   return objSize;
@@ -249,7 +251,7 @@ extern "C" size_t MYCDECL CUSTOM_GOODSIZE (size_t sz) {
 extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 {
   if (ptr == NULL) {
-    ptr = CUSTOM_MALLOC (sz);
+    ptr = xxmalloc (sz);
     return ptr;
   }
   if (sz == 0) {
@@ -257,7 +259,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 #if defined(__APPLE__)
     // 0 size = free. We return a small object.  This behavior is
     // apparently required under Mac OS X and optional under POSIX.
-    return CUSTOM_MALLOC(1);
+    return xxmalloc(1);
 #else
     // For POSIX, don't return anything.
     return NULL;
@@ -266,7 +268,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
   size_t objSize = CUSTOM_GETSIZE (ptr);
 
-  void * buf = CUSTOM_MALLOC(sz);
+  void * buf = xxmalloc(sz);
 
   if (buf != NULL) {
     if (objSize == CUSTOM_GETSIZE(buf)) {
@@ -295,7 +297,7 @@ extern "C" char * MYCDECL CUSTOM_STRNDUP(const char * s, size_t sz)
   char * newString = NULL;
   if (s != NULL) {
     size_t cappedLength = strnlen (s, sz);
-    if ((newString = (char *) CUSTOM_MALLOC(cappedLength + 1))) {
+    if ((newString = (char *) xxmalloc(cappedLength + 1))) {
       strncpy(newString, s, cappedLength);
       newString[cappedLength] = '\0';
     }
@@ -308,7 +310,7 @@ extern "C" char * MYCDECL CUSTOM_STRDUP(const char * s)
 {
   char * newString = NULL;
   if (s != NULL) {
-    if ((newString = (char *) CUSTOM_MALLOC(strlen(s) + 1))) {
+    if ((newString = (char *) xxmalloc(strlen(s) + 1))) {
       strcpy(newString, s);
     }
   }
@@ -337,7 +339,7 @@ extern "C"  char * MYCDECL CUSTOM_GETCWD(char * buf, size_t size)
     if (size == 0) {
       size = PATH_MAX;
     }
-    buf = (char *) CUSTOM_MALLOC(size);
+    buf = (char *) xxmalloc(size);
   }
   return (real_getcwd)(buf, size);
 }
@@ -350,20 +352,20 @@ extern "C" int  CUSTOM_MALLOPT (int /* param */, int /* value */) {
   return 1; // success.
 }
 
-extern "C" int CUSTOM_MALLOC_TRIM(size_t /* pad */) {
+extern "C" int xxmalloc_TRIM(size_t /* pad */) {
   // NOP.
   return 0; // no memory returned to OS.
 }
 
-extern "C" void CUSTOM_MALLOC_STATS(void) {
+extern "C" void xxmalloc_STATS(void) {
   // NOP.
 }
 
-extern "C" void * CUSTOM_MALLOC_GET_STATE(void) {
+extern "C" void * xxmalloc_GET_STATE(void) {
   return NULL; // always returns "error".
 }
 
-extern "C" int CUSTOM_MALLOC_SET_STATE(void * /* ptr */) {
+extern "C" int xxmalloc_SET_STATE(void * /* ptr */) {
   return 0; // success.
 }
 
@@ -399,7 +401,7 @@ void * operator new (size_t sz)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
 {
-  void * ptr = CUSTOM_MALLOC (sz);
+  void * ptr = xxmalloc (sz);
   if (ptr == NULL) {
     throw std::bad_alloc();
   } else {
@@ -417,7 +419,7 @@ void operator delete (void * ptr)
 
 #if !defined(__SUNPRO_CC) || __SUNPRO_CC > 0x420
 void * operator new (size_t sz, const std::nothrow_t&) throw() {
-  return CUSTOM_MALLOC(sz);
+  return xxmalloc(sz);
 }
 
 void * operator new[] (size_t size)
@@ -425,7 +427,7 @@ void * operator new[] (size_t size)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
 {
-  void * ptr = CUSTOM_MALLOC(size);
+  void * ptr = xxmalloc(size);
   if (ptr == NULL) {
     throw std::bad_alloc();
   } else {
@@ -436,7 +438,7 @@ void * operator new[] (size_t size)
 void * operator new[] (size_t sz, const std::nothrow_t&)
   throw()
  {
-  return CUSTOM_MALLOC(sz);
+  return xxmalloc(sz);
 }
 
 void operator delete[] (void * ptr)

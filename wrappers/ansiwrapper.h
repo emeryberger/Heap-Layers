@@ -32,9 +32,9 @@ namespace HL {
   public:
   
     ANSIWrapper() {
-      static_assert(gcd(SuperHeap::Alignment, alignof(max_align_t)) == alignof(max_align_t),
-		    "Alignment mismatch");
+      static_assert(gcd(SuperHeap::Alignment, alignof(max_align_t)) == alignof(max_align_t), "Alignment mismatch");
     }
+    using SuperHeap::SuperHeap;
 
     inline void * malloc (size_t sz) {
       // Prevent integer underflows. This maximum should (and
