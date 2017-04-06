@@ -152,6 +152,9 @@ namespace HL {
 
     enum { MAX_SPIN_LIMIT = 1024 };
   };
+
+  typedef SpinLockType SpinLock;
+  
 }
 
 #endif
