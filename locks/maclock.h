@@ -34,7 +34,7 @@
  * @brief Locking using OS X spin locks.
  */
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1012
+#if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101200
 #define USE_UNFAIR_LOCKS 1
 #include <os/lock.h>
 #else
