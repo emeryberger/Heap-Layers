@@ -39,6 +39,7 @@
 #include <errno.h>
 #include <psapi.h>
 #include <stdio.h>
+#include <tchar.h>
 
 #include "x86jump.h"
 
@@ -525,8 +526,6 @@ static void PatchIt (Patch *patch)
   VirtualProtect(mbi_thunk.BaseAddress, mbi_thunk.RegionSize, 
 		 PAGE_EXECUTE_READWRITE, &mbi_thunk.Protect);
 
-  ///  printf ("PATCHING %s.\n", patch->import);
-
   // Patch CRT library original routine:
   // 	save original code bytes for exit restoration
   //		write jmp <patch_routine> (at least 5 bytes long) to original.
@@ -583,23 +582,28 @@ static bool PatchMe()
       TCHAR szModName[MAX_PATH] = { 0 };
       LPTSTR pszBuffer = szModName;
       if (GetModuleFileName(hMods[i], pszBuffer,
-			    sizeof(szModName) / sizeof(TCHAR))) {
+			    sizeof(szModName) / sizeof(TCHAR)))
+	{
 
-	///	printf("%ls\n", pszBuffer);
-
-	HMODULE RlsCRTLibrary = GetModuleHandle(pszBuffer);
-	// Patch all relevant release CRT Library entry points.
-	if (RlsCRTLibrary) {
-	  for (auto j = 0; j < sizeof(rls_patches) / sizeof(*rls_patches); j++) {
-	    if (rls_patches[j].original = GetProcAddress(RlsCRTLibrary, rls_patches[j].import)) {
-	      // Got one: patch it.
-	      PatchIt(&rls_patches[j]);
-	      rls_patches[j].patched = true;
-	      patchedIn = true;
+	  // Only patch CRT libraries.
+	  if (!(_tcsstr(pszBuffer, _T("CRT")) ||
+		_tcsstr(pszBuffer, _T("crt")))) {
+	    continue;
+	  }
+	  
+	  HMODULE RlsCRTLibrary = GetModuleHandle(pszBuffer);
+	  // Patch all relevant release CRT Library entry points.
+	  if (RlsCRTLibrary) {
+	    for (auto j = 0; j < sizeof(rls_patches) / sizeof(*rls_patches); j++) {
+	      if (rls_patches[j].original = GetProcAddress(RlsCRTLibrary, rls_patches[j].import)) {
+		// Got one: patch it.
+		PatchIt(&rls_patches[j]);
+		rls_patches[j].patched = true;
+		patchedIn = true;
+	      }
 	    }
 	  }
 	}
-      }
     }
   }
   return patchedIn;
@@ -608,7 +612,6 @@ static bool PatchMe()
 static void UnpatchMe()
 {
   for (int i = 0; i < sizeof(rls_patches) / sizeof(*rls_patches); i++) {
-    //    printf ("unpatching %s\n", rls_patches[i].import);
     UnpatchIt(&rls_patches[i]);
   }
 }
