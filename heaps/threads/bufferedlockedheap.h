@@ -1,8 +1,8 @@
 #ifndef HL_BUFFEREDLOCKEDHEAP_H
 #define HL_BUFFEREDLOCKEDHEAP_H
 
+#include <mutex>
 #include <cstddef>
-#include "utility/guard.h"
 
 namespace HL {
 
@@ -13,7 +13,7 @@ namespace HL {
     enum { Alignment = Super::Alignment };
 
     void * malloc (size_t sz) {
-      Guard<LockType> l (theLock);
+      std::lock_guard<LockType> l (thelock);
       void *ptr = Super::malloc (sz);
       if (ptr != NULL) {
         return ptr;
@@ -25,7 +25,7 @@ namespace HL {
 
     void free (void *ptr) {
       if (freeIndex == Size) {
-        Guard<LockType> l (theLock);
+        std::lock_guard<LockType> l (thelock);
         emptyFreeBuffer();
       }
       if (freeBuffer == NULL) {
@@ -36,25 +36,25 @@ namespace HL {
     }
 
     inline size_t getSize (void * ptr) const {
-      Guard<LockType> l (theLock);
+      std::lock_guard<LockType> l (thelock);
       return Super::getSize (ptr);
     }
 
     inline size_t getSize (void * ptr) {
-      Guard<LockType> l (theLock);
+      std::lock_guard<LockType> l (thelock);
       return Super::getSize (ptr);
     }
 
     inline void lock (void) {
-      theLock.lock();
+      thelock.lock();
     }
 
     inline void unlock (void) {
-      theLock.unlock();
+      thelock.unlock();
     }
 
     void clear (void) {
-      Guard<LockType> l (theLock);
+      std::lock_guard<LockType> l (thelock);
       emptyFreeBuffer();
       Super::free (freeBuffer);
     }
@@ -62,7 +62,7 @@ namespace HL {
   private:
 
     void init (void) {
-      Guard<LockType> l (theLock);
+      std::lock_guard<LockType> l (thelock);
       freeBuffer = reinterpret_cast<void **>
         (Super::malloc (sizeof(void *) * Size));
       freeIndex = 0;
@@ -78,7 +78,7 @@ namespace HL {
     static __thread void **freeBuffer;
     static __thread int freeIndex;
 
-    LockType theLock;
+    LockType thelock;
   };
 
   template <int Size, class LockType, class Super>
