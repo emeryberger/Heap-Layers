@@ -1,3 +1,4 @@
+#include "bufferedlockedheap.h"
 #include "lockedheap.h"
 #include "phothreadheap.h"
 #include "threadheap.h"
