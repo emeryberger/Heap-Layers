@@ -147,12 +147,15 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 {
   size_t n = nelem * elsize;
   if (!elsize) {
-    return NULL;
+    return nullptr;
+  }
+  if ((elsize && nelem) != n / elsize) {
+    return nullptr;
   }
   void * ptr = xxmalloc(n);
 
   // Zero out the malloc'd block.
-  if (ptr != NULL) {
+  if (ptr != nullptr) {
     memset (ptr, 0, n);
   }
   return ptr;
