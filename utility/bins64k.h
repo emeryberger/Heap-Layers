@@ -29,7 +29,6 @@
 
 #include <cstdlib>
 #include <assert.h>
-#include <stdalign.h>
 #include <stddef.h>
 
 #include "bins.h"
