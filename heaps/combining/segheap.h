@@ -4,8 +4,8 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2012 by Emery Berger
-  http://www.cs.umass.edu/~emery
+  Copyright (C) 2000-2017 by Emery Berger
+  http://www.emeryberger.com
   emery@cs.umass.edu
   
   This program is free software; you can redistribute it and/or modify
@@ -89,17 +89,17 @@ namespace HL {
     }
 
     inline void * malloc (const size_t sz) {
-      void * ptr = NULL;
+      void * ptr = nullptr;
       if (sz > _maxObjectSize) {
         goto GET_MEMORY;
       }
 
       {
-        const int sc = getSizeClass(sz);
+        const auto sc = getSizeClass(sz);
         assert (sc >= 0);
         assert (sc < NumBins);
-        int idx = sc;
-        int block = idx2block (idx);
+        auto idx = sc;
+        auto block = idx2block (idx);
         unsigned long map = binmap[block];
         unsigned long bit = idx2bit (idx);
 
@@ -149,11 +149,11 @@ namespace HL {
 
     inline void free (void * ptr) {
       // printf ("Free: %x (%d bytes)\n", ptr, getSize(ptr));
-      const size_t objectSize = getSize(ptr); // was bigheap.getSize(ptr)
+      const auto objectSize = getSize(ptr); // was bigheap.getSize(ptr)
       if (objectSize > _maxObjectSize) {
         bigheap.free (ptr);
       } else {
-        int objectSizeClass = getSizeClass(objectSize);
+        auto objectSizeClass = getSizeClass(objectSize);
         assert (objectSizeClass >= 0);
         assert (objectSizeClass < NumBins);
         // Put the freed object into the right sizeclass heap.
@@ -176,10 +176,10 @@ namespace HL {
 
 
     void clear() {
-      for (int i = 0; i < NumBins; i++) {
+      for (auto i = 0; i < NumBins; i++) {
         myLittleHeap[i].clear();
       }
-      for (int j = 0; j < NUM_ULONGS; j++) {
+      for (auto j = 0; j < NUM_ULONGS; j++) {
         binmap[j] = 0;
       }
       bigheap.clear();
