@@ -21,15 +21,15 @@ namespace HL {
       return index+1;
     }
   }
-#elif defined(__GNUC__) && defined(__i386__)
-  static inline unsigned int ilog2 (size_t sz)
+#elif 0 // defined(__GNUC__) && defined(__i386__)
+  static constexpr inline unsigned int ilog2 (size_t sz)
   {
     sz = (sz << 1) - 1;
     asm ("bsrl %0, %0" : "=r" (sz) : "0" (sz));
     return (unsigned int) sz;
   }
-#elif defined(__GNUC__) && defined(__x86_64__)
-  static inline unsigned int ilog2 (size_t sz)
+#elif 0 // defined(__GNUC__) && defined(__x86_64__)
+  static constexpr inline unsigned int ilog2 (size_t sz)
   {
     sz = (sz << 1) - 1;
     asm ("bsrq %0, %0" : "=r" (sz) : "0" (sz));
@@ -37,12 +37,12 @@ namespace HL {
   }
 #elif defined(__GNUC__)
   // Just use the intrinsic.
-  static inline unsigned int ilog2 (const size_t sz)
+  static constexpr inline unsigned int ilog2 (const size_t sz)
   {
     return ((unsigned int) (sizeof(size_t) * 8UL) - (unsigned int) __builtin_clzl((sz << 1) - 1UL) - 1);
   }
 #else
-  static inline unsigned int ilog2 (size_t v) {
+  static constexpr inline unsigned int ilog2 (size_t v) {
     int log = 0;
     unsigned int value = 1;
     while (value < v) {
