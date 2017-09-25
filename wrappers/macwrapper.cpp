@@ -167,7 +167,7 @@ extern "C" {
     if (!elsize) {
       return nullptr;
     }
-    if (nelem != n / elsize) {
+    if (nelems != n / elsize) {
      return nullptr;
     }
     if (n == 0) {
