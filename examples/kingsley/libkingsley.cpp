@@ -4,8 +4,8 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2003 by Emery Berger
-  http://www.cs.umass.edu/~emery
+  Copyright (C) 2000-2017 by Emery Berger
+  http://www.emeryberger.com
   emery@cs.umass.edu
   
   This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 /*
  * @file   libkingsley.cpp
  * @brief  This file replaces malloc etc. in your application.
- * @author Emery Berger <http://www.cs.umass.edu/~emery>
+ * @author Emery Berger <http://www.emeryberger.com>
  */
 
 #include <stdlib.h>
@@ -44,7 +44,7 @@ class TopHeap : public SizeHeap<UniqueHeap<ZoneHeap<MmapHeap, 65536> > > {};
 class TheCustomHeapType :
   public ANSIWrapper<KingsleyHeap<AdaptHeap<DLList, TopHeap>, TopHeap> > {};
 
-inline static TheCustomHeapType * getCustomHeap (void) {
+inline static TheCustomHeapType * getCustomHeap() {
   static char thBuf[sizeof(TheCustomHeapType)];
   static TheCustomHeapType * th = new (thBuf) TheCustomHeapType;
   return th;

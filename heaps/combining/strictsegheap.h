@@ -4,8 +4,8 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
   
-  Copyright (C) 2000-2012 by Emery Berger
-  http://www.cs.umass.edu/~emery
+  Copyright (C) 2000-2017 by Emery Berger
+  http://www.emeryberger.com
   emery@cs.umass.edu
   
   This program is free software; you can redistribute it and/or modify
@@ -69,15 +69,14 @@ namespace HL {
   public:
 
     void clear () {
-      int i;
-      for (i = 0; i < NumBins; i++) {
+      for (auto i = 0; i < NumBins; i++) {
         const size_t sz = class2size(i);
         void * ptr;
         while ((ptr = SuperHeap::myLittleHeap[i].malloc (sz)) != NULL) {
           SuperHeap::bigheap.free (ptr);
         }
       }
-      for (int j = 0; j < SuperHeap::NUM_ULONGS; j++) {
+      for (auto j = 0; j < SuperHeap::NUM_ULONGS; j++) {
         SuperHeap::binmap[j] = 0;
       }
       SuperHeap::_memoryHeld = 0;
@@ -89,9 +88,9 @@ namespace HL {
      */
 
     inline void * malloc (const size_t sz) {
-      void * ptr = NULL;
-      const int sizeClass   = size2class(sz);
-      const size_t realSize = class2size(sizeClass);
+      void * ptr = nullptr;
+      const auto sizeClass   = size2class(sz);
+      const auto realSize = class2size(sizeClass);
 
       assert (realSize >= sz);
 
@@ -107,11 +106,11 @@ namespace HL {
     }
 
     inline void free (void * ptr) {
-      const size_t objectSize = SuperHeap::getSize(ptr);
+      const auto objectSize = SuperHeap::getSize(ptr);
       if (objectSize > SuperHeap::_maxObjectSize) {
         SuperHeap::bigheap.free (ptr);
       } else {
-        int objectSizeClass = size2class(objectSize);
+        auto objectSizeClass = size2class(objectSize);
         assert (objectSizeClass >= 0);
         assert (objectSizeClass < NumBins);
 
