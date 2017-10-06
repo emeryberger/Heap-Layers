@@ -55,7 +55,9 @@ extern "C" {
 
   void * xxmalloc (size_t);
   void   xxfree (void *);
-  void   xxfree_sized (void *, size_t);
+
+  /// Pending widespread support for sized deallocation.
+  /// void   xxfree_sized (void *, size_t);
  
   // Takes a pointer and returns how much space it holds.
   size_t xxmalloc_usable_size (void *);
@@ -84,10 +86,12 @@ extern "C" {
     return ptr;
   }
 
+#if 0 // Disabled pending wider support for sized deallocation.
   void   MACWRAPPER_PREFIX(free_sized) (void * ptr, size_t sz) {
     xxfree_sized (ptr, sz);
   }
-
+#endif
+  
   size_t MACWRAPPER_PREFIX(malloc_usable_size) (void * ptr) {
     if (ptr == NULL) {
       return 0;
