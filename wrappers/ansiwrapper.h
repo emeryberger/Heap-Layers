@@ -38,6 +38,7 @@ namespace HL {
       // Prevent integer underflows. This maximum should (and
       // currently does) provide more than enough slack to compensate for any
       // rounding below (in the alignment section).
+
       if (sz >> (sizeof(size_t) * CHAR_BIT - 1)) {
 	return 0;
       }
@@ -64,6 +65,10 @@ namespace HL {
       }
     }
 
+    inline void free_sized (void * ptr, size_t sz) {
+      SuperHeap::free_sized (ptr, sz);
+    }
+    
     inline void * calloc (size_t s1, size_t s2) {
       auto * ptr = (char *) malloc (s1 * s2);
       if (ptr) {
