@@ -84,14 +84,6 @@ extern "C" {
     return ptr;
   }
 
-+  void   xxfree_sized (void *, size_t);
- 
-   // Takes a pointer and returns how much space it holds.
-   size_t xxmalloc_usable_size (void *);
-@@ -95,6 +96,10 @@ extern "C" {
-     xxfree (ptr);
-   }
- 
   void   MACWRAPPER_PREFIX(free_sized) (void * ptr, size_t sz) {
     xxfree_sized (ptr, sz);
   }
