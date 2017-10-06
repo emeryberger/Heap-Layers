@@ -4,7 +4,7 @@
  * @file   macwrapper.cpp
  * @brief  Replaces malloc family on Macs with custom versions.
  * @author Emery Berger <http://www.cs.umass.edu/~emery>
- * @note   Copyright (C) 2010-2012 by Emery Berger, University of Massachusetts Amherst.
+ * @note   Copyright (C) 2010-2017 by Emery Berger, University of Massachusetts Amherst.
  */
 
 #ifndef __APPLE__
@@ -271,7 +271,8 @@ extern "C" {
   void * _ZnamRKSt9nothrow_t ();
   // operator delete nothrow
   void _ZdaPvRKSt9nothrow_t (void *);
-
+  void _ZdlPvRKSt9nothrow_t (void *);
+  
   void _malloc_fork_prepare ();
   void _malloc_fork_parent ();
   void _malloc_fork_child ();
@@ -467,6 +468,7 @@ MAC_INTERPOSE(macwrapper_malloc, _ZnamRKSt9nothrow_t);
 MAC_INTERPOSE(macwrapper_free, _ZdlPv);
 MAC_INTERPOSE(macwrapper_free, _ZdaPv);
 MAC_INTERPOSE(macwrapper_free, _ZdaPvRKSt9nothrow_t);
+MAC_INTERPOSE(macwrapper_free, _ZdlPvRKSt9nothrow_t);
 
 
 /*
