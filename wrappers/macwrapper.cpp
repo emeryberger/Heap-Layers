@@ -164,6 +164,12 @@ extern "C" {
 
   void * MACWRAPPER_PREFIX(calloc) (size_t elsize, size_t nelems) {
     auto n = nelems * elsize;
+    if (!elsize) {
+      return nullptr;
+    }
+    if (nelems != n / elsize) {
+     return nullptr;
+    }
     if (n == 0) {
       n = 1;
     }
