@@ -29,7 +29,7 @@ namespace HL {
     return (unsigned int) sz;
   }
 #elif 0 // defined(__GNUC__) && defined(__x86_64__)
-  static constexpr inline unsigned int ilog2 (size_t sz)
+  static inline unsigned int ilog2 (size_t sz)
   {
     sz = (sz << 1) - 1;
     asm ("bsrq %0, %0" : "=r" (sz) : "0" (sz));
