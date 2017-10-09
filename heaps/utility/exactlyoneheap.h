@@ -47,6 +47,9 @@ namespace HL {
     inline size_t getSize (void * ptr) {
       return (*this)().getSize (ptr);
     }
+    inline int getClass (void * ptr) {
+      return (*this)().getClass (ptr);
+    }
     inline void clear() {
       (*this)().clear();
     }
