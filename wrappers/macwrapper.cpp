@@ -4,7 +4,7 @@
  * @file   macwrapper.cpp
  * @brief  Replaces malloc family on Macs with custom versions.
  * @author Emery Berger <http://www.cs.umass.edu/~emery>
- * @note   Copyright (C) 2010-2012 by Emery Berger, University of Massachusetts Amherst.
+ * @note   Copyright (C) 2010-2017 by Emery Berger, University of Massachusetts Amherst.
  */
 
 #ifndef __APPLE__
@@ -55,7 +55,9 @@ extern "C" {
 
   void * xxmalloc (size_t);
   void   xxfree (void *);
-  void   xxfree_sized (void *, size_t);
+
+  /// Pending widespread support for sized deallocation.
+  /// void   xxfree_sized (void *, size_t);
  
   // Takes a pointer and returns how much space it holds.
   size_t xxmalloc_usable_size (void *);
@@ -84,18 +86,12 @@ extern "C" {
     return ptr;
   }
 
-+  void   xxfree_sized (void *, size_t);
- 
-   // Takes a pointer and returns how much space it holds.
-   size_t xxmalloc_usable_size (void *);
-@@ -95,6 +96,10 @@ extern "C" {
-     xxfree (ptr);
-   }
- 
+#if 0 // Disabled pending wider support for sized deallocation.
   void   MACWRAPPER_PREFIX(free_sized) (void * ptr, size_t sz) {
     xxfree_sized (ptr, sz);
   }
-
+#endif
+  
   size_t MACWRAPPER_PREFIX(malloc_usable_size) (void * ptr) {
     if (ptr == NULL) {
       return 0;
@@ -275,7 +271,8 @@ extern "C" {
   void * _ZnamRKSt9nothrow_t ();
   // operator delete nothrow
   void _ZdaPvRKSt9nothrow_t (void *);
-
+  void _ZdlPvRKSt9nothrow_t (void *);
+  
   void _malloc_fork_prepare ();
   void _malloc_fork_parent ();
   void _malloc_fork_child ();
@@ -471,6 +468,7 @@ MAC_INTERPOSE(macwrapper_malloc, _ZnamRKSt9nothrow_t);
 MAC_INTERPOSE(macwrapper_free, _ZdlPv);
 MAC_INTERPOSE(macwrapper_free, _ZdaPv);
 MAC_INTERPOSE(macwrapper_free, _ZdaPvRKSt9nothrow_t);
+MAC_INTERPOSE(macwrapper_free, _ZdlPvRKSt9nothrow_t);
 
 
 /*
