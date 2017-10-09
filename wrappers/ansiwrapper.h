@@ -38,12 +38,12 @@ namespace HL {
       // Prevent integer underflows. This maximum should (and
       // currently does) provide more than enough slack to compensate for any
       // rounding below (in the alignment section).
-
-      if (sz >> (sizeof(size_t) * CHAR_BIT - 1)) {
-	return 0;
-      }
+#if !defined(HL_NO_MALLOC_SIZE_CHECKS)
       if (sz < alignof(max_align_t)) {
       	sz = alignof(max_align_t);
+      }
+      if (sz >> (sizeof(size_t) * CHAR_BIT - 1)) {
+	return 0;
       }
       // Enforce alignment requirements: round up allocation sizes if needed.
       // NOTE: Alignment needs to be a power of two.
@@ -53,7 +53,7 @@ namespace HL {
       // Enforce alignment.
       sz = (sz + alignof(max_align_t) - 1UL) &
 	~(alignof(max_align_t) - 1UL);
-
+#endif
       auto * ptr = SuperHeap::malloc (sz);
       assert ((size_t) ptr % alignof(max_align_t) == 0);
       return ptr;
@@ -66,7 +66,9 @@ namespace HL {
     }
 
     inline void free_sized (void * ptr, size_t sz) {
-      SuperHeap::free_sized (ptr, sz);
+      if (ptr != 0) {
+	SuperHeap::free_sized (ptr, sz);
+      }
     }
     
     inline void * calloc (size_t s1, size_t s2) {
