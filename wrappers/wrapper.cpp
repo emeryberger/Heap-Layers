@@ -146,9 +146,7 @@ extern "C" void * MYCDECL CUSTOM_MALLOC(size_t sz)
 extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 {
   size_t n = nelem * elsize;
-  if (!elsize) {
-    return nullptr;
-  }
+  
   if (elsize && (nelem != n / elsize)) {
     return nullptr;
   }
@@ -210,7 +208,7 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
     // Try to just allocate an object of the requested size.
     // If it happens to be aligned properly, just return it.
     void * ptr = xxmalloc(size);
-    if (((size_t) ptr & (alignment - 1)) == (size_t) ptr) {
+    if (((size_t) ptr & ~(alignment - 1)) == (size_t) ptr) {
       // It is already aligned just fine; return it.
       return ptr;
     }
@@ -482,11 +480,9 @@ void operator delete[](void * ptr, size_t)
 
 /***** replacement functions for GNU libc extensions to malloc *****/
 
-// NOTE: for convenience, we assume page size = 8192.
-
 extern "C" void * MYCDECL CUSTOM_VALLOC (size_t sz)
 {
-  return CUSTOM_MEMALIGN (8192UL, sz);
+  return CUSTOM_MEMALIGN (4096UL, sz); // Default page size on most architectures.
 }
 
 
@@ -494,7 +490,7 @@ extern "C" void * MYCDECL CUSTOM_PVALLOC (size_t sz)
 {
   // Rounds up to the next pagesize and then calls valloc. Hoard
   // doesn't support aligned memory requests.
-  return CUSTOM_VALLOC ((sz + 8191UL) & ~8191UL);
+  return CUSTOM_VALLOC ((sz + 4095UL) & ~4095UL);
 }
 
 // The wacky recalloc function, for Windows.
