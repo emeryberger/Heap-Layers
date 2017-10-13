@@ -459,8 +459,11 @@ extern "C" int malloc_jumpstart (int);
 
 // Now interpose everything.
 
-#define REPLACE_MALLOC_OPS 1
-#define REPLACE_ZONES 0
+#ifndef HL_REPLACE_MALLOC_OPS
+#define HL_REPLACE_MALLOC_OPS 1
+#endif
+
+#define HL_REPLACE_ZONES 0
 
 
 #if REPLACE_MALLOC_OPS
