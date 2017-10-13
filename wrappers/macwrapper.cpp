@@ -11,6 +11,9 @@
 #error "This file is for use on Mac OS only."
 #endif
 
+#include <cstdlib>
+using namespace std;
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -241,6 +244,7 @@ extern "C" {
     return alignedPtr;
   }
 
+#if 0
   void * replace_aligned_alloc (size_t alignment, size_t size) {
     // Per the man page: "The function aligned_alloc() is the same as
     // memalign(), except for the added restriction that size should be
@@ -249,6 +253,7 @@ extern "C" {
     size = size + alignment - (size % alignment);
     return replace_memalign (alignment, size);
   }
+#endif
   
   int replace_posix_memalign(void **memptr, size_t alignment, size_t size)
   {
@@ -463,7 +468,7 @@ extern "C" int malloc_jumpstart (int);
 MAC_INTERPOSE(replace__malloc_fork_child, _malloc_fork_child);
 MAC_INTERPOSE(replace__malloc_fork_parent, _malloc_fork_parent);
 MAC_INTERPOSE(replace__malloc_fork_prepare, _malloc_fork_prepare);
-MAC_INTERPOSE(replace_aligned_alloc, aligned_alloc);
+//MAC_INTERPOSE(replace_aligned_alloc, aligned_alloc);
 MAC_INTERPOSE(replace_calloc, calloc);
 MAC_INTERPOSE(replace_free, _ZdaPv);
 MAC_INTERPOSE(replace_free, _ZdaPvRKSt9nothrow_t);
