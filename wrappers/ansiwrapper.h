@@ -8,7 +8,7 @@
 #include <stddef.h>
 #include <stdalign.h>
 #include <cstdint>
-
+#include <climits>
 
 /*
  * @class ANSIWrapper
