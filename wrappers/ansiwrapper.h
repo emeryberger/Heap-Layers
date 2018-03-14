@@ -6,9 +6,12 @@
 #include <assert.h>
 #include <string.h>
 #include <stddef.h>
-#include <stdalign.h>
 #include <cstdint>
 #include <climits>
+
+#ifndef _WIN32
+#include <stdalign.h>
+#endif
 
 /*
  * @class ANSIWrapper
