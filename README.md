@@ -1,7 +1,7 @@
 [Heap Layers: An Extensible Memory Allocation Infrastructure](http://www.heaplayers.org)
 -----------------------------------------------------------
 
-Copyright (C) 2000 - 2012 by [Emery Berger](http://www.cs.umass.edu/~emery)
+Copyright (C) 2000 - 2018 by [Emery Berger](http://www.emeryberger.com)
 
 Please read [COPYING](heaplayers/COPYING) for licensing information.
 
@@ -22,7 +22,7 @@ a number of high-performance allocators, including [Hoard](http://www.hoard.org)
 ## Using Heap Layers ##
 
 For an introduction to Heap Layers, read the article [Policy-Based
-Memory Allocation](http://www.drdobbs.com/184402039), by Andrei
+Memory Allocation](http://www.drdobbs.com/policy-based-memory-allocation/184402039), by Andrei
 Alexandrescu and Emery Berger. It's a good overview.
 
 Heap Layers contains a number of ready-made heap components that can
