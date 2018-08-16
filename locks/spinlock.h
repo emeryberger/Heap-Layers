@@ -65,6 +65,13 @@
 
 #endif
 
+#define _MM_PAUSE
+
+// The use of the PAUSE instruction has now been disabled, as it can be insanely costly.
+// See https://aloiskraus.wordpress.com/2018/06/16/why-skylakex-cpus-are-sometimes-50-slower-how-intel-has-broken-existing-code/amp
+
+/*
+
 #if defined(_WIN32) // includes WIN64
 
 // NOTE: Below is the new "pause" instruction, which is inocuous for
@@ -85,6 +92,8 @@
 #define _MM_PAUSE
 
 #endif
+
+*/
 
 namespace HL {
 
