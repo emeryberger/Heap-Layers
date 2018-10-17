@@ -63,7 +63,7 @@ namespace HL {
 
   public:
 
-    enum { BIG_OBJECT = Size };
+    enum { BIG_OBJECT = Size - sizeof(Header) };
     enum { NUM_BINS   = HL::ilog2(Size) - HL::ilog2(sizeof(max_align_t)) + 1 };
 
     static inline constexpr int getSizeClass (size_t sz) {
