@@ -13,7 +13,7 @@ namespace HL {
     class bins<Header, 8192> { 
 
     public:
-      bins (void) {
+      bins() {
 	static_assert(BIG_OBJECT > 0, "Size must be positive.");
       }
 
