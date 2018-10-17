@@ -3,8 +3,8 @@
 /**
  * @file   macwrapper.cpp
  * @brief  Replaces malloc family on Macs with custom versions.
- * @author Emery Berger <http://www.cs.umass.edu/~emery>
- * @note   Copyright (C) 2010-2017 by Emery Berger, University of Massachusetts Amherst.
+ * @author Emery Berger <http://www.emeryberger.com>
+ * @note   Copyright (C) 2010-2018 by Emery Berger, University of Massachusetts Amherst.
  */
 
 #ifndef __APPLE__
@@ -316,7 +316,7 @@ static malloc_zone_t theDefaultZone;
 
 extern "C" {
 
-  malloc_zone_t * replace_malloc_create_zone(vm_size_t sz,
+  malloc_zone_t * replace_malloc_create_zone(vm_size_t,
 					     unsigned)
   {
     //    auto zone = (malloc_zone_t *) replace_malloc(sizeof(malloc_zone_t));
@@ -335,7 +335,10 @@ extern "C" {
     // Do nothing.
   }
 
-  kern_return_t replace_malloc_get_all_zones (task_t task, memory_reader_t reader, vm_address_t **addresses, unsigned *count) {
+  kern_return_t replace_malloc_get_all_zones (task_t,
+					      memory_reader_t,
+					      vm_address_t **addresses,
+					      unsigned *count) {
     *addresses = 0;
     count = 0;
     return KERN_SUCCESS;
@@ -345,7 +348,7 @@ extern "C" {
     return z->zone_name;
   }
 
-  void replace_malloc_printf(const char * format, ...) {
+  void replace_malloc_printf(const char *, ...) {
   }
 
   size_t replace_internal_malloc_zone_size (malloc_zone_t *, const void * ptr) {
@@ -365,7 +368,7 @@ extern "C" {
 					    void ** results,
 					    unsigned num_requested)
   {
-    for (auto i = 0; i < num_requested; i++) {
+    for (auto i = 0U; i < num_requested; i++) {
       results[i] = replace_malloc(sz);
       if (results[i] == nullptr) {
 	return i;
@@ -378,7 +381,7 @@ extern "C" {
 				      void ** to_be_freed,
 				      unsigned num)
   {
-    for (auto i = 0; i < num; i++) {
+    for (auto i = 0U; i < num; i++) {
       replace_free(to_be_freed[i]);
     }
   }
