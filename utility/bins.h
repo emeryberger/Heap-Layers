@@ -24,6 +24,8 @@
 
 #pragma once
 
+//#include "tprintf.hh"
+
 #ifndef HL_BINS_H
 #define HL_BINS_H
 
@@ -32,7 +34,7 @@
 #include <stddef.h>
 
 #include "ilog2.h"
-#include "unistd.h"
+//#include "unistd.h"
 
 namespace HL {
   
@@ -52,18 +54,21 @@ namespace HL {
       static_assert(getSizeClass(0) >= getSizeClass(sizeof(max_align_t)), "Min size must be at least max_align_t.");
       static_assert(getSizeClass(0) >= getSizeClass(alignof(max_align_t)), "Min size must be at least alignof(max_align_t).");
 #ifndef NDEBUG
-      for (unsigned long i = sizeof(max_align_t); i < BIG_OBJECT; i++) {
+      int bins = 0;
+      for (auto i = sizeof(max_align_t); i < BIG_OBJECT; i++) {
+	bins++;
 	int sc = getSizeClass(i);
 	assert (getClassSize(sc) >= i);
 	assert (sc == 0 ? true : (getClassSize(sc-1) < i));
 	assert (getSizeClass(getClassSize(sc)) == sc);
       }
+      assert(bins == NUM_BINS);
 #endif
     }
 
   public:
 
-    enum { BIG_OBJECT = Size / 2 - sizeof(Header) };
+    enum { BIG_OBJECT = Size / 8 - sizeof(Header) };
     enum { NUM_BINS   = HL::ilog2(Size) - HL::ilog2(sizeof(max_align_t)) + 1 };
 
     static inline constexpr int getSizeClass (size_t sz) {

@@ -24,6 +24,8 @@
   
 */
 
+//#include "tprintf.hh"
+
 #ifndef HL_HYBRIDHEAP_H
 #define HL_HYBRIDHEAP_H
 
@@ -56,6 +58,10 @@ namespace HL {
         ptr = SmallHeap::malloc (sz);
       } else {
         ptr = slowPath (sz);
+      }
+      if (SmallHeap::getSize(ptr) < sz) {
+	//	tprintf::tprintf("sz = @, bigsize = @, smallsize @, bigsize @\n", sz, BigSize, SmallHeap::getSize(ptr), bm.getSize(ptr));
+	assert(bm.getSize(ptr) >= sz);
       }
       assert (SmallHeap::getSize(ptr) >= sz);
       assert ((size_t) ptr % Alignment == 0);

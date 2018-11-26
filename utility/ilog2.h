@@ -42,6 +42,7 @@ namespace HL {
     return ((unsigned int) (sizeof(size_t) * 8UL) - (unsigned int) __builtin_clzl((sz << 1) - 1UL) - 1);
   }
 #else
+#error "Could not find an efficient implementation of log2."
   static constexpr inline unsigned int ilog2 (size_t v) {
     int log = 0;
     unsigned int value = 1;
