@@ -66,10 +66,24 @@ namespace HL {
 #endif
     }
 
+  private:
+
+    // constexpr integer log base two calculations, ONLY for use during compilation.
+    
+    static constexpr inline unsigned int ilog2(const size_t n) {
+      return ((n<=1) ? 0 : 1 + ilog2(n/2));
+    }
+    
+    static constexpr inline unsigned int ilog2_ceil (const size_t n)
+    {
+      return ilog2(n * 2 - 1);
+    }
+    
+    
   public:
 
-    enum { BIG_OBJECT = Size / 8 - sizeof(Header) };
-    enum { NUM_BINS   = HL::ilog2(Size) - HL::ilog2(sizeof(max_align_t)) + 1 };
+    enum { BIG_OBJECT = Size / 8 }; // - sizeof(Header) };
+    enum { NUM_BINS   = ilog2_ceil(Size) - ilog2_ceil(sizeof(max_align_t)) + 1 };
 
     static inline constexpr int getSizeClass (size_t sz) {
       sz = (sz < sizeof(max_align_t)) ? sizeof(max_align_t) : sz;
