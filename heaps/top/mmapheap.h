@@ -114,17 +114,24 @@ namespace HL {
     static inline void * malloc (size_t sz) {
       // Round up to the size of a page.
       sz = (sz + CPUInfo::PageSize - 1) & (size_t) ~(CPUInfo::PageSize - 1);
+      void * addr = 0;
+      int flags = 0;
+      static int fd = -1;
 #if defined(MAP_ALIGN) && defined(MAP_ANON)
-      // Request memory aligned to the Alignment value above.
-      void * ptr = mmap ((char *) Alignment, sz, HL_MMAP_PROTECTION_MASK, MAP_PRIVATE | MAP_ALIGN | MAP_ANON, -1, 0);
+      addr = Alignment;
+      flags |= MAP_PRIVATE | MAP_ALIGN | MAP_ANON;
 #elif !defined(MAP_ANONYMOUS)
-      static int fd = ::open ("/dev/zero", O_RDWR);
-      void * ptr = mmap (NULL, sz, HL_MMAP_PROTECTION_MASK, MAP_PRIVATE, fd, 0);
+      if (fd == -1) {
+	fd = ::open ("/dev/zero", O_RDWR);
+      }
+      flags |= MAP_PRIVATE;
 #else
-      void * ptr = mmap (NULL, sz, HL_MMAP_PROTECTION_MASK, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+      flags |= MAP_PRIVATE | MAP_ANONYMOUS;
 #endif
+
+      auto ptr = mmap (addr, sz, HL_MMAP_PROTECTION_MASK, flags, fd, 0);
       if (ptr == MAP_FAILED) {
-	ptr = NULL;
+	ptr = nullptr;
       }
       return ptr;
     }
