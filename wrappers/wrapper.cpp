@@ -213,7 +213,7 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
       return ptr;
     }
     // It was not aligned as requested: free the object and allocate a big one.
-    CUSTOM_FREE(ptr);
+    xxfree(ptr);
     ptr = xxmalloc (size + 2 * alignment);
     void * alignedPtr = (void *) (((size_t) ptr + alignment - 1) & ~(alignment - 1));
     return alignedPtr;
