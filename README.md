@@ -5,11 +5,7 @@ Copyright (C) 2000 - 2018 by [Emery Berger](http://www.emeryberger.com)
 
 Please read [COPYING](heaplayers/COPYING) for licensing information.
 
-Heap Layers is distributed under the terms of the GNU General Public License.
-
-**Commercial licenses are also available.**
-
-Please contact Emery Berger (emery@cs.umass.edu) for more details.
+Heap Layers is distributed under the terms of the Apache 2.0 license.
 
 ## Introduction ##
 
