@@ -44,7 +44,8 @@ opportunities.
 
 To reference Heap Layers in an academic paper, please cite as follows:
 
-```@inproceedings{DBLP:conf/pldi/BergerZM01,
+```
+@inproceedings{DBLP:conf/pldi/BergerZM01,
   author    = {Emery D. Berger and
                Benjamin G. Zorn and
                Kathryn S. McKinley},
