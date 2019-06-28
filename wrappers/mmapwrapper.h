@@ -48,7 +48,10 @@ extern "C" int madvise (caddr_t, size_t, int);
 #if HL_EXECUTABLE_HEAP
 #define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC)
 #else
-#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE)
+#if !defined(PROT_MAX)
+#define PROT_MAX(p) 0
+#endif
+#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_MAX(PROT_READ | PROT_WRITE))
 #endif
 #endif
 
