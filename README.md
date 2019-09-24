@@ -17,7 +17,8 @@ a number of high-performance allocators, including [Hoard](http://www.hoard.org)
 
 For an introduction to Heap Layers, read the article [Policy-Based
 Memory Allocation](https://github.com/emeryberger/Heap-Layers/raw/master/cuj-2005-12.pdf), by Andrei
-Alexandrescu and Emery Berger. It's a good overview.
+Alexandrescu and Emery Berger. It's a good overview. See also ["Memory Allocation: Either Love It or Hate It
+(or just think it’s okay)"](https://accu.org/content/conf2008/Alexandrescu-memory-allocation.screen.pdf), a talk by Andrei.
 
 Heap Layers contains a number of ready-made heap components that can
 be plugged together with minimal effort, and the result is often
