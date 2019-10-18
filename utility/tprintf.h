@@ -127,7 +127,7 @@ namespace tprintf {
     }
   }
 
-};
+}
 
 
 #endif
