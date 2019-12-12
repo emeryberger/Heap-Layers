@@ -105,6 +105,10 @@ namespace HL {
 
   };
 
+  // We are going to rename this layer to BumpHeap and deprecate BumpAlloc eventually.
+  template <size_t Size, class X>
+  using BumpHeap = BumpAlloc<Size, X>;
+  
 }
 
 #if defined(__clang__)
