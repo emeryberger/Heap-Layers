@@ -78,30 +78,30 @@ namespace tprintf {
   inline void writeval(double n) {
     char buf[MAXBUF];
     int len = ftoa(buf, n);
-    write(FD, buf, len);
+    auto _ __attribute__((unused)) = write(FD, buf, len);
   }
   
   inline void writeval(const char * str) {
-    write(FD, str, strlen(str));
+    auto _ __attribute__((unused)) = write(FD, str, strlen(str));
   }
 
   inline void writeval(const char c) {
     char buf[1];
     buf[0] = c;
-    write(FD, buf, 1);
+    auto _ __attribute__((unused)) = write(FD, buf, 1);
   }
 
   inline void writeval(uint64_t n) {
     char buf[MAXBUF];
     int len = itoa(buf, n);
-    write(FD, buf, len);
+    auto _ __attribute__((unused)) = write(FD, buf, len);
   }
 
   template <class T>
   inline void writeval(T n) {
     char buf[MAXBUF];
     int len = itoa(buf, n);
-    write(FD, buf, len);
+    auto _ __attribute__((unused)) = write(FD, buf, len);
   }
 
   inline void tprintf(const char* format) // base function
@@ -127,7 +127,7 @@ namespace tprintf {
     }
   }
 
-};
+}
 
 
 #endif
