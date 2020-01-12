@@ -55,6 +55,8 @@ namespace HL {
       //      char _buf[HL::MallocInfo::Alignment];
     };
 
+    enum { MAGIC_NUMBER = 0xCAFEBABE };
+    
   public:
 
     enum { Alignment = gcd<(int) SuperHeap::Alignment,
@@ -65,25 +67,31 @@ namespace HL {
     inline void * malloc (size_t sz) {
       freeObject * p = (freeObject *) SuperHeap::malloc (sz + sizeof(freeObject));
       p->_sz = sz;
-      p->_magic = 0xcafebabe;
+      p->_magic = MAGIC_NUMBER;
       return (void *) (p + 1);
     }
 
     inline void free (void * ptr) {
-      assert (getHeader(ptr)->_magic == 0xcafebabe);
-      SuperHeap::free (getHeader(ptr));
+      if (getHeader(ptr)->_magic == MAGIC_NUMBER) {
+	// Probably one of our objects.
+	SuperHeap::free (getHeader(ptr));
+      }
     }
 
     inline static size_t getSize (const void * ptr) {
-      assert (getHeader(ptr)->_magic == 0xcafebabe);
-      size_t size = getHeader(ptr)->_sz;
-      return size;
+      if (getHeader(ptr)->_magic == MAGIC_NUMBER) {
+	size_t size = getHeader(ptr)->_sz;
+	return size;
+      } else {
+	// Probably not one of our objects.
+	return 0;
+      }
     }
 
   private:
 
     inline static void setSize (void * ptr, size_t sz) {
-      assert (getHeader(ptr)->_magic == 0xcafebabe);
+      assert (getHeader(ptr)->_magic == MAGIC_NUMBER);
       getHeader(ptr)->_sz = sz;
     }
 
