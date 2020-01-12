@@ -69,6 +69,8 @@ namespace HL {
     };
   };
 
+  typedef PosixLockType PosixLock;
+  
 }
 
 #endif
