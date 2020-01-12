@@ -75,7 +75,7 @@ namespace HL {
 
     inline void * malloc (size_t sz) {
       void * ptr = zoneMalloc (sz);
-      assert ((size_t) ptr % Alignment == 0);
+      //      assert ((size_t) ptr % Alignment == 0);
       return ptr;
     }
 
@@ -121,7 +121,7 @@ namespace HL {
       ptr = _currentArena->arenaSpace;
       _currentArena->arenaSpace += sz;
       assert (ptr != NULL);
-      assert ((size_t) ptr % SuperHeap::Alignment == 0);
+      //      assert ((size_t) ptr % SuperHeap::Alignment == 0);
       return ptr;
     }
   
