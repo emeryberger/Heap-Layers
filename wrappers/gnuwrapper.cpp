@@ -53,10 +53,11 @@
 #endif
 
 #define CUSTOM_PREFIX(x) custom##x
+#define ATTRIBUTE_EXPORT __attribute__((visibility("default")))
 
-#define WEAK_REDEF1(type,fname,arg1) type fname(arg1) __THROW WEAK(custom##fname)
-#define WEAK_REDEF2(type,fname,arg1,arg2) type fname(arg1,arg2) __THROW WEAK(custom##fname)
-#define WEAK_REDEF3(type,fname,arg1,arg2,arg3) type fname(arg1,arg2,arg3) __THROW WEAK(custom##fname)
+#define WEAK_REDEF1(type,fname,arg1) ATTRIBUTE_EXPORT type fname(arg1) __THROW WEAK(custom##fname)
+#define WEAK_REDEF2(type,fname,arg1,arg2) ATTRIBUTE_EXPORT type fname(arg1,arg2) __THROW WEAK(custom##fname)
+#define WEAK_REDEF3(type,fname,arg1,arg2,arg3) ATTRIBUTE_EXPORT type fname(arg1,arg2,arg3) __THROW WEAK(custom##fname)
 
 extern "C" {
   WEAK_REDEF1(void *, malloc, size_t);
