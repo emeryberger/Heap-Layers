@@ -80,7 +80,13 @@ namespace tprintf {
     int len = ftoa(buf, n);
     auto _ __attribute__((unused)) = write(FD, buf, len);
   }
-  
+
+  inline void writeval(float n) {
+    char buf[MAXBUF];
+    int len = ftoa(buf, n);
+    auto _ __attribute__((unused)) = write(FD, buf, len);
+  }
+
   inline void writeval(const char * str) {
     auto _ __attribute__((unused)) = write(FD, str, strlen(str));
   }
