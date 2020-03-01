@@ -113,24 +113,33 @@ extern "C" {
 #define MYCDECL __cdecl
 #if !defined(NO_INLINE)
 #define NO_INLINE __declspec(noinline)
-#endif
+#endif // !defined(NO_INLINE)
 #pragma inline_depth(255)
 
 #if !defined(NDEBUG)
 #define __forceinline inline
-#endif
+#endif // !defined(NDEBUG)
 
 #else
 #define MYCDECL
-#endif
+#endif // defined(_WIN32)
+
+#if defined(__linux__) || defined(__APPLE__)
+#define HEAP_LAYERS_INLINE __attribute__((always_inline))
+#else
+#define HEAP_LAYERS_INLINE
+#endif // defined(__linux__) || defined(__APPLE__)
 
 /***** generic malloc functions *****/
 
 #include <stdio.h>
 
-extern "C" void MYCDECL CUSTOM_FREE(void *);
-extern "C" void * MYCDECL CUSTOM_MALLOC(size_t);
-extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize);
+// since we're in a cpp file, marking these as inline allows the
+// compiler to inline their definitions into e.g. `operator new`,
+// removing branches and improving performance.
+extern "C" void MYCDECL HEAP_LAYERS_INLINE CUSTOM_FREE(void *);
+extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_MALLOC(size_t);
+extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_CALLOC(size_t nelem, size_t elsize);
 
 extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
 {
