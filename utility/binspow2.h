@@ -62,7 +62,7 @@ namespace HL {
   private:
 
     static constexpr inline unsigned int ilog2_constexpr (size_t v) {
-      int log = 0;
+      unsigned int log = 0;
       unsigned int value = 1;
       while (value < v) {
 	value <<= 1;
@@ -80,7 +80,7 @@ namespace HL {
 
     static inline constexpr int getSizeClass (size_t sz) {
       sz = (sz < sizeof(max_align_t)) ? sizeof(max_align_t) : sz;
-      return (int) HL::ilog2(sz) - HL::ilog2(sizeof(max_align_t));
+      return static_cast<int>(HL::ilog2(sz) - HL::ilog2(sizeof(max_align_t)));
     }
 
     static constexpr inline size_t getClassSize (int i) {
