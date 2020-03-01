@@ -22,7 +22,7 @@ namespace tprintf {
   
 
   template <typename T>
-  inline int itoa(char * buf, T v) {
+  inline unsigned int itoa(char * buf, T v) {
     long n = (long) v;
     auto startbuf = buf;
     if (n < 0) {
@@ -31,21 +31,21 @@ namespace tprintf {
     }
     if (n == 0) {
       *buf++ = '0';
-      return (int) (buf - startbuf);
+      return static_cast<unsigned int>(buf - startbuf);
     }
     long tens = 1L;
     while (n / (10 * tens)) {
       tens *= 10;
     }
     while (tens) {
-      *buf++ = '0' + n / tens;
+      *buf++ = '0' + static_cast<char>(n / tens);
       n = n - (n / tens) * tens;
       tens /= 10;
     }
-    return (int) (buf - startbuf);
+    return (unsigned int) (buf - startbuf);
   }
 
-  inline int ftoa(char * buf, double n, int decimalPlaces = 4) {
+  inline unsigned int ftoa(char * buf, double n, int decimalPlaces = 4) {
     // Extract integer part
     auto ipart = (long) n;
   
@@ -56,7 +56,7 @@ namespace tprintf {
     }
   
     // convert integer part to string
-    int i = itoa(buf, ipart);
+    auto i = itoa(buf, ipart);
   
     if (decimalPlaces > 0) {
       buf[i] = '.';
@@ -77,13 +77,13 @@ namespace tprintf {
 
   inline void writeval(double n) {
     char buf[MAXBUF];
-    int len = ftoa(buf, n);
+    unsigned long len = ftoa(buf, n);
     auto _ __attribute__((unused)) = write(FD, buf, len);
   }
 
   inline void writeval(float n) {
     char buf[MAXBUF];
-    int len = ftoa(buf, n);
+    auto len = ftoa(buf, n);
     auto _ __attribute__((unused)) = write(FD, buf, len);
   }
 
@@ -99,14 +99,14 @@ namespace tprintf {
 
   inline void writeval(uint64_t n) {
     char buf[MAXBUF];
-    int len = itoa(buf, n);
+    auto len = itoa(buf, n);
     auto _ __attribute__((unused)) = write(FD, buf, len);
   }
 
   template <class T>
   inline void writeval(T n) {
     char buf[MAXBUF];
-    int len = itoa(buf, n);
+    auto len = itoa(buf, n);
     auto _ __attribute__((unused)) = write(FD, buf, len);
   }
 
