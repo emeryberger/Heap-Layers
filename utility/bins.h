@@ -70,11 +70,11 @@ namespace HL {
 
     // constexpr integer log base two calculations, ONLY for use during compilation.
     
-    static constexpr inline unsigned long ilog2(const size_t n) {
+    static constexpr inline unsigned int ilog2(const size_t n) {
       return ((n<=1) ? 0 : 1 + ilog2(n/2));
     }
     
-    static constexpr inline unsigned long ilog2_ceil (const size_t n)
+    static constexpr inline auto ilog2_ceil (const size_t n)
     {
       return ilog2(n * 2 - 1);
     }
@@ -91,7 +91,7 @@ namespace HL {
     static inline constexpr int getSizeClass (size_t sz) {
       // tprintf::tprintf("sz = @\n", sz);
       sz = (sz < sizeof(max_align_t)) ? sizeof(max_align_t) : sz;
-      return (unsigned long) HL::ilog2(sz) - LogMaxAlignT; // (int) HL::ilog2(sizeof(max_align_t));
+      return (int) HL::ilog2(sz) - LogMaxAlignT; // (int) HL::ilog2(sizeof(max_align_t));
     }
 
     static constexpr inline size_t getClassSize(int i) {
