@@ -24,7 +24,7 @@
 
 #pragma once
 
-//#include "tprintf.hh"
+#include "tprintf.h"
 
 #ifndef HL_BINS_H
 #define HL_BINS_H
@@ -70,11 +70,11 @@ namespace HL {
 
     // constexpr integer log base two calculations, ONLY for use during compilation.
     
-    static constexpr inline unsigned int ilog2(const size_t n) {
+    static constexpr inline unsigned long ilog2(const size_t n) {
       return ((n<=1) ? 0 : 1 + ilog2(n/2));
     }
     
-    static constexpr inline unsigned int ilog2_ceil (const size_t n)
+    static constexpr inline unsigned long ilog2_ceil (const size_t n)
     {
       return ilog2(n * 2 - 1);
     }
@@ -84,14 +84,22 @@ namespace HL {
 
     enum { BIG_OBJECT = Size / 8 }; // - sizeof(Header) };
     enum { NUM_BINS   = ilog2_ceil(Size) - ilog2_ceil(sizeof(max_align_t)) + 1 };
-
+    enum { NumBins = NUM_BINS };
+    enum { MaxObjectSize = BIG_OBJECT };
+    enum { LogMaxAlignT = ilog2(sizeof(max_align_t)) };
+    
     static inline constexpr int getSizeClass (size_t sz) {
+      // tprintf::tprintf("sz = @\n", sz);
       sz = (sz < sizeof(max_align_t)) ? sizeof(max_align_t) : sz;
-      return (int) HL::ilog2(sz) - (int) HL::ilog2(sizeof(max_align_t));
+      return (unsigned long) HL::ilog2(sz) - LogMaxAlignT; // (int) HL::ilog2(sizeof(max_align_t));
     }
 
-    static constexpr inline size_t getClassSize (int i) {
+    static constexpr inline size_t getClassSize(int i) {
       return (sizeof(max_align_t) << i);
+    }
+    
+    static constexpr inline size_t getClassMaxSize(int i) {
+      return getClassSize(i);
     }
     
   };
