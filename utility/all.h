@@ -6,6 +6,7 @@
 //#include "bins64k.h"
 
 //#include "bins8k.h"
+#include "binspow2.h"
 #include "checkpoweroftwo.h"
 #include "dllist.h"
 #include "dynarray.h"

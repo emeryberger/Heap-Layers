@@ -57,7 +57,8 @@
  **/
 
 #include <assert.h>
-#include <utility/gcd.h>
+
+#include "utility/gcd.h"
 
 namespace HL {
 

@@ -1,3 +1,5 @@
+// -*- C++ -*-
+
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
@@ -24,29 +26,23 @@
 
 #pragma once
 
-#include "tprintf.h"
-
-#ifndef HL_BINS_H
-#define HL_BINS_H
+#if !defined(HL_BINSPOW2_H)
+#define HL_BINSPOW2_H
 
 #include <cstdlib>
 #include <assert.h>
 #include <stddef.h>
 
+#include "bins.h"
 #include "ilog2.h"
-//#include "unistd.h"
 
 namespace HL {
-  
-  template <class Header, size_t Size>
-    class bins;
 
-  /// Default, generic, power of two bins for undefined sizes.
-  template <class Header, size_t Size>
-  class bins {
+  template <size_t MaxSize>
+  class bins_pow2 {
   public:
 
-    bins()
+    bins_pow2()
     {
       static_assert(BIG_OBJECT > 0, "BIG_OBJECT must be positive.");
       static_assert(getClassSize(0) < getClassSize(1), "Need distinct size classes.");
@@ -54,57 +50,50 @@ namespace HL {
       static_assert(getSizeClass(0) >= getSizeClass(sizeof(max_align_t)), "Min size must be at least max_align_t.");
       static_assert(getSizeClass(0) >= getSizeClass(alignof(max_align_t)), "Min size must be at least alignof(max_align_t).");
 #ifndef NDEBUG
-      int bins = 0;
-      for (auto i = sizeof(max_align_t); i < BIG_OBJECT; i++) {
-	bins++;
+      for (unsigned long i = sizeof(max_align_t); i < BIG_OBJECT; i++) {
 	int sc = getSizeClass(i);
 	assert (getClassSize(sc) >= i);
 	assert (sc == 0 ? true : (getClassSize(sc-1) < i));
 	assert (getSizeClass(getClassSize(sc)) == sc);
       }
-      assert(bins == NUM_BINS);
 #endif
     }
 
   private:
 
-    // constexpr integer log base two calculations, ONLY for use during compilation.
-    
-    static constexpr inline unsigned int ilog2(const size_t n) {
-      return ((n<=1) ? 0 : 1 + ilog2(n/2));
+    static constexpr inline unsigned int ilog2_constexpr (size_t v) {
+      unsigned int log = 0;
+      unsigned int value = 1;
+      while (value < v) {
+	value <<= 1;
+	log++;
+      }
+      return log;
     }
-    
-    static constexpr inline auto ilog2_ceil (const size_t n)
-    {
-      return ilog2(n * 2 - 1);
-    }
-    
     
   public:
 
-    enum { BIG_OBJECT = Size / 8 }; // - sizeof(Header) };
-    enum { NUM_BINS   = ilog2_ceil(Size) - ilog2_ceil(sizeof(max_align_t)) + 1 };
-    enum { NumBins = NUM_BINS };
+    enum { BIG_OBJECT = MaxSize };
     enum { MaxObjectSize = BIG_OBJECT };
-    enum { LogMaxAlignT = ilog2(sizeof(max_align_t)) };
-    
+    enum { NUM_BINS   = HL::ilog2(MaxSize) - HL::ilog2(sizeof(max_align_t)) + 1 };
+    enum { NumBins    = NUM_BINS };
+
     static inline constexpr int getSizeClass (size_t sz) {
-      // tprintf::tprintf("sz = @\n", sz);
       sz = (sz < sizeof(max_align_t)) ? sizeof(max_align_t) : sz;
-      return (int) HL::ilog2(sz) - LogMaxAlignT; // (int) HL::ilog2(sizeof(max_align_t));
+      return static_cast<int>(HL::ilog2(sz) - HL::ilog2(sizeof(max_align_t)));
     }
 
-    static constexpr inline size_t getClassSize(int i) {
+    static constexpr inline size_t getClassSize (int i) {
       return (sizeof(max_align_t) << i);
     }
-    
+
     static constexpr inline size_t getClassMaxSize(int i) {
       return getClassSize(i);
     }
-    
   };
-  
+
 }
+
 
 
 #endif

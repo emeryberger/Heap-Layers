@@ -28,7 +28,8 @@
 #define HL_XALLOCHEAP_H
 
 #include <cstddef>
-#include <utility/align.h>
+
+#include "utility/align.h"
 
 namespace HL {
 
