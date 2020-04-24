@@ -52,7 +52,17 @@
 #define __THROW
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+#endif
+
 #define CUSTOM_PREFIX(x) custom##x
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 #define ATTRIBUTE_EXPORT __attribute__((visibility("default")))
 
 #define WEAK_REDEF1(type,fname,arg1) ATTRIBUTE_EXPORT type fname(arg1) __THROW WEAK(custom##fname)
@@ -73,3 +83,4 @@ extern "C" {
 
 #include "wrapper.cpp"
 #include "gnuwrapper-hooks.cpp"
+
