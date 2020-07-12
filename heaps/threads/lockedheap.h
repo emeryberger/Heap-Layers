@@ -43,9 +43,9 @@ namespace HL {
       return Super::malloc (sz);
     }
 
-    inline void free (void * ptr) {
+    inline auto free (void * ptr) {
       std::lock_guard<LockType> l (thelock);
-      Super::free (ptr);
+      return Super::free (ptr);
     }
 
     inline size_t getSize (void * ptr) const {
@@ -58,11 +58,11 @@ namespace HL {
       return Super::getSize (ptr);
     }
 
-    inline void lock (void) {
+    inline void lock() {
       thelock.lock();
     }
 
-    inline void unlock (void) {
+    inline void unlock() {
       thelock.unlock();
     }
 
