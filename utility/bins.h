@@ -51,11 +51,10 @@ namespace HL {
       static_assert(BIG_OBJECT > 0, "BIG_OBJECT must be positive.");
       static_assert(getClassSize(0) < getClassSize(1), "Need distinct size classes.");
       static_assert(getSizeClass(getClassSize(0)) == 0, "Size class computation error.");
-      static_assert(getSizeClass(0) >= getSizeClass(sizeof(max_align_t)), "Min size must be at least max_align_t.");
       static_assert(getSizeClass(0) >= getSizeClass(alignof(max_align_t)), "Min size must be at least alignof(max_align_t).");
 #ifndef NDEBUG
       int bins = 0;
-      for (auto i = sizeof(max_align_t); i < BIG_OBJECT; i++) {
+      for (auto i = alignof(max_align_t); i < BIG_OBJECT; i++) {
 	bins++;
 	int sc = getSizeClass(i);
 	assert (getClassSize(sc) >= i);
@@ -83,19 +82,19 @@ namespace HL {
   public:
 
     enum { BIG_OBJECT = Size / 8 }; // - sizeof(Header) };
-    enum { NUM_BINS   = ilog2_ceil(Size) - ilog2_ceil(sizeof(max_align_t)) + 1 };
+    enum { NUM_BINS   = ilog2_ceil(Size) - ilog2_ceil(alignof(max_align_t)) + 1 };
     enum { NumBins = NUM_BINS };
     enum { MaxObjectSize = BIG_OBJECT };
-    enum { LogMaxAlignT = ilog2(sizeof(max_align_t)) };
+    enum { LogMaxAlignT = ilog2(alignof(max_align_t)) };
     
     static inline constexpr int getSizeClass (size_t sz) {
-      // tprintf::tprintf("sz = @\n", sz);
-      sz = (sz < sizeof(max_align_t)) ? sizeof(max_align_t) : sz;
-      return (int) HL::ilog2(sz) - LogMaxAlignT; // (int) HL::ilog2(sizeof(max_align_t));
+      sz = (sz < alignof(max_align_t)) ? alignof(max_align_t) : sz;
+      auto sizeClass = (int) HL::ilog2(sz) - LogMaxAlignT; // (int) HL::ilog2(alignof(max_align_t));
+      return sizeClass;
     }
 
     static constexpr inline size_t getClassSize(int i) {
-      return (sizeof(max_align_t) << i);
+      return (alignof(max_align_t) << i);
     }
     
     static constexpr inline size_t getClassMaxSize(int i) {
