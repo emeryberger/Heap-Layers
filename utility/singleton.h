@@ -11,12 +11,21 @@ namespace HL {
   class singleton {
   public:
     
-    static inline C& getInstance() {
+    static C& getInstance() {
+#if 0
+      static C theSingleton;
+      return theSingleton;
+#else
       static char buf[sizeof(C)];
       static C * theSingleton = new (buf) C;
       return *theSingleton;
+#endif
     }
 
+    singleton()= default;
+    ~singleton()= default;
+    singleton(const singleton&)= delete;
+    singleton& operator=(const singleton&)= delete;
   };
 
 }
