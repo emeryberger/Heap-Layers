@@ -5,6 +5,8 @@
 
 // Written by Emery Berger
 
+#if !defined(_WIN32)
+
 #include <unistd.h>
 #include <string.h>
 #include <cmath>
@@ -135,5 +137,6 @@ namespace tprintf {
 
 }
 
+#endif // !_WIN32
 
 #endif
