@@ -3,8 +3,14 @@
 /**
  * @file   gnuwrapper.cpp
  * @brief  Replaces malloc family on GNU/Linux with custom versions.
- * @author Emery Berger <http://www.cs.umass.edu/~emery>
- * @note   Copyright (C) 2010 by Emery Berger, University of Massachusetts Amherst.
+ * @author Emery Berger <http://www.emeryberger.com>
+ * @note   Copyright (C) 2010-2020 by Emery Berger.
+
+  Heap Layers is distributed under the terms of the Apache 2.0 license.
+
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+
  */
 
 

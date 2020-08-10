@@ -4,30 +4,21 @@
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
 
-  Copyright (C) 2000-2015 by Emery Berger
+  Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
 
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
+  Heap Layers is distributed under the terms of the Apache 2.0 license.
 
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
 
 */
 
 /*
  * @file   wrapper.cpp
  * @brief  Replaces malloc with appropriate calls to TheCustomHeapType.
- * @author Emery Berger <http://www.cs.umass.edu/~emery>
+ * @author Emery Berger <http://www.emeryberger.com>
  */
 
 #include <string.h> // for memcpy and memset
@@ -124,7 +115,7 @@ extern "C" {
 #define MYCDECL
 #endif // defined(_WIN32)
 
-#if defined(__linux__) || defined(__APPLE__)
+#if !defined(__GNUG__) && (defined(__linux__) || defined(__APPLE__))
 #define HEAP_LAYERS_INLINE __attribute__((always_inline))
 #else
 #define HEAP_LAYERS_INLINE
