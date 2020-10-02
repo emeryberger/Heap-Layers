@@ -53,7 +53,9 @@ namespace HL {
     }
 
     inline void free (void * ptr) {
-      getHeap()->free (ptr);
+      PerThreadHeap * heap =
+	(PerThreadHeap *) pthread_getspecific (getHeapKey());
+      if (heap) heap->free (ptr);
     }
 
     inline size_t getSize (void * ptr) {
@@ -81,7 +83,9 @@ namespace HL {
 
     static void deleteHeap (void *) {
       PerThreadHeap * heap = getHeap();
+      heap->~PerThreadHeap();
       HL::MmapWrapper::unmap (heap, sizeof(PerThreadHeap));
+      pthread_setspecific (getHeapKey(), 0);
     }
 
     // Access the given heap.
