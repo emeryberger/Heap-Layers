@@ -32,13 +32,77 @@
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 
+// Compute the version of gcc we're compiling with (if any).
+#define GCC_VERSION (__GNUC__ * 10000	    \
+                     + __GNUC_MINOR__ * 100 \
+                     + __GNUC_PATCHLEVEL__)
+
+#if (((defined(GCC_VERSION) && (GCC_VERSION >= 30300)) &&	\
+      !defined(__SVR4) &&					\
+      !defined(__APPLE__))					\
+     || defined(__SUNPRO_CC)					\
+     || defined(__FreeBSD__))
+#define USE_THREAD_KEYWORD 0
+#else
+#define USE_THREAD_KEYWORD 0
+#endif
+
 namespace HL {
 
+#if USE_THREAD_KEYWORD
+
+#define INITIAL_EXEC_ATTR __attribute__((tls_model ("initial-exec")))
+
+  template <class PerThreadHeap>
+  class ThreadSpecificHeap {
+  private:
+    alignas(16) static __thread char heapbuf[sizeof(PerThreadHeap)];
+    static __thread PerThreadHeap * heap;
+  public:
+
+    ThreadSpecificHeap()
+    {
+    }
+
+    inline void * malloc(size_t sz) {
+      if (heap == nullptr) {
+	heap = new (heapbuf) PerThreadHeap();
+      }
+      return heap->malloc(sz);
+    }
+
+    inline void free(void * ptr) {
+      if (heap == nullptr) {
+	heap = new (heapbuf) PerThreadHeap();
+      }
+      heap->free(ptr);
+    }
+
+    inline void * memalign(size_t alignment, size_t sz) {
+      return heap->memalign(alignment, sz);
+    }
+    
+    inline size_t getSize(void * ptr) {
+      return heap->getSize(ptr);
+    }
+
+    enum { Alignment = PerThreadHeap::Alignment };
+  };
+
+  template <class PerThreadHeap>
+  alignas(16) __thread char ThreadSpecificHeap<PerThreadHeap>::heapbuf[sizeof(PerThreadHeap)] INITIAL_EXEC_ATTR;
+
+  template <class PerThreadHeap>
+  __thread PerThreadHeap * ThreadSpecificHeap<PerThreadHeap>::heap INITIAL_EXEC_ATTR = nullptr;
+
+
+#else
+  
   template <class PerThreadHeap>
   class ThreadSpecificHeap {
   public:
 
-    ThreadSpecificHeap (void)
+    ThreadSpecificHeap()
     {
       // Initialize the heap exactly once.
       pthread_once (&(getOnce()), initializeHeap);
@@ -53,15 +117,17 @@ namespace HL {
     }
 
     inline void free (void * ptr) {
-      PerThreadHeap * heap =
-	(PerThreadHeap *) pthread_getspecific (getHeapKey());
-      if (heap) heap->free (ptr);
+      getHeap()->free (ptr);
     }
 
     inline size_t getSize (void * ptr) {
       return getHeap()->getSize(ptr);
     }
 
+    inline void * memalign(size_t alignment, size_t sz) {
+      return getHeap()->memalign(alignment, sz);
+    }
+    
     enum { Alignment = PerThreadHeap::Alignment };
 
   private:
@@ -103,6 +169,8 @@ namespace HL {
     }
   };
 
+#endif
+  
 }
 
 #if defined(__clang__)
