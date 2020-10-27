@@ -31,7 +31,8 @@ extern "C" {
 
   void * xxmalloc (size_t);
   void   xxfree (void *);
-
+  void * xxmemalign(size_t, size_t);
+  
   // Takes a pointer and returns how much space it holds.
   size_t xxmalloc_usable_size (void *);
 
@@ -195,29 +196,7 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
   throw()
 #endif
 {
-  // NOTE: This function is deprecated.
-  // Check for non power-of-two alignment.
-  if ((alignment == 0) || (alignment & (alignment - 1)))
-    {
-      return NULL;
-    }
-
-  if (alignment == sizeof(double)) {
-    return xxmalloc (size);
-  } else {
-    // Try to just allocate an object of the requested size.
-    // If it happens to be aligned properly, just return it.
-    void * ptr = xxmalloc(size);
-    if (((size_t) ptr & ~(alignment - 1)) == (size_t) ptr) {
-      // It is already aligned just fine; return it.
-      return ptr;
-    }
-    // It was not aligned as requested: free the object and allocate a big one.
-    xxfree(ptr);
-    ptr = xxmalloc (size + 2 * alignment);
-    void * alignedPtr = (void *) (((size_t) ptr + alignment - 1) & ~(alignment - 1));
-    return alignedPtr;
-  }
+  return xxmemalign(alignment, size);
 }
 
 extern "C" void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t size)
