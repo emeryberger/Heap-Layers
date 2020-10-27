@@ -42,7 +42,7 @@
       !defined(__APPLE__))					\
      || defined(__SUNPRO_CC)					\
      || defined(__FreeBSD__))
-#define USE_THREAD_KEYWORD 0
+#define USE_THREAD_KEYWORD 1
 #else
 #define USE_THREAD_KEYWORD 0
 #endif
