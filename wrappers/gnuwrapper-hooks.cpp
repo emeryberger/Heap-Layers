@@ -62,13 +62,13 @@ static bool initialized = false;
 
 extern "C" {
 
-  void * xxmalloc (size_t);
-  void   xxfree (void *);
-  size_t xxmalloc_usable_size (void *);
-  void   xxmalloc_lock (void);
-  void   xxmalloc_unlock (void);
+  void * xxmalloc(size_t);
+  void   xxfree(void *);
+  size_t xxmalloc_usable_size(void *);
+  void   xxmalloc_lock();
+  void   xxmalloc_unlock();
 
-  static void my_init_hook (void);
+  static void my_init_hook();
 
   // New hooks for allocation functions.
   static void * my_malloc_hook (size_t, const void *);
@@ -89,11 +89,11 @@ extern "C" {
  #define __MALLOC_HOOK_VOLATILE
 #endif
 
-  void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook) (void) = my_init_hook;
+  void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook)() = my_init_hook;
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   
-  static void my_init_hook (void) {
+  static void my_init_hook() {
     if (!initialized) {
       // Store the old hooks.
       old_malloc_hook = __malloc_hook;
