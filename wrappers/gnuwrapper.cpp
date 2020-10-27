@@ -35,6 +35,7 @@
   
   - xxmalloc
   - xxfree
+  - xxmemalign
   - xxmalloc_usable_size
   - xxmalloc_lock
   - xxmalloc_unlock
@@ -42,14 +43,6 @@
   See the extern "C" block below for function prototypes and more
   details. YOU SHOULD NOT NEED TO MODIFY ANY OF THE CODE HERE TO
   SUPPORT ANY ALLOCATOR.
-
-
-  LIMITATIONS:
-
-  - This wrapper assumes that the underlying allocator will do "the
-    right thing" when xxfree() is called with a pointer internal to an
-    allocated object. Header-based allocators, for example, need not
-    apply.
 
 */
 
@@ -89,4 +82,3 @@ extern "C" {
 
 #include "wrapper.cpp"
 #include "gnuwrapper-hooks.cpp"
-
