@@ -28,6 +28,7 @@ using namespace std;
   
   - xxmalloc
   - xxfree
+  - xxmemalign
   - xxmalloc_usable_size
   - xxmalloc_lock
   - xxmalloc_unlock
@@ -38,11 +39,6 @@ using namespace std;
 
 
   LIMITATIONS:
-
-  - This wrapper assumes that the underlying allocator will do "the
-    right thing" when xxfree() is called with a pointer internal to an
-    allocated object. Header-based allocators, for example, need not
-    apply.
 
   - This wrapper also assumes that there is some way to lock all the
     heaps used by a given allocator; however, such support is only
@@ -58,7 +54,8 @@ extern "C" {
 
   void * xxmalloc (size_t);
   void   xxfree (void *);
-
+  void * xxmemalign(size_t, size_t);
+  
   /// Pending widespread support for sized deallocation.
   /// void   xxfree_sized (void *, size_t);
  
@@ -198,6 +195,8 @@ extern "C" {
 
   void * replace_memalign (size_t alignment, size_t size)
   {
+    return xxmemalign(alignment, size);
+#if 0
     // Check for non power-of-two alignment, or mistake in size.
     if (alignment < alignof(max_align_t)) {
       alignment = alignof(max_align_t);
@@ -242,6 +241,7 @@ extern "C" {
     auto * buf = replace_malloc(2 * alignment + size);
     auto * alignedPtr = (void *) (((size_t) buf + alignment - 1) & ~(alignment - 1));
     return alignedPtr;
+#endif
   }
 
 #if 0
