@@ -466,7 +466,7 @@ extern "C" int malloc_jumpstart (int);
 #define HL_REPLACE_MALLOC_OPS 1
 #endif
 
-#define HL_REPLACE_ZONES 0
+#define HL_REPLACE_ZONES 1
 
 
 #if HL_REPLACE_MALLOC_OPS
@@ -476,17 +476,17 @@ MAC_INTERPOSE(replace__malloc_fork_parent, _malloc_fork_parent);
 MAC_INTERPOSE(replace__malloc_fork_prepare, _malloc_fork_prepare);
 //MAC_INTERPOSE(replace_aligned_alloc, aligned_alloc);
 MAC_INTERPOSE(replace_calloc, calloc);
-MAC_INTERPOSE(replace_free, _ZdaPv);
-MAC_INTERPOSE(replace_free, _ZdaPvRKSt9nothrow_t);
-MAC_INTERPOSE(replace_free, _ZdlPv);
-MAC_INTERPOSE(replace_free, _ZdlPvRKSt9nothrow_t);
-MAC_INTERPOSE(replace_free, free);
-MAC_INTERPOSE(replace_free, vfree);
-MAC_INTERPOSE(replace_malloc, _Znam);
-MAC_INTERPOSE(replace_malloc, _ZnamRKSt9nothrow_t);
-MAC_INTERPOSE(replace_malloc, _Znwm);
-MAC_INTERPOSE(replace_malloc, _ZnwmRKSt9nothrow_t);
-MAC_INTERPOSE(replace_malloc, malloc);
+MAC_INTERPOSE(xxfree, _ZdaPv);
+MAC_INTERPOSE(xxfree, _ZdaPvRKSt9nothrow_t);
+MAC_INTERPOSE(xxfree, _ZdlPv);
+MAC_INTERPOSE(xxfree, _ZdlPvRKSt9nothrow_t);
+MAC_INTERPOSE(xxfree, free);
+MAC_INTERPOSE(xxfree, vfree);
+MAC_INTERPOSE(xxmalloc, _Znam);
+MAC_INTERPOSE(xxmalloc, _ZnamRKSt9nothrow_t);
+MAC_INTERPOSE(xxmalloc, _Znwm);
+MAC_INTERPOSE(xxmalloc, _ZnwmRKSt9nothrow_t);
+MAC_INTERPOSE(xxmalloc, malloc);
 #if HL_REPLACE_ZONES
 MAC_INTERPOSE(replace_malloc_create_zone, malloc_create_zone);
 MAC_INTERPOSE(replace_malloc_default_purgeable_zone, malloc_default_purgeable_zone);
@@ -501,7 +501,7 @@ MAC_INTERPOSE(replace_malloc_jumpstart, malloc_jumpstart);
 #endif
 MAC_INTERPOSE(replace_malloc_printf, malloc_printf);
 MAC_INTERPOSE(replace_malloc_set_zone_name, malloc_set_zone_name);
-MAC_INTERPOSE(replace_malloc_usable_size, malloc_size);
+MAC_INTERPOSE(xxmalloc_usable_size, malloc_size);
 #if HL_REPLACE_ZONES
 MAC_INTERPOSE(replace_malloc_zone_batch_free, malloc_zone_batch_free);
 MAC_INTERPOSE(replace_malloc_zone_batch_malloc, malloc_zone_batch_malloc);
