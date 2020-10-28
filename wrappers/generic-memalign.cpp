@@ -17,7 +17,7 @@ extern "C" {
 }
 
 extern "C"
-void * generic_xxmemalign(size_t alignment, size_t sz) {
+void * generic_xxmemalign(size_t alignment, size_t size) {
   // Check for non power-of-two alignment.
   if ((alignment == 0) || (alignment & (alignment - 1)))
     {
@@ -26,7 +26,7 @@ void * generic_xxmemalign(size_t alignment, size_t sz) {
 
   if (alignment <= alignof(max_align_t)) {
     // Already aligned by default.
-    return xxmalloc (size);
+    return xxmalloc(size);
   } else {
     // Try to just allocate an object of the requested size.
     // If it happens to be aligned properly, just return it.
