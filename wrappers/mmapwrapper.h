@@ -37,7 +37,10 @@ extern "C" int madvise (caddr_t, size_t, int);
 
 #if !defined(HL_MMAP_PROTECTION_MASK)
 #if HL_EXECUTABLE_HEAP
-#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC)
+#ifndef MAP_JIT
+#define MAP_JIT 0
+#endif
+#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | MAP_JIT)
 #else
 #if !defined(PROT_MAX)
 #define PROT_MAX(p) 0
@@ -109,7 +112,7 @@ namespace HL {
 #else
       const int permflags = PAGE_READWRITE;
 #endif
-      ptr = VirtualAlloc (NULL, sz, MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN, permflags);
+      ptr = VirtualAlloc(nullptr, sz, MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN, permflags);
       return  ptr;
     }
   
@@ -130,7 +133,7 @@ namespace HL {
     static void * map (size_t sz) {
 
       if (sz == 0) {
-	return NULL;
+	return nullptr;
       }
 
       // Round up the size to a page-sized value.
@@ -149,13 +152,16 @@ namespace HL {
       mapFlag |= MAP_PRIVATE;
 #else
       int fd = -1;
-      mapFlag |= MAP_ANONYMOUS | MAP_PRIVATE;
+      //      mapFlag |= MAP_ANONYMOUS | MAP_PRIVATE;
+      mapFlag |= MAP_ANON | MAP_PRIVATE;
 #endif
 
       ptr = mmap(startAddress, sz, HL_MMAP_PROTECTION_MASK, mapFlag, fd, 0);
 
       if (ptr == MAP_FAILED) {
-	return NULL;
+	tprintf::tprintf("MAP_FAILED\n");
+	perror("WTF");
+	return nullptr;
       } else {
 	return ptr;
       }
