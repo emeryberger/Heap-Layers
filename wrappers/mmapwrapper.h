@@ -40,7 +40,7 @@ extern "C" int madvise (caddr_t, size_t, int);
 #ifndef MAP_JIT
 #define MAP_JIT 0
 #endif
-#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | MAP_JIT)
+#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC | MAP_JIT)
 #else
 #if !defined(PROT_MAX)
 #define PROT_MAX(p) 0
