@@ -36,7 +36,7 @@ namespace HL {}
 // Define HL_EXECUTABLE_HEAP as 1 if you want that (i.e., you're doing
 // dynamic code generation).
 
-#define HL_EXECUTABLE_HEAP 1
+// #define HL_EXECUTABLE_HEAP 1
 
 #if defined(_MSC_VER)
 
