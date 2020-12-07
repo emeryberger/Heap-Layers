@@ -36,7 +36,11 @@ namespace HL {
       : _numBins (size)
     {
       assert (_numBins > 0);
-      void * buf = _allocator.malloc (sizeof(ListNodePtr) * _numBins); 
+      void * buf = _allocator.malloc (sizeof(ListNodePtr) * _numBins);
+      assert(buf);
+      if (buf == nullptr) {
+	abort();
+      }
       _bins = new (buf) ListNodePtr[_numBins];
       for (unsigned int i = 0 ; i < _numBins; i++) {
 	_bins[i] = NULL;
