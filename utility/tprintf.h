@@ -17,7 +17,7 @@ using namespace std;
 namespace tprintf {
   
   const int MAXBUF = 65536;
-  const int FD = 1; // 2
+  int FD = 1; // 2
 
   template <typename T>
   inline void writeval(T v);
