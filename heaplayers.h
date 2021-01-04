@@ -3,11 +3,11 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-  
+
   Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-  
+
   Heap Layers is distributed under the terms of the Apache 2.0 license.
 
   You may obtain a copy of the License at
@@ -45,7 +45,7 @@ namespace HL {}
 #define INLINE __forceinline
 //#define inline __forceinline
 #define NO_INLINE __declspec(noinline)
-#pragma warning(disable: 4530)
+#pragma warning(disable : 4530)
 #define MALLOC_FUNCTION
 #define RESTRICT
 
@@ -53,10 +53,10 @@ namespace HL {}
 
 // GNU C
 
-#define NO_INLINE       __attribute__ ((noinline))
-#define INLINE          inline
+#define NO_INLINE __attribute__((noinline))
+#define INLINE inline
 #define MALLOC_FUNCTION __attribute__((malloc))
-#define RESTRICT        __restrict__
+#define RESTRICT __restrict__
 
 #else
 
@@ -68,7 +68,6 @@ namespace HL {}
 #define RESTRICT
 
 #endif
-
 
 /**
  * @def ALLOCATION_STATS
@@ -89,18 +88,18 @@ namespace HL {}
 #ifdef _MSC_VER
 // 4786: Disable warnings about long (> 255 chars) identifiers.
 // 4512: Disable warnings about assignment operators.
-#pragma warning( push )
-#pragma warning( disable:4786 4512 )
+#pragma warning(push)
+#pragma warning(disable : 4786 4512)
 #endif
 
-#include "utility/all.h"
 #include "heaps/all.h"
 #include "locks/all.h"
 #include "threads/all.h"
+#include "utility/all.h"
 #include "wrappers/all.h"
 
 #ifdef _MSC_VER
-#pragma warning( pop )
+#pragma warning(pop)
 #endif
 
 #endif // _HEAPLAYERS_H_

@@ -1,12 +1,10 @@
 #include "exactlyoneheap.h"
 #include "exceptionheap.h"
-#include "nullheap.h"
-#include "perclassheap.h"
-#include "slopheap.h"
-#include "uniqueheap.h"
 #include "localmallocheap.h"
+#include "nullheap.h"
 #include "oneheap.h"
+#include "perclassheap.h"
 #include "profileheap.h"
+#include "slopheap.h"
 #include "traceheap.h"
-
-
+#include "uniqueheap.h"

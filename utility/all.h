@@ -12,9 +12,9 @@
 #include "dynarray.h"
 #include "exactlyone.h"
 #include "freesllist.h"
+#include "gcd.h"
 #include "hash.h"
 #include "ilog2.h"
-#include "gcd.h"
 #include "istrue.h"
 #include "lcm.h"
 #include "modulo.h"
@@ -22,4 +22,3 @@
 #include "sllist.h"
 #include "timer.h"
 #include "tprintf.h"
-

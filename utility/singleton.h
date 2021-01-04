@@ -7,28 +7,24 @@
 
 namespace HL {
 
-  template <class C>
-  class singleton {
-  public:
-    
-    static C& getInstance() {
+template <class C> class singleton {
+public:
+  static C &getInstance() {
 #if 0
       static C theSingleton;
       return theSingleton;
 #else
-      static char buf[sizeof(C)];
-      static C * theSingleton = new (buf) C;
-      return *theSingleton;
+    static char buf[sizeof(C)];
+    static C *theSingleton = new (buf) C;
+    return *theSingleton;
 #endif
-    }
+  }
 
-    singleton()= default;
-    ~singleton()= default;
-    singleton(const singleton&)= delete;
-    singleton& operator=(const singleton&)= delete;
-  };
-
+  singleton() = default;
+  ~singleton() = default;
+  singleton(const singleton &) = delete;
+  singleton &operator=(const singleton &) = delete;
+};
 }
 
 #endif
-

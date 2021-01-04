@@ -4,10 +4,10 @@
  * @file   checkpoweroftwo.h
  * @brief  Check statically if a number is a power of two.
  * @author Emery Berger <http://www.cs.umass.edu/~emery>
- * @note   Copyright (C) 2005 by Emery Berger, University of Massachusetts Amherst.
+ * @note   Copyright (C) 2005 by Emery Berger, University of Massachusetts
+ *Amherst.
  *
  **/
-
 
 #ifndef HL_CHECKPOWEROFTWO_H
 #define HL_CHECKPOWEROFTWO_H
@@ -20,26 +20,23 @@
 
 namespace HL {
 
-  template <unsigned long Number>
-  class IsPowerOfTwo {
-  public:
-    enum { VALUE = (!(Number & (Number - 1)) && Number) };
-  };
+template <unsigned long Number> class IsPowerOfTwo {
+public:
+  enum { VALUE = (!(Number & (Number - 1)) && Number) };
+};
 
-  /**
-   * @class CheckPowerOfTwo
-   * @brief Template meta-program: fails if number is not a power of two.
-   *
-   **/
-  template <unsigned long V>
-  class CheckPowerOfTwo {
-  public:
-    CheckPowerOfTwo() {
-      static_assert(IsPowerOfTwo<V>::VALUE, "Argument must be a power of two.");
-    }
-    //    enum { Verify = HL::sassert<IsPowerOfTwo<V>::VALUE>::VALUE };
-  };
-  
+/**
+ * @class CheckPowerOfTwo
+ * @brief Template meta-program: fails if number is not a power of two.
+ *
+ **/
+template <unsigned long V> class CheckPowerOfTwo {
+public:
+  CheckPowerOfTwo() {
+    static_assert(IsPowerOfTwo<V>::VALUE, "Argument must be a power of two.");
+  }
+  //    enum { Verify = HL::sassert<IsPowerOfTwo<V>::VALUE>::VALUE };
+};
 }
 
 #endif

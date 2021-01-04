@@ -14,14 +14,12 @@ int counter[NUMTHREADS];
 using namespace HL;
 using namespace std;
 
-void * fn (void *) {
+void *fn(void *) {
   counter[CPUInfo::getThreadId() % NUMTHREADS]++;
   return NULL;
 }
 
-int
-main()
-{
+int main() {
   // Clear the counter array.
   for (int i = 0; i < NUMTHREADS; i++) {
     counter[i] = 0;
@@ -29,7 +27,7 @@ main()
 
   Fred t[NUMTHREADS];
   for (int i = 0; i < NUMTHREADS; i++) {
-    t[i].create (fn, NULL);
+    t[i].create(fn, NULL);
   }
   for (int i = 0; i < NUMTHREADS; i++) {
     t[i].join();

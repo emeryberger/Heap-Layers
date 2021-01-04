@@ -1,10 +1,11 @@
 #include <assert.h>
-#include <windows.h>
 #include <process.h>
+#include <windows.h>
 
-/* Sbrk implementation for Win32 by Emery Berger, http://www.cs.utexas.edu/users/emery */
+/* Sbrk implementation for Win32 by Emery Berger,
+ * http://www.cs.utexas.edu/users/emery */
 
-void * sbrk (long size) {
+void *sbrk(long size) {
 
 /* Reserve up to 1 GB of RAM */
 /*
@@ -16,11 +17,11 @@ void * sbrk (long size) {
   static long remainingReserved = PRE_RESERVE;
 
   static int initialized = 0;
-  static char * currentPosition = NULL;
-  static char * nextPage = NULL;
+  static char *currentPosition = NULL;
+  static char *nextPage = NULL;
   static long remainingCommitted = 0;
   static long pageSize;
-  void * p;
+  void *p;
 
   if (!initialized) {
 
@@ -38,19 +39,20 @@ void * sbrk (long size) {
 
     pageSize = sSysInfo.dwPageSize;
 
-    /* Reserve pages in the process's virtual address space. */
+/* Reserve pages in the process's virtual address space. */
 
 #if 1
     base = VirtualAlloc(NULL, remainingReserved, MEM_RESERVE, PAGE_NOACCESS);
 #else
-    base = VirtualAlloc(NULL, remainingReserved, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    remainingCommitted =  PRE_RESERVE;
+    base = VirtualAlloc(NULL, remainingReserved, MEM_COMMIT | MEM_RESERVE,
+                        PAGE_EXECUTE_READWRITE);
+    remainingCommitted = PRE_RESERVE;
 #endif
 
-    if (base == NULL )
-      exit (1); /* VirtualAlloc reserve failed */
+    if (base == NULL)
+      exit(1); /* VirtualAlloc reserve failed */
 
-    currentPosition = nextPage = (char *) base;
+    currentPosition = nextPage = (char *)base;
     initialized = 1;
   }
 
@@ -85,11 +87,10 @@ void * sbrk (long size) {
     remainingReserved += size;
 #endif
     return currentPosition;
-
   }
 
   if (size > 0) {
-    void * p;
+    void *p;
     if (size > remainingCommitted) {
 
       /* Commit some more pages.
@@ -97,13 +98,15 @@ void * sbrk (long size) {
          Note that page size must be a power of two.
       */
 
-      int bytesToCommit = (size - remainingCommitted + pageSize - 1) & ~(pageSize - 1); 
-      int * result;
+      int bytesToCommit =
+          (size - remainingCommitted + pageSize - 1) & ~(pageSize - 1);
+      int *result;
 
-      result = VirtualAlloc((LPVOID) nextPage, bytesToCommit, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+      result = VirtualAlloc((LPVOID)nextPage, bytesToCommit, MEM_COMMIT,
+                            PAGE_EXECUTE_READWRITE);
 
-      if (result == NULL )
-        exit (1); /* VirtualAlloc commit failed */
+      if (result == NULL)
+        exit(1); /* VirtualAlloc commit failed */
 
       nextPage += bytesToCommit;
       remainingCommitted += bytesToCommit;
@@ -116,7 +119,6 @@ void * sbrk (long size) {
     return p;
   }
 
-  assert (size == 0);
+  assert(size == 0);
   return currentPosition;
-
 }

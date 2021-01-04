@@ -3,11 +3,11 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-  
+
   Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-  
+
   Heap Layers is distributed under the terms of the Apache 2.0 license.
 
   You may obtain a copy of the License at
@@ -28,25 +28,16 @@
 
 namespace HL {
 
-template <class SuperHeap>
-class NestedHeap : public SuperHeap {
+template <class SuperHeap> class NestedHeap : public SuperHeap {
 public:
+  NestedHeap() : parent(NULL), child(NULL), prev(NULL), next(NULL) {}
 
-  NestedHeap()
-    : parent (NULL),
-      child (NULL),
-      prev (NULL),
-      next (NULL)
-  {
-  }
-
-  ~NestedHeap()
-  {
+  ~NestedHeap() {
     clear();
     if (parent != NULL) {
-      parent->removeChild (this);
+      parent->removeChild(this);
     }
-    removeSibling (this);
+    removeSibling(this);
   }
 
   inline void clear() {
@@ -77,25 +68,23 @@ public:
 
 #else // clear all the children.
 
-    NestedHeap<SuperHeap> * ch = child;
+    NestedHeap<SuperHeap> *ch = child;
     while (ch != NULL) {
-      NestedHeap<SuperHeap> * nextChild = ch->next;
+      NestedHeap<SuperHeap> *nextChild = ch->next;
       ch->clear();
       ch = nextChild;
     }
 #endif
-
   }
 
-  void addChild (NestedHeap<SuperHeap> * ch)
-  {
+  void addChild(NestedHeap<SuperHeap> *ch) {
     if (child == NULL) {
       child = ch;
       child->prev = NULL;
       child->next = NULL;
     } else {
-      assert (child->prev == NULL);
-      assert (ch->next == NULL);
+      assert(child->prev == NULL);
+      assert(ch->next == NULL);
       ch->prev = NULL;
       ch->next = child;
       child->prev = ch;
@@ -105,10 +94,8 @@ public:
   }
 
 private:
-
-  void removeChild (NestedHeap<SuperHeap> * ch)
-  {
-    assert (ch != NULL);
+  void removeChild(NestedHeap<SuperHeap> *ch) {
+    assert(ch != NULL);
     if (child == ch) {
       if (ch->prev) {
         child = ch->prev;
@@ -118,11 +105,10 @@ private:
         child = NULL;
       }
     }
-    removeSibling (ch);
+    removeSibling(ch);
   }
 
-  inline static void removeSibling (NestedHeap<SuperHeap> * sib)
-  {
+  inline static void removeSibling(NestedHeap<SuperHeap> *sib) {
     if (sib->prev) {
       sib->prev->next = sib->next;
     }
@@ -131,13 +117,11 @@ private:
     }
   }
 
-  NestedHeap<SuperHeap> * parent;
-  NestedHeap<SuperHeap> * child;
-  NestedHeap<SuperHeap> * prev;
-  NestedHeap<SuperHeap> * next;
-
+  NestedHeap<SuperHeap> *parent;
+  NestedHeap<SuperHeap> *child;
+  NestedHeap<SuperHeap> *prev;
+  NestedHeap<SuperHeap> *next;
 };
-
 }
 
 #endif

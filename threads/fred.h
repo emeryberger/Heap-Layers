@@ -7,13 +7,13 @@
 
 #if defined(_WIN32)
 
-#include <windows.h>
 #include <process.h>
+#include <windows.h>
 
 #elif defined(__SVR4)
 
-#include <thread.h>
 #include <pthread.h>
+#include <thread.h>
 #include <unistd.h>
 
 #else
@@ -23,78 +23,73 @@
 
 #endif
 
-extern "C" typedef void * (*ThreadFunctionType) (void *);
+extern "C" typedef void *(*ThreadFunctionType)(void *);
 
 namespace HL {
 
-  class Fred {
-  public:
-
-    Fred() {
+class Fred {
+public:
+  Fred() {
 #if !defined(_WIN32)
-      pthread_attr_init (&attr);
+    pthread_attr_init(&attr);
 #endif
-    }
+  }
 
-    ~Fred() {
+  ~Fred() {
 #if !defined(_WIN32)
-      pthread_attr_destroy (&attr);
+    pthread_attr_destroy(&attr);
 #endif
-    }
+  }
 
-    void create (ThreadFunctionType function, void * arg) {
+  void create(ThreadFunctionType function, void *arg) {
 #if defined(_WIN32)
-      t = CreateThread (0, 0, (LPTHREAD_START_ROUTINE) *function, (LPVOID) arg, 0, 0);
+    t = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)*function, (LPVOID)arg, 0,
+                     0);
 #else
-      pthread_create (&t, &attr, function, arg);
+    pthread_create(&t, &attr, function, arg);
 #endif
-    }
+  }
 
-    void join() {
+  void join() {
 #if defined(_WIN32)
-      WaitForSingleObject (t, INFINITE);
+    WaitForSingleObject(t, INFINITE);
 #else
-      pthread_join (t, NULL);
+    pthread_join(t, NULL);
 #endif
-    }
+  }
 
-    static void yield() {
+  static void yield() {
 #if defined(_WIN32)
-      Sleep (0);
+    Sleep(0);
 #elif defined(__SVR4)
-      thr_yield();
+    thr_yield();
 #else
-      sched_yield();
+    sched_yield();
 #endif
-    }
+  }
 
-
-    static void setConcurrency (int n) {
+  static void setConcurrency(int n) {
 #if defined(_WIN32)
 #elif defined(__SVR4)
-      thr_setconcurrency (n);
+    thr_setconcurrency(n);
 #else
-      pthread_setconcurrency (n);
+    pthread_setconcurrency(n);
 #endif
-    }
+  }
 
-
-  private:
-
-    Fred (const Fred&);
-    Fred& operator=(const Fred&);
+private:
+  Fred(const Fred &);
+  Fred &operator=(const Fred &);
 
 #if defined(_WIN32)
-    typedef HANDLE FredType;
+  typedef HANDLE FredType;
 #else
-    typedef pthread_t FredType;
-    pthread_attr_t attr;
+  typedef pthread_t FredType;
+  pthread_attr_t attr;
 #endif
 
-    FredType t;
-  };
-
+  FredType t;
+};
 }
-
 
 #endif

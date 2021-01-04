@@ -3,11 +3,11 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-  
+
   Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-  
+
   Heap Layers is distributed under the terms of the Apache 2.0 license.
 
   You may obtain a copy of the License at
@@ -27,8 +27,8 @@
  * meaning that such objects must be at least the size of a pointer.
  */
 
-#include <assert.h>
 #include "utility/freesllist.h"
+#include <assert.h>
 
 #ifndef NULL
 #define NULL 0
@@ -36,41 +36,36 @@
 
 namespace HL {
 
-  template <class SuperHeap>
-  class FreelistHeap : public SuperHeap {
-  public:
-
-    inline void * malloc (size_t sz) {
-      // Check the free list first.
-      void * ptr = _freelist.get();
-      // If it's empty, get more memory;
-      // otherwise, advance the free list pointer.
-      if (ptr == 0) {
-        ptr = SuperHeap::malloc (sz);
-      }
-      return ptr;
+template <class SuperHeap> class FreelistHeap : public SuperHeap {
+public:
+  inline void *malloc(size_t sz) {
+    // Check the free list first.
+    void *ptr = _freelist.get();
+    // If it's empty, get more memory;
+    // otherwise, advance the free list pointer.
+    if (ptr == 0) {
+      ptr = SuperHeap::malloc(sz);
     }
+    return ptr;
+  }
 
-    inline void free (void * ptr) {
-      if (ptr == 0) {
-        return;
-      }
-      _freelist.insert (ptr);
+  inline void free(void *ptr) {
+    if (ptr == 0) {
+      return;
     }
+    _freelist.insert(ptr);
+  }
 
-    inline void clear (void) {
-      void * ptr;
-      while ((ptr = _freelist.get())) {
-        SuperHeap::free (ptr);
-      }
+  inline void clear(void) {
+    void *ptr;
+    while ((ptr = _freelist.get())) {
+      SuperHeap::free(ptr);
     }
+  }
 
-  private:
-
-    FreeSLList _freelist;
-
-  };
-
+private:
+  FreeSLList _freelist;
+};
 }
 
 #endif
