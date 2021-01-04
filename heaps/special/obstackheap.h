@@ -3,11 +3,11 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-
+  
   Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-
+  
   Heap Layers is distributed under the terms of the Apache 2.0 license.
 
   You may obtain a copy of the License at
@@ -27,197 +27,209 @@
 
 namespace HL {
 
-template <int ChunkSize, class SuperHeap> class ObstackHeap : public SuperHeap {
-public:
-  enum { Alignment = sizeof(double) };
+  template <int ChunkSize, class SuperHeap>
+  class ObstackHeap : public SuperHeap {
+  public:
 
-  ObstackHeap() {
-    // Get one chunk and set the current position marker.
-    currentChunk = makeChunk(NULL, ChunkSize);
-    currentBase = nextPos = (char *)(currentChunk + 1);
-    assert(isValid());
-  }
+    enum { Alignment = sizeof(double) };
 
-  ~ObstackHeap() {
-    // Free every chunk.
-    assert(isValid());
-    ChunkHeader *ch = currentChunk;
-    while (ch != NULL) {
-      ChunkHeader *pch = ch->getPrevChunk();
-      // cout << "Freeing chunk " << ch << endl;
-      SuperHeap::free(ch);
-      ch = pch;
+    ObstackHeap()
+    {
+      // Get one chunk and set the current position marker.
+      currentChunk = makeChunk (NULL, ChunkSize);
+      currentBase = nextPos = (char *) (currentChunk + 1);
+      assert (isValid());
     }
-  }
 
-  // "Grow" the current object.
-  // Returns a point in the object just before the current "grow".
-  inline void *grow(size_t sz) {
-    // If we've grown beyond the confines of this chunk,
-    // get a new one.
-    assert(isValid());
-    if ((int)((char *)currentChunk->getLimit() - (char *)nextPos) < sz) {
-      ChunkHeader *newCurrent = copyToNew(sz);
-      if (newCurrent == NULL)
-        return NULL;
+    ~ObstackHeap() {
+      // Free every chunk.
+      assert (isValid());
+      ChunkHeader * ch = currentChunk;
+      while (ch != NULL) {
+        ChunkHeader * pch = ch->getPrevChunk();
+        // cout << "Freeing chunk " << ch << endl;
+        SuperHeap::free (ch);
+        ch = pch;
+      }
+    }
+
+    // "Grow" the current object.
+    // Returns a point in the object just before the current "grow".
+    inline void * grow (size_t sz) {
+      // If we've grown beyond the confines of this chunk,
+      // get a new one.
+      assert (isValid());
+      if ((int) ((char *) currentChunk->getLimit() - (char *) nextPos) < sz) {
+        ChunkHeader * newCurrent = copyToNew(sz);
+        if (newCurrent == NULL)
+          return NULL;
 #if 0
         // Now delete the previous chunk if this was the only object in it.
         if (deleteChunk != NULL) {
           SuperHeap::free (deleteChunk);
         }
 #endif
-      assert(isValid());
+        assert (isValid());
+      }
+      assert (((int) ((char *) currentChunk->getLimit() - (char *) nextPos) >= sz));
+      assert ((char *) (sz + nextPos) <= currentChunk->getLimit());
+      // Bump the pointer for the next object.
+      void * prevNextPos = nextPos;
+      nextPos += sz;
+      assert (isValid());
+      return prevNextPos;
     }
-    assert(((int)((char *)currentChunk->getLimit() - (char *)nextPos) >= sz));
-    assert((char *)(sz + nextPos) <= currentChunk->getLimit());
-    // Bump the pointer for the next object.
-    void *prevNextPos = nextPos;
-    nextPos += sz;
-    assert(isValid());
-    return prevNextPos;
-  }
 
-  inline void *malloc(size_t sz) {
-    assert(isValid());
-    if (currentChunk == NULL) {
-      return NULL;
-    }
-    // sz = align(sz > 0 ? sz : 1);
-    // If this object can't fit in the current chunk,
-    // get another one.
-    if ((int)((char *)currentChunk->getLimit() - (char *)nextPos) < sz) {
-      // Allocate a chunk that's large enough to hold the requested size.
-      currentChunk = makeChunk(currentChunk, sz);
+
+    inline void * malloc (size_t sz) {
+      assert (isValid());
       if (currentChunk == NULL) {
         return NULL;
       }
-      currentBase = nextPos = (char *)(currentChunk + 1);
-      assert(isValid());
+      //sz = align(sz > 0 ? sz : 1);
+      // If this object can't fit in the current chunk,
+      // get another one.
+      if ((int) ((char *) currentChunk->getLimit() - (char *) nextPos) < sz) {
+        // Allocate a chunk that's large enough to hold the requested size.
+        currentChunk = makeChunk (currentChunk, sz);
+        if (currentChunk == NULL) {
+          return NULL;
+        }
+        currentBase = nextPos = (char *) (currentChunk + 1);
+        assert (isValid());
+      }
+      assert (((int) ((char *) currentChunk->getLimit() - (char *) nextPos) >= sz));
+      assert ((char *) (sz + nextPos) <= currentChunk->getLimit());
+      // Bump the pointers forward.
+      currentBase = nextPos;
+      nextPos += sz;
+      void * ptr = currentBase;
+      finalize();
+      assert (isValid());
+      return (void *) ptr;
     }
-    assert(((int)((char *)currentChunk->getLimit() - (char *)nextPos) >= sz));
-    assert((char *)(sz + nextPos) <= currentChunk->getLimit());
-    // Bump the pointers forward.
-    currentBase = nextPos;
-    nextPos += sz;
-    void *ptr = currentBase;
-    finalize();
-    assert(isValid());
-    return (void *)ptr;
-  }
 
-  // Free everything allocated "after" ptr.
-  // NB: Freeing NULL safely empties the entire obstack.
-  inline void free(void *ptr) {
-    assert(isValid());
-    // Free every chunk until we find the one that this pointer is in.
-    // Then reset the current position to ptr.
-    while (currentChunk != NULL &&
-           (((char *)currentChunk > (char *)ptr) ||
-            ((char *)currentChunk->getLimit() < (char *)ptr))) {
-      ChunkHeader *pch = currentChunk;
-      currentChunk = currentChunk->getPrevChunk();
-      SuperHeap::free(pch);
-    }
-    if (currentChunk != NULL) {
-      currentBase = nextPos = (char *)ptr;
-      assert(isValid());
-    } else {
-      if (ptr != NULL) {
-        // Something bad has happened -- we tried to free an item that
-        // wasn't in any chunk.
-        abort();
+    // Free everything allocated "after" ptr.
+    // NB: Freeing NULL safely empties the entire obstack.
+    inline void free (void * ptr) {
+      assert (isValid());
+      // Free every chunk until we find the one that this pointer is in.
+      // Then reset the current position to ptr.
+      while (currentChunk != NULL &&
+	     (((char *) currentChunk > (char *) ptr) ||
+	      ((char *) currentChunk->getLimit() < (char *) ptr))) {
+        ChunkHeader * pch = currentChunk;
+        currentChunk = currentChunk->getPrevChunk();
+        SuperHeap::free (pch);
+      }
+      if (currentChunk != NULL) {
+        currentBase = nextPos = (char *) ptr;
+        assert (isValid());
       } else {
-        // Get one chunk.
-        currentChunk = makeChunk(NULL, ChunkSize);
-        currentBase = nextPos = (char *)(currentChunk + 1);
-        assert(isValid());
+        if (ptr != NULL) {
+          // Something bad has happened -- we tried to free an item that
+          // wasn't in any chunk.
+          abort();
+        } else {
+          // Get one chunk.
+          currentChunk = makeChunk (NULL, ChunkSize);
+          currentBase = nextPos = (char *) (currentChunk + 1);
+          assert (isValid());
+        }
       }
     }
-  }
 
-  inline void *getObjectBase() {
-    assert(isValid());
-    return currentBase;
-  }
 
-  inline void finalize() {
-    assert(isValid());
-    nextPos = (char *)HL::align<Alignment>((size_t)nextPos);
-    currentBase = nextPos;
-    assert(isValid());
-  }
+    inline void * getObjectBase() {
+      assert (isValid());
+      return currentBase;
+    }
 
-private:
-  inline int objectSize() {
-    int diff = (int)(nextPos - currentBase);
-    assert(diff >= 0);
-    return diff;
-  }
 
-  int isValid() {
-// Verify class invariants.
-#ifndef NDEBUG
-    bool c1 = (currentBase <= nextPos);
-    assert(c1);
-    bool c2 = (nextPos <= currentChunk->getLimit());
-    assert(c2);
-    bool c3 = ((char *)currentChunk <= currentChunk->getLimit());
-    assert(c3);
-    bool c4 = ((char *)currentChunk <= currentBase);
-    assert(c4);
-    bool c5 = (currentChunk != currentChunk->getPrevChunk());
-    assert(c5);
-    bool c6 = (objectSize() >= 0);
-    assert(c6);
-    return (c1 && c2 && c3 && c4 && c5 && c6);
-#else
-    return 1;
-#endif
-  }
+    inline void finalize() {
+      assert (isValid());
+      nextPos = (char *) HL::align<Alignment> ((size_t) nextPos);
+      currentBase = nextPos;
+      assert (isValid());
+    }
 
-  // The header for every chunk.
-  class ChunkHeader {
-  public:
-    inline ChunkHeader(ChunkHeader *prev, size_t sz)
-        : _pastEnd((char *)(this + 1) + sz), _prevChunk(prev) {}
-
-    // Return the end of the current chunk.
-    inline char *getLimit() { return _pastEnd; }
-
-    // Return the previous chunk.
-    inline ChunkHeader *getPrevChunk() { return _prevChunk; }
 
   private:
-    // Just past the end of this chunk.
-    char *_pastEnd;
 
-    // Address of prior chunk.
-    ChunkHeader *_prevChunk;
-  };
 
-  // Make a new chunk of at least sz bytes.
-  inline ChunkHeader *makeChunk(ChunkHeader *ch, size_t sz) {
-    // Round up the allocation size to at least one chunk.
-    size_t allocSize =
-        HL::align<Alignment>((sz > ChunkSize - sizeof(ChunkHeader))
-                                 ? sz
-                                 : ChunkSize - sizeof(ChunkHeader));
-    // Make a new chunk.
-    void *ptr = SuperHeap::malloc(sizeof(ChunkHeader) + allocSize);
-    if (ptr == NULL) {
-      return NULL;
+    inline int objectSize() {
+      int diff = (int) (nextPos - currentBase);
+      assert (diff >= 0);
+      return diff;
     }
-    ChunkHeader *newChunk = new (ptr) ChunkHeader(ch, allocSize);
-    return newChunk;
-  }
 
-  // Copy the current object to a new chunk.
-  // sz = the minimum amount of extra space we need.
-  inline ChunkHeader *copyToNew(size_t sz) {
-    size_t obj_size = objectSize();
-    size_t new_size = obj_size + sz + (obj_size >> 3) + 100;
-    // size_t new_size = 2 * (obj_size + sz);
-    ChunkHeader *newChunk;
+
+    int isValid() {
+      // Verify class invariants.
+#ifndef NDEBUG
+      bool c1 = (currentBase <= nextPos);
+      assert (c1);
+      bool c2 = (nextPos <= currentChunk->getLimit());
+      assert (c2);
+      bool c3 = ((char *) currentChunk <= currentChunk->getLimit());
+      assert (c3);
+      bool c4 = ((char *) currentChunk <= currentBase);
+      assert (c4);
+      bool c5 = (currentChunk != currentChunk->getPrevChunk());
+      assert (c5);
+      bool c6 = (objectSize() >= 0);
+      assert (c6);
+      return (c1 && c2 && c3 && c4 && c5 && c6);
+#else
+      return 1;
+#endif
+    }
+
+    // The header for every chunk.
+    class ChunkHeader {
+    public:
+      inline ChunkHeader (ChunkHeader * prev, size_t sz)
+        : _pastEnd ((char *) (this + 1) + sz),
+        _prevChunk (prev)
+      {}
+
+      // Return the end of the current chunk.
+      inline char * getLimit() { return _pastEnd; }
+
+      // Return the previous chunk.
+      inline ChunkHeader * getPrevChunk() { return _prevChunk; }
+
+    private:
+      // Just past the end of this chunk.
+      char * _pastEnd;
+
+      // Address of prior chunk.
+      ChunkHeader * _prevChunk;
+    };
+
+    // Make a new chunk of at least sz bytes.
+    inline ChunkHeader * makeChunk (ChunkHeader * ch, size_t sz) {
+      // Round up the allocation size to at least one chunk.
+      size_t allocSize
+        = HL::align<Alignment>((sz > ChunkSize - sizeof(ChunkHeader)) ? sz : ChunkSize - sizeof(ChunkHeader));
+      // Make a new chunk.
+      void * ptr = SuperHeap::malloc (sizeof(ChunkHeader) + allocSize);
+      if (ptr == NULL) {
+        return NULL;
+      }
+      ChunkHeader * newChunk
+        = new (ptr) ChunkHeader (ch, allocSize);
+      return newChunk;
+    }
+
+
+    // Copy the current object to a new chunk.
+    // sz = the minimum amount of extra space we need.
+    inline ChunkHeader * copyToNew (size_t sz) {
+      size_t obj_size = objectSize();
+      size_t new_size = obj_size + sz + (obj_size >> 3) + 100;
+      //size_t new_size = 2 * (obj_size + sz);
+      ChunkHeader * newChunk;
 #if 0
       // This variable will hold the chunk to be deleted (if any).
       ChunkHeader * deleteChunk = NULL;
@@ -230,34 +242,37 @@ private:
         newChunk = makeChunk (currentChunk, new_size);
       }
 #else
-    newChunk = makeChunk(currentChunk, new_size);
+      newChunk = makeChunk (currentChunk, new_size);
 #endif
-    if (newChunk == NULL) {
-      currentChunk = NULL;
-      return NULL;
-    }
-    // Copy the current object to the new chunk.
-    memcpy((char *)(newChunk + 1), currentBase, obj_size);
-    currentChunk = newChunk;
-    currentBase = (char *)(currentChunk + 1);
-    nextPos = currentBase + obj_size;
+      if (newChunk == NULL) {
+        currentChunk = NULL;
+        return NULL;
+      }
+      // Copy the current object to the new chunk.
+      memcpy ((char *) (newChunk + 1), currentBase, obj_size);
+      currentChunk = newChunk;
+      currentBase = (char *) (currentChunk + 1);
+      nextPos = currentBase + obj_size;
 #if 0
       if (deleteChunk != NULL) {
         SuperHeap::free (deleteChunk);
       }
 #endif
-    return currentChunk;
-  }
+      return currentChunk;
+    }
 
-  // Current position in the current chunk.
-  char *currentBase;
 
-  // Where to add the next character to the current object.
-  char *nextPos;
+    // Current position in the current chunk.
+    char * currentBase;
 
-  // My current chunk.
-  ChunkHeader *currentChunk;
-};
+    // Where to add the next character to the current object.
+    char * nextPos;
+
+    // My current chunk.
+    ChunkHeader * currentChunk;
+
+  };
+
 }
 
 #endif

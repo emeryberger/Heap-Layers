@@ -6,11 +6,11 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-
+  
   Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-
+  
   Heap Layers is distributed under the terms of the Apache 2.0 license.
 
   You may obtain a copy of the License at
@@ -44,43 +44,49 @@
 
 namespace HL {
 
-template <int NumHeaps, class PerThreadHeap>
-class ThreadHeap : public PerThreadHeap {
-public:
-  enum { Alignment = PerThreadHeap::Alignment };
+  template <int NumHeaps, class PerThreadHeap>
+  class ThreadHeap : public PerThreadHeap {
+  public:
 
-  inline void *malloc(size_t sz) {
-    auto tid = Modulo<NumHeaps>::mod(CPUInfo::getThreadId());
-    assert(tid >= 0);
-    assert(tid < NumHeaps);
-    return getHeap(tid)->malloc(sz);
-  }
+    enum { Alignment = PerThreadHeap::Alignment };
 
-  inline void free(void *ptr) {
-    auto tid = Modulo<NumHeaps>::mod(CPUInfo::getThreadId());
-    assert(tid >= 0);
-    assert(tid < NumHeaps);
-    getHeap(tid)->free(ptr);
-  }
+    inline void * malloc (size_t sz) {
+      auto tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
+      assert (tid >= 0);
+      assert (tid < NumHeaps);
+      return getHeap(tid)->malloc (sz);
+    }
 
-  inline size_t getSize(void *ptr) {
-    auto tid = Modulo<NumHeaps>::mod(CPUInfo::getThreadId());
-    assert(tid >= 0);
-    assert(tid < NumHeaps);
-    return getHeap(tid)->getSize(ptr);
-  }
+    inline void free (void * ptr) {
+      auto tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
+      assert (tid >= 0);
+      assert (tid < NumHeaps);
+      getHeap(tid)->free (ptr);
+    }
 
-private:
-  // Access the given heap within the buffer.
-  inline PerThreadHeap *getHeap(unsigned int index) {
-    int ind = (int)index;
-    assert(ind >= 0);
-    assert(ind < NumHeaps);
-    return &ptHeaps[ind];
-  }
+    inline size_t getSize (void * ptr) {
+      auto tid = Modulo<NumHeaps>::mod (CPUInfo::getThreadId());
+      assert (tid >= 0);
+      assert (tid < NumHeaps);
+      return getHeap(tid)->getSize (ptr);
+    }
 
-  PerThreadHeap ptHeaps[NumHeaps];
-};
+    
+  private:
+
+    // Access the given heap within the buffer.
+    inline PerThreadHeap * getHeap (unsigned int index) {
+      int ind = (int) index;
+      assert (ind >= 0);
+      assert (ind < NumHeaps);
+      return &ptHeaps[ind];
+    }
+
+    PerThreadHeap ptHeaps[NumHeaps];
+
+  };
+
 }
+
 
 #endif

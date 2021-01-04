@@ -3,11 +3,11 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-
+  
   Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-
+  
   Heap Layers is distributed under the terms of the Apache 2.0 license.
 
   You may obtain a copy of the License at
@@ -26,8 +26,8 @@
 
 #include <assert.h>
 
-#include "chunkheap.h"
 #include "heaplayers.h"
+#include "chunkheap.h"
 #include "nestedheap.h"
 #include "slopheap.h"
 
@@ -45,10 +45,13 @@
 using namespace HL;
 
 template <class Sbrk>
-class LeaHeap2
-    : public Threshold<4096,
-                       DLSmallHeapType<DLBigHeapType<CoalesceableHeap<Sbrk>>>> {
-};
+class LeaHeap2 :
+  public
+  Threshold<4096,
+	    DLSmallHeapType<DLBigHeapType<CoalesceableHeap<Sbrk> > > >
+{};
+
+
 
 #if 0 // USE stack for non-touching deletion stuff (for drag measurements)
 
@@ -148,45 +151,52 @@ private:
  * @brief A heap layer that provides region semantics.
  */
 
-template <class SuperHeap> class RegionHeap : public SuperHeap {
+template <class SuperHeap>
+class RegionHeap : public SuperHeap {
 public:
-  RegionHeap(void) : prev(NULL) {}
 
-  ~RegionHeap(void) { clear(); }
+  RegionHeap (void)
+    : prev (NULL)
+  {}
 
-  inline void *malloc(const size_t sz) {
-    char *ch = (char *)SuperHeap::malloc(sz + sizeof(Header));
+  ~RegionHeap (void)
+  {
+    clear();
+  }
+
+  inline void * malloc (const size_t sz) {
+    char * ch = (char *) SuperHeap::malloc (sz + sizeof(Header));
 
     if (ch == NULL) {
       return NULL;
     }
-
+    
     // Put the "header" at the end of the object.
     // This is just so we can overwrite the start of the object
     // with a boundary tag (metadata) that will let us free it
     // into a coalescing heap.
-
+    
     // The datum member points to the actual start of the object,
     // while the prev member is our linked-list pointer.
-
-    Header *ptr = (Header *)(ch + sz);
+    
+    Header * ptr = (Header *) (ch + sz);
     ptr->datum = ch;
     ptr->prev = prev;
     prev = ptr;
 
-    return (void *)ch;
+    return (void *) ch;
   }
 
   /**
    * @brief Checks to see if an object was allocated from this heap.
    * @return 1 iff the obj was in one of our chunks.
    */
-  int find(void *obj) const {
+  int find (void * obj) const {
     // Search backwards through the header links.
-    Header *curr = prev;
+    Header * curr = prev;
     while (curr) {
       if ((curr->datum <= obj) && (curr > obj)) {
-        return 1;
+	return 1;
       }
       curr = curr->prev;
     }
@@ -194,29 +204,31 @@ public:
   }
 
   /// Delete everything.
-  inline void clear(void) {
+  inline void clear (void) {
     while (prev) {
-      Header *ptr = prev->prev;
-      SuperHeap::free(prev->datum);
+      Header * ptr = prev->prev;
+      SuperHeap::free (prev->datum);
       prev = ptr;
     }
   }
 
   // Just a NOP.
-  inline void free(void *) {}
+  inline void free (void *) {}
 
 private:
+
+
   /// The header for allocated objects.
   class Header {
   public:
     /// Points to the start of the allocated object.
-    void *datum;
-
+    void * datum;
+    
     /// The previous header.
-    Header *prev;
+    Header * prev;
   };
 
-  Header *prev;
+  Header * prev;
 };
 
 #endif
@@ -230,9 +242,9 @@ class NoHeap {};
  */
 
 template <class MainStore>
-class ReapTopHeap
-    : public ChunkHeap<8192 - sizeof(typename AddHeader<NoHeap>::Header),
-                       SlopHeap<RegionHeap<MainStore>, 16>> {};
+class ReapTopHeap :
+  public ChunkHeap<8192 - sizeof(typename AddHeader<NoHeap>::Header),
+		   SlopHeap<RegionHeap<MainStore>, 16> > {};
 
 /**
  * @class ReapBaseType
@@ -241,9 +253,10 @@ class ReapTopHeap
  */
 
 template <class MainStore>
-class ReapBaseType
-    : public ClearOptimizeHeap<AddHeader<ReapTopHeap<MainStore>>,
-                               LeaHeap2<ReapTopHeap<MainStore>>> {};
+class ReapBaseType :
+  public ClearOptimizeHeap<AddHeader<ReapTopHeap<MainStore> >,
+                           LeaHeap2<ReapTopHeap<MainStore> > >
+{};
 
 /**
  * @class Reap
@@ -255,7 +268,9 @@ class ReapBaseType
  */
 
 template <class MainStore>
-class Reap : public PerClassHeap<FreelistHeap<MainStore>>,
-             public ANSIWrapper<NestedHeap<ReapBaseType<MainStore>>> {};
+class Reap :
+  public PerClassHeap<FreelistHeap<MainStore> >, 
+  public ANSIWrapper<NestedHeap<ReapBaseType<MainStore> > >
+{};
 
 #endif

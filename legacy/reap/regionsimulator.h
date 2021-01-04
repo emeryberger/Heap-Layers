@@ -9,6 +9,7 @@
  * free calls.
  */
 
+
 #ifndef _REGIONSIMULATOR_H_
 #define _REGIONSIMULATOR_H_
 
@@ -18,10 +19,12 @@
 #define MALLOC_TRACE 0
 #endif
 
-#include "..\heaplayers\dynarray.h"
+
 #include "..\heaplayers\traceheap.h"
+#include "..\heaplayers\dynarray.h"
 
 #include <assert.h>
+
 
 #if 0
 // A dynamic array that automatically grows to fit
@@ -136,40 +139,48 @@ private:
 };
 #endif
 
+
 #if 1
 class MallocStack {
 public:
-  MallocStack(void) : numMallocs(0) { mallocs[0] = NULL; }
+  MallocStack (void)
+    : numMallocs (0)
+  {
+    mallocs[0] = NULL;
+  }
 
-  int length(void) const { return numMallocs; }
+  int length (void) const { return numMallocs; }
 
-  inline void push(void *ptr) {
+  inline void push (void * ptr) {
     numMallocs++;
     mallocs[numMallocs] = ptr;
   }
 
-  inline void *pop(void) {
-    void *ptr = NULL;
+  inline void * pop (void) {
+    void * ptr = NULL;
     if (numMallocs > 0) {
       ptr = mallocs[numMallocs];
       numMallocs--;
       // The array has shrunk, so potentially trim it.
-      mallocs.trim(numMallocs + 1);
+      mallocs.trim (numMallocs + 1);
     }
     return ptr;
   }
 
-  inline void *top(void) {
-    void *ptr = NULL;
+  inline void * top (void) {
+    void * ptr = NULL;
     if (numMallocs > 0) {
       ptr = mallocs[numMallocs];
     }
     return ptr;
   }
 
-  inline void clear(void) { mallocs.clear(); }
-
+  inline void clear (void) {
+	  mallocs.clear();
+  }
+  
 private:
+  
   // The number of mallocs recorded above.
   // 0 == no mallocs.
   // 1 == mallocs[1] has the one malloc, etc.
@@ -180,15 +191,22 @@ private:
   // The array of remembered malloc pointers.
 
   DynamicArray<void *> mallocs;
+
+
 };
 #else
 class MallocStack {
 public:
-  inline int length(void) const { return theStack.size(); }
 
-  inline void push(void *p) { theStack.push_front(p); }
+  inline int length (void) const {
+    return theStack.size();
+  }
 
-  inline void *top(void) const {
+  inline void push (void * p) {
+    theStack.push_front(p);
+  }
+
+  inline void * top (void) const {
     if (length() <= 0) {
       return NULL;
     } else {
@@ -196,20 +214,23 @@ public:
     }
   }
 
-  inline void *pop(void) {
+  inline void * pop (void) {
     if (length() <= 0) {
       return NULL;
     }
-    void *ptr = top();
+    void * ptr = top();
     theStack.pop_front();
     return ptr;
   }
 
 private:
+
   list<void *> theStack;
+
 };
 
 #endif
+
 
 /**
  * @class RegionSimulator
@@ -225,36 +246,43 @@ private:
 #include <windows.h>
 #endif
 
-template <class SuperHeap> class RegionSimulator : public SuperHeap {
+template <class SuperHeap>
+class RegionSimulator : public SuperHeap {
 public:
-  RegionSimulator(void)
-      : magicNumber(MAGIC_NUMBER), parent(NULL), child(NULL), sibling(NULL) {
+
+
+  RegionSimulator (void)
+    : magicNumber (MAGIC_NUMBER),
+      parent (NULL),
+      child (NULL),
+      sibling (NULL)
+  {
     initCurrentObject();
     sanityCheck();
   }
 
-  ~RegionSimulator(void) {
+  ~RegionSimulator (void) {
     sanityCheck();
 
-    //	freeAll();
-    SuperHeap::free(currentObject);
+//	freeAll();
+    SuperHeap::free (currentObject);
 
 #if 1
-// Free everything still on our allocated object array.
+    // Free everything still on our allocated object array.
 
 #if 1
-    void *ptr;
+    void * ptr;
     while ((ptr = mallocStack.pop())) {
-      if ((size_t)ptr & 1 == 0)
-        SuperHeap::free(ptr);
+      if ((size_t) ptr & 1 == 0)
+	SuperHeap::free (ptr);
     }
 #endif
 
-// Now iterate over the children and destroy them all.
+    // Now iterate over the children and destroy them all.
 
 #if 1
     while (child != NULL) {
-      RegionSimulator *nextChild = child->sibling;
+      RegionSimulator * nextChild = child->sibling;
       delete child;
       child = nextChild;
     }
@@ -263,17 +291,19 @@ public:
     // Inform our parent that we're gone.
 
     if (parent != NULL) {
-      parent->removeChild(this);
+      parent->removeChild (this);
     }
 #endif
+
   }
 
   // Make the current object big enough to accomodate this request.
 
-  inline void *malloc(size_t sz) {
+  inline void * malloc (size_t sz)
+  {
     sanityCheck();
 
-    void *ptr;
+    void * ptr;
 
     // If the current object has been exposed,
     // we need to grow it. Otherwise, we can allocate
@@ -285,39 +315,43 @@ public:
       // large enough to hold sz bytes.
       // Finalize and return the grown object.
 
-      grow(sz - currentObjectSize);
+      grow (sz - currentObjectSize);
       ptr = currentObject;
-      assert(currentObjectSize >= sz);
+      assert (currentObjectSize >= sz);
       finalize();
 
     } else
 
-    {
+      {
 
       // Allocate the object directly
       // and record it.
 
-      ptr = SuperHeap::malloc(sz);
-      mallocStack.push(ptr);
+      ptr = SuperHeap::malloc (sz);
+      mallocStack.push (ptr);
 
 #if MALLOC_TRACE
-      printf("M %x %d\n", ptr, sz);
+      printf ("M %x %d\n", ptr, sz);
 #endif
     }
+
 
     sanityCheck();
     return ptr;
   }
 
+
 private:
+
   // Hide free.
-  void free(void *);
+  void free (void *);
 
 public:
+
   // Obstack support.
 
   // Free every pointer allocated AFTER this pointer.
-  inline void freeAfter(void *ptr) {
+  inline void freeAfter (void * ptr) {
     sanityCheck();
 
     if (ptr != currentObject) {
@@ -327,53 +361,57 @@ public:
       // we do these comparisons because we add 1 bits to
       // indicate when objects have already been freed.
 
-      while ((mallocStack.top() != NULL) &&
-             (((size_t)mallocStack.top() & ~1) != (size_t)ptr)) {
+      while ((mallocStack.top() != NULL)
+	     && (((size_t) mallocStack.top() & ~1) != (size_t) ptr))
+	{
 
-        void *popPtr = mallocStack.top();
-
-        // If this object has not yet been freed, free it.
-
-        if (((size_t)popPtr & 1) == 0) {
-          void *addr = (void *)((size_t)popPtr & ~1);
+	  void * popPtr = mallocStack.top();
+	
+	  // If this object has not yet been freed, free it.
+	
+	  if (((size_t) popPtr & 1) == 0) {
+	    void * addr = (void *) ((size_t) popPtr & ~1);
 #if MALLOC_TRACE
-          printf("F %x\n", addr);
+	    printf ("F %x\n", addr);
 #endif
-          SuperHeap::free(addr);
-        }
-        mallocStack.pop();
-      }
+	    SuperHeap::free (addr);
+	  }
+	  mallocStack.pop();
+	}
 
       sanityCheck();
 
     } else {
 
-// Just free the current object and start a new one.
+      // Just free the current object and start a new one.
 
 #if MALLOC_TRACE
-      printf("M %x %d\n", currentObject, currentObjectSize);
-      printf("F %x\n", currentObject);
+      printf ("M %x %d\n", currentObject, currentObjectSize);
+      printf ("F %x\n", currentObject);
 #endif
-      SuperHeap::free(currentObject);
+      SuperHeap::free (currentObject);
       initCurrentObject();
     }
+
   }
 
+
   // Free every pointer allocated to date.
-  inline void freeAll(void) {
-    void *ptr;
+  inline void freeAll (void)
+  {
+    void * ptr;
     sanityCheck();
 
     while ((ptr = mallocStack.pop())) {
-      //		printf ("F %x\n", ptr);
-      if (((size_t)ptr & 1) == 0) {
-        SuperHeap::free((void *)((size_t)ptr & ~1));
+//		printf ("F %x\n", ptr);
+      if (((size_t) ptr & 1) == 0) {
+	SuperHeap::free ((void *) ((size_t) ptr & ~1));
       }
     }
     mallocStack.clear();
-
+    
     while (child != NULL) {
-      RegionSimulator *nextChild = child->sibling;
+      RegionSimulator * nextChild = child->sibling;
       delete child;
       child = nextChild;
     }
@@ -388,26 +426,27 @@ public:
 #endif
 
     sanityCheck();
-  }
 
+  }
+  
   // Return the start of the current allocated object.
-  inline void *getObjectBase(void) {
+  inline void * getObjectBase (void) {
     sanityCheck();
     isCurrentObjectExposed = true;
     return currentObject;
   }
 
   // Finalize an object.
-  inline void finalize(void) {
+  inline void finalize (void) {
     sanityCheck();
 
     // Add the current allocated object to our array
     // and start a new object.
 
-    mallocStack.push(currentObject);
+    mallocStack.push (currentObject);
 
 #if MALLOC_TRACE
-    printf("M %x %d\n", currentObject, currentObjectSize);
+    printf ("M %x %d\n", currentObject, currentObjectSize);
 #endif
 
     initCurrentObject();
@@ -417,7 +456,7 @@ public:
 
   // "Grow" the current object by a certain amount.
 
-  inline void *grow(size_t sz) {
+  inline void * grow (size_t sz) {
 
     sanityCheck();
 
@@ -434,33 +473,32 @@ public:
       // modifying CurrentObjectPosition so it points
       // into the right place in the new object.
 
-      void *ptr = SuperHeap::malloc(requestedObjectSize);
+      void * ptr = SuperHeap::malloc (requestedObjectSize);
 #if MALLOC_TRACE
-      printf("m %x %d\n", ptr, requestedObjectSize);
+      printf ("m %x %d\n", ptr, requestedObjectSize);
 #endif
 
       actualObjectSize = requestedObjectSize;
       if (ptr == NULL)
-        abort();
-      memcpy(ptr, currentObject, currentObjectSize);
-      SuperHeap::free(currentObject);
+	abort();
+      memcpy (ptr, currentObject, currentObjectSize);
+      SuperHeap::free (currentObject);
 #if MALLOC_TRACE
-      printf("f %x\n", currentObject);
+      printf ("f %x\n", currentObject);
 #endif
 
-      currentObjectPosition =
-          (char *)ptr + (currentObjectPosition - (char *)currentObject);
+      currentObjectPosition = (char *) ptr + (currentObjectPosition - (char *) currentObject);
 
       // If someone has already obtained a "handle" on the current object
       // via getObjectBase, record this object as already freed -- we may
       // have to free backwards to this pointer.
 
       if (isCurrentObjectExposed) {
-
-        // Record this object.
-        // We OR the address with 1 to mark this object as already freed.
-
-        mallocStack.push((void *)((size_t)currentObject | 1));
+			
+	// Record this object.
+	// We OR the address with 1 to mark this object as already freed.
+			
+	mallocStack.push ((void *) ((size_t) currentObject | 1));
       }
 
       currentObject = ptr;
@@ -471,13 +509,12 @@ public:
     // starting position plus the size. Return the previous starting position.
 
     // Because calling grow can result in a new object,
-    // the current object can be considered no longer exposed (if it was
-    // before).
+    // the current object can be considered no longer exposed (if it was before).
 
     isCurrentObjectExposed = false;
 
     currentObjectSize += sz;
-    char *oldPosition = currentObjectPosition;
+    char * oldPosition = currentObjectPosition;
     currentObjectPosition += sz;
     sanityCheck();
     return oldPosition;
@@ -485,11 +522,12 @@ public:
 
   // ch should be a new region, i.e., it should not have any siblings yet.
 
-  void addChild(RegionSimulator *ch) {
+  void addChild (RegionSimulator * ch)
+  {
     if (child == NULL) {
       child = ch;
     } else {
-      assert(ch->sibling == NULL);
+      assert (ch->sibling == NULL);
       ch->sibling = child;
       child = ch;
     }
@@ -497,47 +535,51 @@ public:
   }
 
 private:
+
 #if 1
 
-  void removeChild(RegionSimulator *ch) {
-    assert(ch != NULL);
+  void removeChild (RegionSimulator * ch)
+  {
+    assert (ch != NULL);
     if (child == ch) {
       child = child->sibling;
     } else {
-      child->removeSibling(ch);
+      child->removeSibling (ch);
     }
   }
 
-  void removeSibling(RegionSimulator *sib) {
-    RegionSimulator *prev = NULL;
-    RegionSimulator *curr = sibling;
-    int i = 0;
-    while (curr && (curr != sib)) {
-      prev = curr;
-      curr = curr->sibling;
-      i++;
-    }
-    if (prev == NULL) {
-      sibling = sibling->sibling;
-    } else {
-      prev->sibling = curr->sibling;
-    }
+  void removeSibling (RegionSimulator * sib)
+  {
+	RegionSimulator * prev = NULL;
+	RegionSimulator * curr = sibling;
+	int i = 0;
+	while (curr && (curr != sib)) {
+		prev = curr;
+		curr = curr->sibling;
+		i++;
+	}
+	if (prev == NULL) {
+		sibling = sibling->sibling;
+	} else {
+		prev->sibling = curr->sibling;
+	}
   }
 
-  RegionSimulator *parent;
-  RegionSimulator *child;
-  RegionSimulator *sibling;
+  RegionSimulator * parent;
+  RegionSimulator * child;
+  RegionSimulator * sibling;
 #endif
 
   enum { INITIAL_OBJECT_SIZE = sizeof(double) };
 
+
   // Allocate a new object and initialize the associated variables.
 
-  inline void initCurrentObject(void) {
-    currentObject = SuperHeap::malloc(INITIAL_OBJECT_SIZE);
+  inline void initCurrentObject (void) {
+    currentObject = SuperHeap::malloc (INITIAL_OBJECT_SIZE);
     if (currentObject == NULL)
       abort();
-    currentObjectPosition = (char *)currentObject;
+    currentObjectPosition = (char *) currentObject;
     currentObjectSize = 0;
     actualObjectSize = INITIAL_OBJECT_SIZE;
     isCurrentObjectExposed = false;
@@ -545,11 +587,11 @@ private:
 
   // Round up to a double word.
 
-  inline static size_t align(int sz) {
+  inline static size_t align (int sz) {
     return (sz + (sizeof(double) - 1)) & ~(sizeof(double) - 1);
   }
 
-  inline void sanityCheck(void) {
+  inline void sanityCheck (void) {
 
     // Check some class invariants:
     //
@@ -558,9 +600,9 @@ private:
     // - The current object must exist.
     // - The current position needs to be after the start of the object.
 
-    assert(magicNumber == MAGIC_NUMBER);
-    assert(currentObject != NULL);
-    assert(currentObjectPosition >= (char *)currentObject);
+    assert (magicNumber == MAGIC_NUMBER);
+    assert (currentObject != NULL);
+    assert (currentObjectPosition >= (char *) currentObject);
   }
 
   // With this magic number, we're either in this layer
@@ -571,8 +613,8 @@ private:
   // The current object, the current position in that object,
   // and the current object's perceived and actual sizes.
 
-  void *currentObject;
-  char *currentObjectPosition;
+  void * currentObject;
+  char * currentObjectPosition;
   size_t currentObjectSize;
   size_t actualObjectSize;
 
@@ -589,7 +631,10 @@ private:
   // The stack of malloc'ed objects.
 
   MallocStack mallocStack;
+
 };
+
+
 
 #if 0
 extern char * PseudoObstackName;
@@ -599,7 +644,7 @@ class PseudoObstack : public RegionSimulator<SuperHeap> {};
 
 #define C_LINKAGE extern "C"
 
-#else /* __cplusplus */
+#else  /* __cplusplus */
 
 #define C_LINKAGE extern
 
@@ -608,33 +653,32 @@ class PseudoObstack : public RegionSimulator<SuperHeap> {};
 #include <stdlib.h>
 
 /* C_LINKAGE void regionCreate (void ** reg); */
-C_LINKAGE void regionCreate(void **reg, void **parent);
-C_LINKAGE void regionDestroy(void **reg);
-C_LINKAGE void *regionAllocate(void **reg, size_t sz);
-C_LINKAGE void regionFreeAll(void **reg);
+C_LINKAGE void regionCreate (void ** reg, void ** parent);
+C_LINKAGE void regionDestroy (void ** reg);
+C_LINKAGE void * regionAllocate (void ** reg, size_t sz);
+C_LINKAGE void regionFreeAll (void ** reg);
 
 /* Obstack functions */
 
 struct obstack {
-  void *theObstack;
+	void * theObstack;
 };
 
-C_LINKAGE void obstack_init(struct obstack *obstack);
-C_LINKAGE void *obstack_alloc(struct obstack *obstack, size_t size);
-C_LINKAGE void *obstack_copy(struct obstack *obstack, void *address,
-                             size_t size);
-C_LINKAGE void *obstack_copy0(struct obstack *obstack, void *address,
-                              size_t size);
-C_LINKAGE void obstack_free(struct obstack *obstack, void *block);
-C_LINKAGE void obstack_blank(struct obstack *obstack, size_t size);
-C_LINKAGE void obstack_grow(struct obstack *obstack, void *data, size_t size);
-C_LINKAGE void obstack_grow0(struct obstack *obstack, void *data, int size);
-C_LINKAGE void obstack_1grow(struct obstack *obstack, long c);
-C_LINKAGE void obstack_ptr_grow(struct obstack *obstack, void *data);
-C_LINKAGE void obstack_int_grow(struct obstack *obstack, int data);
-C_LINKAGE void *obstack_finish(struct obstack *obstack);
-C_LINKAGE void *obstack_base(struct obstack *obstack);
-C_LINKAGE void *obstack_next_free(struct obstack *obstack);
-C_LINKAGE int _obstack_get_alignment(struct obstack *);
+C_LINKAGE void obstack_init (struct obstack *obstack);
+C_LINKAGE void * obstack_alloc (struct obstack *obstack, size_t size);
+C_LINKAGE void * obstack_copy (struct obstack *obstack, void *address, size_t size);
+C_LINKAGE void * obstack_copy0 (struct obstack *obstack, void *address, size_t size);
+C_LINKAGE void obstack_free (struct obstack *obstack, void *block);
+C_LINKAGE void obstack_blank (struct obstack *obstack, size_t size);
+C_LINKAGE void obstack_grow (struct obstack *obstack, void *data, size_t size);
+C_LINKAGE void obstack_grow0 (struct obstack *obstack, void *data, int size);
+C_LINKAGE void obstack_1grow (struct obstack *obstack, long c);
+C_LINKAGE void obstack_ptr_grow (struct obstack *obstack, void *data);
+C_LINKAGE void obstack_int_grow (struct obstack *obstack, int data);
+C_LINKAGE void * obstack_finish (struct obstack * obstack);
+C_LINKAGE void * obstack_base (struct obstack *obstack);
+C_LINKAGE void * obstack_next_free (struct obstack *obstack);
+C_LINKAGE int _obstack_get_alignment (struct obstack *);
 
 #endif /* _REGIONSIMULATOR_H_ */
+

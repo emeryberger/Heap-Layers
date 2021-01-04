@@ -10,26 +10,33 @@
 template <int numObjects, class Super>
 class BoundedFreeListHeap : public Super {
 public:
-  BoundedFreeListHeap() : nObjects(0), myFreeList(NULL) {}
 
-  ~BoundedFreeListHeap() { clear(); }
+  BoundedFreeListHeap()
+    : nObjects (0),
+    myFreeList (NULL)
+  {}
 
-  inline void *malloc(size_t sz) {
+  ~BoundedFreeListHeap()
+  {
+    clear();
+  }
+
+  inline void * malloc (size_t sz) {
     // Check the free list first.
-    void *ptr = myFreeList;
+    void * ptr = myFreeList;
     if (ptr == NULL) {
-      ptr = Super::malloc(sz);
+      ptr = Super::malloc (sz);
     } else {
       myFreeList = myFreeList->next;
     }
     return ptr;
   }
 
-  inline void free(void *ptr) {
+  inline void free (void * ptr) {
     if (nObjects < numObjects) {
       // Add this object to the free list.
-      ((freeObject *)ptr)->next = myFreeList;
-      myFreeList = (freeObject *)ptr;
+      ((freeObject *) ptr)->next = myFreeList;
+      myFreeList = (freeObject *) ptr;
       nObjects++;
     } else {
       clear();
@@ -37,26 +44,27 @@ public:
     }
   }
 
-  inline void clear(void) {
+  inline void clear (void) {
     // Delete everything on the free list.
-    void *ptr = myFreeList;
+    void * ptr = myFreeList;
     while (ptr != NULL) {
-      void *oldptr = ptr;
-      ptr = (void *)((freeObject *)ptr)->next;
-      Super::free(oldptr);
+      void * oldptr = ptr;
+      ptr = (void *) ((freeObject *) ptr)->next;
+      Super::free (oldptr);
     }
     myFreeList = NULL;
     nObjects = 0;
   }
 
 private:
+
   class freeObject {
   public:
-    freeObject *next;
+    freeObject * next;
   };
 
   int nObjects;
-  freeObject *myFreeList;
+  freeObject * myFreeList;
 };
 
 #endif

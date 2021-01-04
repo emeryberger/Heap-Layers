@@ -12,9 +12,9 @@ typedef struct interpose_s {
   void *orig_func;
 } interpose_t;
 
-#define MAC_INTERPOSE(newf, oldf)                                              \
-  __attribute__((used)) static const interpose_t macinterpose##newf##oldf      \
-      __attribute__((section("__DATA, __interpose"))) = {(void *)newf,         \
-                                                         (void *)oldf}
+#define MAC_INTERPOSE(newf,oldf) __attribute__((used)) \
+  static const interpose_t macinterpose##newf##oldf \
+  __attribute__ ((section("__DATA, __interpose"))) = \
+    { (void *) newf, (void *) oldf }
 
 #endif

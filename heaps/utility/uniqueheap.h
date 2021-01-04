@@ -3,11 +3,11 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-
+  
   Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-
+  
   Heap Layers is distributed under the terms of the Apache 2.0 license.
 
   You may obtain a copy of the License at
@@ -31,43 +31,56 @@
 
 namespace HL {
 
-template <class SuperHeap, class Child = int> class UniqueHeap {
-public:
-  enum { Alignment = SuperHeap::Alignment };
+  template <class SuperHeap, class Child = int>
+  class UniqueHeap {
+  public:
 
-  /**
-   * Ensure that the super heap gets created,
-   * and add a reference for every instance of unique heap.
-   */
-  UniqueHeap() {
-    volatile SuperHeap *forceCreationOfSuperHeap = getSuperHeap();
-    addRef();
-  }
+    enum { Alignment = SuperHeap::Alignment };
 
-  /**
-   * @brief Delete one reference to the unique heap.
-   * When the number of references goes to zero,
-   * delete the super heap.
-   */
-  ~UniqueHeap() {
-    int r = delRef();
-    if (r <= 0) {
-      getSuperHeap()->SuperHeap::~SuperHeap();
+    /**
+     * Ensure that the super heap gets created,
+     * and add a reference for every instance of unique heap.
+     */
+    UniqueHeap() 
+    {
+      volatile SuperHeap * forceCreationOfSuperHeap = getSuperHeap();
+      addRef();
     }
-  }
 
-  // The remaining public methods are just
-  // thin wrappers that route calls to the static object.
+    /**
+     * @brief Delete one reference to the unique heap.
+     * When the number of references goes to zero,
+     * delete the super heap.
+     */
+    ~UniqueHeap() {
+      int r = delRef();
+      if (r <= 0) {
+	getSuperHeap()->SuperHeap::~SuperHeap();
+      }
+    }
 
-  inline void *malloc(size_t sz) { return getSuperHeap()->malloc(sz); }
+    // The remaining public methods are just
+    // thin wrappers that route calls to the static object.
 
-  inline void free(void *ptr) { getSuperHeap()->free(ptr); }
+    inline void * malloc (size_t sz) {
+      return getSuperHeap()->malloc (sz);
+    }
+  
+    inline void free (void * ptr) {
+      getSuperHeap()->free (ptr);
+    }
+  
+    inline size_t getSize (void * ptr) {
+      return getSuperHeap()->getSize (ptr);
+    }
 
-  inline size_t getSize(void *ptr) { return getSuperHeap()->getSize(ptr); }
+    inline int remove (void * ptr) {
+      return getSuperHeap()->remove (ptr);
+    }
 
-  inline int remove(void *ptr) { return getSuperHeap()->remove(ptr); }
-
-  inline void clear() { getSuperHeap()->clear(); }
+    inline void clear() {
+      getSuperHeap()->clear();
+    }
 
 #if 0
     inline int getAllocated() {
@@ -83,30 +96,33 @@ public:
     }
 #endif
 
-private:
-  /// Add one reference.
-  void addRef() { getRefs() += 1; }
+  private:
 
-  /// Delete one reference count.
-  int delRef() {
-    getRefs() -= 1;
-    return getRefs();
-  }
+    /// Add one reference.
+    void addRef() {
+      getRefs() += 1;
+    }
 
-  /// Internal accessor for reference count.
-  int &getRefs() {
-    static int numRefs = 0;
-    return numRefs;
-  }
+    /// Delete one reference count.
+    int delRef() {
+      getRefs() -= 1;
+      return getRefs();
+    }
 
-  SuperHeap *getSuperHeap() {
-    static char superHeapBuffer[sizeof(SuperHeap)];
-    static SuperHeap *aSuperHeap =
-        (SuperHeap *)(new ((char *)&superHeapBuffer) SuperHeap);
-    return aSuperHeap;
-  }
+    /// Internal accessor for reference count.
+    int& getRefs() {
+      static int numRefs = 0;
+      return numRefs;
+    }
 
-  void doNothing(Child *) {}
-};
+    SuperHeap * getSuperHeap() {
+      static char superHeapBuffer[sizeof(SuperHeap)];
+      static SuperHeap * aSuperHeap = (SuperHeap *) (new ((char *) &superHeapBuffer) SuperHeap);
+      return aSuperHeap;
+    }
+
+    void doNothing (Child *) {}
+  };
+
 }
 #endif // _UNIQUE_H_

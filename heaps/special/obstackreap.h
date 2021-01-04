@@ -125,63 +125,76 @@ namespace ObstackReapNS {
   };
 #endif
 
-template <class OBJTYPE> class DynStack {
-public:
-  DynStack() : numItems(0) { items[0] = 0; }
-
-  int length() const { return numItems; }
-
-  inline void push(OBJTYPE *ptr) {
-    numItems++;
-    items[numItems] = ptr;
-  }
-
-  inline OBJTYPE *pop() {
-    OBJTYPE *ptr = 0;
-    if (numItems > 0) {
-      ptr = items[numItems];
-      numItems--;
-      // The array has shrunk, so potentially trim it.
-      items.trim(numItems + 1);
+  template <class OBJTYPE>
+  class DynStack {
+  public:
+    DynStack()
+      : numItems (0)
+    {
+      items[0] = 0;
     }
-    return ptr;
-  }
 
-  inline OBJTYPE *top() {
-    OBJTYPE *ptr = NULL;
-    if (numItems > 0) {
-      ptr = items[numItems];
+    int length() const { return numItems; }
+
+    inline void push (OBJTYPE * ptr) {
+      numItems++;
+      items[numItems] = ptr;
     }
-    return ptr;
-  }
 
-  inline void clear() { items.clear(); }
+    inline OBJTYPE * pop() {
+      OBJTYPE * ptr = 0;
+      if (numItems > 0) {
+        ptr = items[numItems];
+        numItems--;
+        // The array has shrunk, so potentially trim it.
+        items.trim (numItems + 1);
+      }
+      return ptr;
+    }
 
-private:
-  // The number of items recorded above.
-  // 0 == no items.
-  // 1 == items[1] has the single item, etc.
-  // i.e., we waste entry zero.
+    inline OBJTYPE * top() {
+      OBJTYPE * ptr = NULL;
+      if (numItems > 0) {
+        ptr = items[numItems];
+      }
+      return ptr;
+    }
 
-  int numItems;
+    inline void clear() {
+      items.clear();
+    }
 
-  // The array of remembered objects.
+  private:
 
-  HL::DynamicArray<OBJTYPE *> items;
+    // The number of items recorded above.
+    // 0 == no items.
+    // 1 == items[1] has the single item, etc.
+    // i.e., we waste entry zero.
+
+    int numItems;
+
+    // The array of remembered objects.
+
+    HL::DynamicArray<OBJTYPE *> items;
+  };
+
 };
-};
+
 
 // Layers on top of a reap.
 
-template <class ReapType> class ObstackReap {
+template <class ReapType>
+class ObstackReap {
 public:
-  ObstackReap() {
+
+  ObstackReap()
+  {
     currentReap = new ReapType;
     initCurrentObject();
   }
 
   ~ObstackReap() {
-    ReapType *r;
+    ReapType * r;
     while ((r = reapStack.pop())) {
       delete r;
     }
@@ -189,58 +202,64 @@ public:
     delete currentObject;
   }
 
-  inline void *malloc(size_t sz);
-  inline void freeAfter(void *ptr);
+  inline void * malloc (size_t sz);
+  inline void freeAfter (void * ptr);
   inline void freeAll();
-  inline void *getObjectBase();
+  inline void * getObjectBase();
   inline void finalize();
-  inline void *grow(size_t sz);
+  inline void * grow (size_t sz);
 
 private:
+
   inline void initCurrentObject();
 
   // Hide free.
-  void free(void *);
+  void free (void *);
 
   enum { INITIAL_OBJECT_SIZE = 8 * sizeof(double) };
 
-  void *currentObject;
-  char *currentObjectPosition;
+  void * currentObject;
+  char * currentObjectPosition;
   size_t currentObjectSize;
   size_t actualObjectSize;
   bool isCurrentObjectExposed;
-  ReapType *currentReap;
+  ReapType * currentReap;
   ObstackReapNS::DynStack<ReapType> reapStack;
 };
 
-template <class ReapType> void ObstackReap<ReapType>::initCurrentObject() {
-  currentObject = currentReap->malloc(INITIAL_OBJECT_SIZE);
-  currentObjectPosition = (char *)currentObject;
+
+template <class ReapType>
+void ObstackReap<ReapType>::initCurrentObject() {
+  currentObject = currentReap->malloc (INITIAL_OBJECT_SIZE);
+  currentObjectPosition = (char *) currentObject;
   currentObjectSize = 0;
   actualObjectSize = INITIAL_OBJECT_SIZE;
   isCurrentObjectExposed = false;
 }
 
-template <class ReapType> void *ObstackReap<ReapType>::malloc(size_t sz) {
+template <class ReapType>
+void * ObstackReap<ReapType>::malloc (size_t sz) {
   if (!isCurrentObjectExposed) {
-    return currentReap->malloc(sz);
+    return currentReap->malloc (sz);
   } else {
-    void *ptr = currentReap->realloc(currentObject, sz);
-    reapStack.push(currentReap);
+    void * ptr = currentReap->realloc (currentObject, sz);
+    reapStack.push (currentReap);
     currentReap = new ReapType;
     initCurrentObject();
     return ptr;
   }
 }
 
-template <class ReapType> void ObstackReap<ReapType>::freeAfter(void *ptr) {
+template <class ReapType>
+void ObstackReap<ReapType>::freeAfter (void * ptr) {
   while (currentReap && (!currentReap->find(ptr))) {
     delete currentReap;
     currentReap = reapStack.pop();
   }
 }
 
-template <class ReapType> void ObstackReap<ReapType>::freeAll() {
+template <class ReapType>
+void ObstackReap<ReapType>::freeAll() {
   while (currentReap) {
     delete currentReap;
     currentReap = reapStack.pop();
@@ -248,29 +267,32 @@ template <class ReapType> void ObstackReap<ReapType>::freeAll() {
   currentReap = new ReapType;
 }
 
-template <class ReapType> inline void *ObstackReap<ReapType>::getObjectBase() {
+
+template <class ReapType>
+inline void * ObstackReap<ReapType>::getObjectBase() {
   isCurrentObjectExposed = true;
   return currentObject;
 }
 
-template <class ReapType> inline void ObstackReap<ReapType>::finalize() {
+template <class ReapType>
+inline void ObstackReap<ReapType>::finalize() {
   if (isCurrentObjectExposed) {
-    reapStack.push(currentReap);
+    reapStack.push (currentReap);
     currentReap = new ReapType;
   }
   initCurrentObject();
 }
 
-template <class ReapType> inline void *ObstackReap<ReapType>::grow(size_t sz) {
+template <class ReapType>
+inline void * ObstackReap<ReapType>::grow (size_t sz) {
 
   const int requestedObjectSize = currentObjectSize + sz;
 
   if (requestedObjectSize > actualObjectSize) {
-    void *ptr = currentReap->realloc(currentObject, sz);
-    currentObjectPosition =
-        (char *)ptr + (currentObjectPosition - (char *)currentObject);
+    void * ptr = currentReap->realloc (currentObject, sz);
+    currentObjectPosition = (char *) ptr + (currentObjectPosition - (char *) currentObject);
     if (isCurrentObjectExposed) {
-      reapStack.push(currentReap);
+      reapStack.push (currentReap);
       currentReap = new ReapType;
     }
     currentObject = ptr;
@@ -281,7 +303,7 @@ template <class ReapType> inline void *ObstackReap<ReapType>::grow(size_t sz) {
 
   isCurrentObjectExposed = false;
   currentObjectSize += sz;
-  char *oldPosition = currentObjectPosition;
+  char * oldPosition = currentObjectPosition;
   currentObjectPosition += sz;
   return oldPosition;
 }

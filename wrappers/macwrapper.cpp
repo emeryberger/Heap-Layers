@@ -4,8 +4,7 @@
  * @file   macwrapper.cpp
  * @brief  Replaces malloc family on Macs with custom versions.
  * @author Emery Berger <http://www.emeryberger.com>
- * @note   Copyright (C) 2010-2018 by Emery Berger, University of Massachusetts
- * Amherst.
+ * @note   Copyright (C) 2010-2018 by Emery Berger, University of Massachusetts Amherst.
  */
 
 #ifndef __APPLE__
@@ -15,25 +14,25 @@
 #include <cstdlib>
 using namespace std;
 
-#include <errno.h>
-#include <malloc/malloc.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <malloc/malloc.h>
+#include <errno.h>
 
 #include <unistd.h>
 
 /*
   To use this library,
   you only need to define the following allocation functions:
-
+  
   - xxmalloc
   - xxfree
   - xxmemalign
   - xxmalloc_usable_size
   - xxmalloc_lock
   - xxmalloc_unlock
-
+  
   See the extern "C" block below for function prototypes and more
   details. YOU SHOULD NOT NEED TO MODIFY ANY OF THE CODE HERE TO
   SUPPORT ANY ALLOCATOR.
@@ -48,25 +47,27 @@ using namespace std;
 
 */
 
+
 #include <assert.h>
 
 extern "C" {
 
-void *xxmalloc(size_t);
-void xxfree(void *);
-void *xxmemalign(size_t, size_t);
+  void * xxmalloc (size_t);
+  void   xxfree (void *);
+  void * xxmemalign(size_t, size_t);
+  
+  /// Pending widespread support for sized deallocation.
+  /// void   xxfree_sized (void *, size_t);
+ 
+  // Takes a pointer and returns how much space it holds.
+  size_t xxmalloc_usable_size (void *);
 
-/// Pending widespread support for sized deallocation.
-/// void   xxfree_sized (void *, size_t);
+  // Locks the heap(s), used prior to any invocation of fork().
+  void xxmalloc_lock ();
 
-// Takes a pointer and returns how much space it holds.
-size_t xxmalloc_usable_size(void *);
+  // Unlocks the heap(s), after fork().
+  void xxmalloc_unlock ();
 
-// Locks the heap(s), used prior to any invocation of fork().
-void xxmalloc_lock();
-
-// Unlocks the heap(s), after fork().
-void xxmalloc_unlock();
 }
 
 #include "macinterpose.h"
@@ -78,57 +79,60 @@ void xxmalloc_unlock();
 
 extern "C" {
 
-void *replace_malloc(size_t sz) {
-  void *ptr = xxmalloc(sz);
-  return ptr;
-}
+  void * replace_malloc (size_t sz) {
+    void * ptr = xxmalloc(sz);
+    return ptr;
+  }
 
 #if 0 // Disabled pending wider support for sized deallocation.
   void   replace_free_sized (void * ptr, size_t sz) {
     xxfree_sized (ptr, sz);
   }
 #endif
-
-size_t replace_malloc_usable_size(void *ptr) {
-  if (ptr == nullptr) {
-    return 0;
-  }
-  auto objSize = xxmalloc_usable_size(ptr);
-  return objSize;
-}
-
-void replace_free(void *ptr) { xxfree(ptr); }
-
-size_t replace_malloc_good_size(size_t sz) {
-  auto *ptr = xxmalloc(sz);
-  auto objSize = xxmalloc_usable_size(ptr);
-  xxfree(ptr);
-  return objSize;
-}
-
-static void *_extended_realloc(void *ptr, size_t sz, bool isReallocf) {
-  // NULL ptr = malloc.
-  if (ptr == NULL) {
-    return xxmalloc(sz);
+  
+  size_t replace_malloc_usable_size (void * ptr) {
+    if (ptr == nullptr) {
+      return 0;
+    }
+    auto objSize = xxmalloc_usable_size (ptr);
+    return objSize;
   }
 
-  // 0 size = free. We return a small object.  This behavior is
-  // apparently required under Mac OS X and optional under POSIX.
-  if (sz == 0) {
+  void   replace_free (void * ptr) {
+    xxfree (ptr);
+  }
+
+  size_t replace_malloc_good_size (size_t sz) {
+    auto * ptr = xxmalloc(sz);
+    auto objSize = xxmalloc_usable_size(ptr);
     xxfree(ptr);
-    return xxmalloc(1);
+    return objSize;
   }
 
-  auto objSize = xxmalloc_usable_size(ptr);
+  static void * _extended_realloc (void * ptr, size_t sz, bool isReallocf) 
+  {
+    // NULL ptr = malloc.
+    if (ptr == NULL) {
+      return xxmalloc(sz);
+    }
 
-  // Custom logic here to ensure we only do a logarithmic number of
-  // reallocations (with a constant space overhead).
+    // 0 size = free. We return a small object.  This behavior is
+    // apparently required under Mac OS X and optional under POSIX.
+    if (sz == 0) {
+      xxfree(ptr);
+      return xxmalloc(1);
+    }
 
-  // Don't change size if the object is shrinking by less than half.
-  if ((objSize / 2 < sz) && (sz <= objSize)) {
-    // Do nothing.
-    return ptr;
-  }
+    auto objSize = xxmalloc_usable_size(ptr);
+
+    // Custom logic here to ensure we only do a logarithmic number of
+    // reallocations (with a constant space overhead).
+
+    // Don't change size if the object is shrinking by less than half.
+    if ((objSize / 2 < sz) && (sz <= objSize)) {
+      // Do nothing.
+      return ptr;
+    }
 #if 0
     // If the object is growing by less than 2X, double it.
     if ((objSize < sz) && (sz < objSize * 2)) {
@@ -136,60 +140,62 @@ static void *_extended_realloc(void *ptr, size_t sz, bool isReallocf) {
     }
 #endif
 
-  auto *buf = xxmalloc((size_t)sz);
+    auto * buf = xxmalloc((size_t) sz);
 
-  if (buf != NULL) {
-    // Successful malloc.
-    // Copy the contents of the original object
-    // up to the size of the new block.
-    auto minSize = (objSize < sz) ? objSize : sz;
-    memcpy(buf, ptr, minSize);
-    xxfree(ptr);
-  } else {
-    if (isReallocf) {
-      // Free the old block if the new allocation failed.
-      // Specific behavior for Mac OS X reallocf().
+    if (buf != NULL) {
+      // Successful malloc.
+      // Copy the contents of the original object
+      // up to the size of the new block.
+      auto minSize = (objSize < sz) ? objSize : sz;
+      memcpy (buf, ptr, minSize);
       xxfree(ptr);
+    } else {
+      if (isReallocf) {
+	// Free the old block if the new allocation failed.
+	// Specific behavior for Mac OS X reallocf().
+	xxfree(ptr);
+      }
     }
+
+    // Return a pointer to the new one.
+    return buf;
   }
 
-  // Return a pointer to the new one.
-  return buf;
-}
-
-void *replace_realloc(void *ptr, size_t sz) {
-  return _extended_realloc(ptr, sz, false);
-}
-
-void *replace_reallocf(void *ptr, size_t sz) {
-  return _extended_realloc(ptr, sz, true);
-}
-
-void *replace_calloc(size_t elsize, size_t nelems) {
-  auto n = nelems * elsize;
-  if (elsize && (nelems != n / elsize)) {
-    return nullptr;
+  void * replace_realloc (void * ptr, size_t sz) {
+    return _extended_realloc (ptr, sz, false);
   }
-  auto *ptr = xxmalloc(n);
-  if (ptr) {
-    memset(ptr, 0, n);
-  }
-  return ptr;
-}
 
-char *replace_strdup(const char *s) {
-  char *newString = NULL;
-  if (s != NULL) {
-    auto len = strlen(s) + 1UL;
-    if ((newString = (char *)replace_malloc(len))) {
-      memcpy(newString, s, len);
+  void * replace_reallocf (void * ptr, size_t sz) {
+    return _extended_realloc (ptr, sz, true);
+  }
+
+  void * replace_calloc (size_t elsize, size_t nelems) {
+    auto n = nelems * elsize;
+    if (elsize && (nelems != n / elsize)) {
+     return nullptr;
     }
+    auto * ptr = xxmalloc(n);
+    if (ptr) {
+      memset (ptr, 0, n);
+    }
+    return ptr;
   }
-  return newString;
-}
 
-void *replace_memalign(size_t alignment, size_t size) {
-  return xxmemalign(alignment, size);
+  char * replace_strdup (const char * s)
+  {
+    char * newString = NULL;
+    if (s != NULL) {
+      auto len = strlen(s) + 1UL;
+      if ((newString = (char *) replace_malloc(len))) {
+	memcpy (newString, s, len);
+      }
+    }
+    return newString;
+  }
+
+  void * replace_memalign (size_t alignment, size_t size)
+  {
+    return xxmemalign(alignment, size);
 #if 0
     // Check for non power-of-two alignment, or mistake in size.
     if (alignment < alignof(max_align_t)) {
@@ -236,7 +242,7 @@ void *replace_memalign(size_t alignment, size_t size) {
     auto * alignedPtr = (void *) (((size_t) buf + alignment - 1) & ~(alignment - 1));
     return alignedPtr;
 #endif
-}
+  }
 
 #if 0
   void * replace_aligned_alloc (size_t alignment, size_t size) {
@@ -248,189 +254,211 @@ void *replace_memalign(size_t alignment, size_t size) {
     return replace_memalign (alignment, size);
   }
 #endif
-
-int replace_posix_memalign(void **memptr, size_t alignment, size_t size) {
-  // Check for non power-of-two alignment.
-  if ((alignment == 0) || (alignment & (alignment - 1))) {
-    return EINVAL;
+  
+  int replace_posix_memalign(void **memptr, size_t alignment, size_t size)
+  {
+    // Check for non power-of-two alignment.
+    if ((alignment == 0) ||
+	(alignment & (alignment - 1)))
+      {
+	return EINVAL;
+      }
+    auto * ptr = replace_memalign (alignment, size);
+    if (!ptr) {
+      return ENOMEM;
+    } else {
+      *memptr = ptr;
+      return 0;
+    }
   }
-  auto *ptr = replace_memalign(alignment, size);
-  if (!ptr) {
-    return ENOMEM;
-  } else {
-    *memptr = ptr;
-    return 0;
+
+  void * replace_valloc (size_t sz)
+  {
+    // Equivalent to memalign(pagesize, sz).
+    void * ptr = replace_memalign (PAGE_SIZE, sz);
+    return ptr;
   }
+  
+  void replace_vfree(void * ptr)
+  {
+    replace_free(ptr);
+  }
+
 }
 
-void *replace_valloc(size_t sz) {
-  // Equivalent to memalign(pagesize, sz).
-  void *ptr = replace_memalign(PAGE_SIZE, sz);
-  return ptr;
-}
-
-void replace_vfree(void *ptr) { replace_free(ptr); }
-}
 
 /////////
 /////////
 
 extern "C" {
-// operator new
-void *_Znwm(unsigned long);
-void *_Znam(unsigned long);
+  // operator new
+  void * _Znwm (unsigned long);
+  void * _Znam (unsigned long);
 
-// operator delete
-void _ZdlPv(void *);
-void _ZdaPv(void *);
+  // operator delete
+  void _ZdlPv (void *);
+  void _ZdaPv (void *);
 
-// nothrow variants
-// operator new nothrow
-void *_ZnwmRKSt9nothrow_t();
-void *_ZnamRKSt9nothrow_t();
-// operator delete nothrow
-void _ZdaPvRKSt9nothrow_t(void *);
-void _ZdlPvRKSt9nothrow_t(void *);
-
-void _malloc_fork_prepare();
-void _malloc_fork_parent();
-void _malloc_fork_child();
+  // nothrow variants
+  // operator new nothrow
+  void * _ZnwmRKSt9nothrow_t ();
+  void * _ZnamRKSt9nothrow_t ();
+  // operator delete nothrow
+  void _ZdaPvRKSt9nothrow_t (void *);
+  void _ZdlPvRKSt9nothrow_t (void *);
+  
+  void _malloc_fork_prepare ();
+  void _malloc_fork_parent ();
+  void _malloc_fork_child ();
 }
 
 static malloc_zone_t theDefaultZone;
 
 extern "C" {
 
-malloc_zone_t *replace_malloc_create_zone(vm_size_t, unsigned) {
-  //    auto zone = (malloc_zone_t *) replace_malloc(sizeof(malloc_zone_t));
-  return nullptr; // zone;
-}
+  malloc_zone_t * replace_malloc_create_zone(vm_size_t,
+					     unsigned)
+  {
+    //    auto zone = (malloc_zone_t *) replace_malloc(sizeof(malloc_zone_t));
+    return nullptr; // zone;
+  }
 
-malloc_zone_t *replace_malloc_default_zone() { return &theDefaultZone; }
+  malloc_zone_t * replace_malloc_default_zone () {
+    return &theDefaultZone;
+  }
 
-malloc_zone_t *replace_malloc_default_purgeable_zone() {
-  return &theDefaultZone;
-}
+  malloc_zone_t * replace_malloc_default_purgeable_zone() {
+    return &theDefaultZone;
+  }
 
-void replace_malloc_destroy_zone(malloc_zone_t *) {
-  // Do nothing.
-}
+  void replace_malloc_destroy_zone (malloc_zone_t *) {
+    // Do nothing.
+  }
 
-kern_return_t replace_malloc_get_all_zones(task_t, memory_reader_t,
-                                           vm_address_t **addresses,
-                                           unsigned *count) {
-  *addresses = 0;
-  count = 0;
-  return KERN_SUCCESS;
-}
+  kern_return_t replace_malloc_get_all_zones (task_t,
+					      memory_reader_t,
+					      vm_address_t **addresses,
+					      unsigned *count) {
+    *addresses = 0;
+    count = 0;
+    return KERN_SUCCESS;
+  }
+  
+  const char * replace_malloc_get_zone_name(malloc_zone_t * z) {
+    return z->zone_name;
+  }
 
-const char *replace_malloc_get_zone_name(malloc_zone_t *z) {
-  return z->zone_name;
-}
+  void replace_malloc_printf(const char *, ...) {
+  }
 
-void replace_malloc_printf(const char *, ...) {}
+  size_t replace_internal_malloc_zone_size (malloc_zone_t *, const void * ptr) {
+    return replace_malloc_usable_size((void *) ptr);
+  }
 
-size_t replace_internal_malloc_zone_size(malloc_zone_t *, const void *ptr) {
-  return replace_malloc_usable_size((void *)ptr);
-}
+  int replace_malloc_jumpstart(int) {
+    return 1;
+  }
 
-int replace_malloc_jumpstart(int) { return 1; }
+  void replace_malloc_set_zone_name(malloc_zone_t *, const char *) {
+    // do nothing.
+  }
 
-void replace_malloc_set_zone_name(malloc_zone_t *, const char *) {
-  // do nothing.
-}
+  unsigned replace_malloc_zone_batch_malloc(malloc_zone_t *,
+					    size_t sz,
+					    void ** results,
+					    unsigned num_requested)
+  {
+    for (auto i = 0U; i < num_requested; i++) {
+      results[i] = replace_malloc(sz);
+      if (results[i] == nullptr) {
+	return i;
+      }
+    }
+    return num_requested;
+  }
 
-unsigned replace_malloc_zone_batch_malloc(malloc_zone_t *, size_t sz,
-                                          void **results,
-                                          unsigned num_requested) {
-  for (auto i = 0U; i < num_requested; i++) {
-    results[i] = replace_malloc(sz);
-    if (results[i] == nullptr) {
-      return i;
+  void replace_malloc_zone_batch_free(malloc_zone_t *,
+				      void ** to_be_freed,
+				      unsigned num)
+  {
+    for (auto i = 0U; i < num; i++) {
+      replace_free(to_be_freed[i]);
     }
   }
-  return num_requested;
-}
 
-void replace_malloc_zone_batch_free(malloc_zone_t *, void **to_be_freed,
-                                    unsigned num) {
-  for (auto i = 0U; i < num; i++) {
-    replace_free(to_be_freed[i]);
+  void * replace_malloc_zone_calloc (malloc_zone_t *, size_t n, size_t size) {
+    return replace_calloc (n, size);
   }
+  
+  bool replace_malloc_zone_check(malloc_zone_t *) {
+    // Just return true for all zones.
+    return true;
+  }
+
+  void replace_malloc_zone_free (malloc_zone_t *, void * ptr) {
+    replace_free(ptr);
+  }
+
+  void replace_malloc_zone_free_definite_size (malloc_zone_t *, void * ptr, size_t) {
+    replace_free(ptr);
+  }
+
+  malloc_zone_t * replace_malloc_zone_from_ptr (const void *) {
+    return replace_malloc_default_zone();
+  }
+  
+  void replace_malloc_zone_log(malloc_zone_t *, void *) {
+    // Do nothing.
+  }
+
+  void * replace_malloc_zone_malloc (malloc_zone_t *, size_t size) {
+    return replace_malloc (size);
+  }
+  
+  void replace_malloc_zone_print(malloc_zone_t *, bool) {
+    // Do nothing.
+  }
+
+  void replace_malloc_zone_print_ptr_info(void *) {
+  }
+
+  void * replace_malloc_zone_realloc (malloc_zone_t *, void * ptr, size_t size) {
+    return replace_realloc (ptr, size);
+  }
+  
+  void replace_malloc_zone_register (malloc_zone_t *) {
+  }
+
+  void * replace_malloc_zone_memalign (malloc_zone_t *, size_t alignment, size_t size) {
+    return replace_memalign (alignment, size);
+  }
+  
+  void replace_malloc_zone_unregister (malloc_zone_t *) {
+  }
+
+  void * replace_malloc_zone_valloc (malloc_zone_t *, size_t size) {
+    return replace_valloc (size);
+  }
+ 
+  void replace__malloc_fork_child() {
+    /* Called in the child process after a fork() to resume normal operation.  In the MTASK case we also have to change memory inheritance so that the child does not share memory with the parent. */
+    xxmalloc_unlock();
+  }
+  
+  void replace__malloc_fork_parent() {
+    /* Called in the parent process after a fork() to resume normal operation. */
+    xxmalloc_unlock();
+  }
+
+  void replace__malloc_fork_prepare() {
+    /* Prepare the malloc module for a fork by insuring that no thread is in a malloc critical section */
+    xxmalloc_lock();
+  }
+
 }
 
-void *replace_malloc_zone_calloc(malloc_zone_t *, size_t n, size_t size) {
-  return replace_calloc(n, size);
-}
-
-bool replace_malloc_zone_check(malloc_zone_t *) {
-  // Just return true for all zones.
-  return true;
-}
-
-void replace_malloc_zone_free(malloc_zone_t *, void *ptr) { replace_free(ptr); }
-
-void replace_malloc_zone_free_definite_size(malloc_zone_t *, void *ptr,
-                                            size_t) {
-  replace_free(ptr);
-}
-
-malloc_zone_t *replace_malloc_zone_from_ptr(const void *) {
-  return replace_malloc_default_zone();
-}
-
-void replace_malloc_zone_log(malloc_zone_t *, void *) {
-  // Do nothing.
-}
-
-void *replace_malloc_zone_malloc(malloc_zone_t *, size_t size) {
-  return replace_malloc(size);
-}
-
-void replace_malloc_zone_print(malloc_zone_t *, bool) {
-  // Do nothing.
-}
-
-void replace_malloc_zone_print_ptr_info(void *) {}
-
-void *replace_malloc_zone_realloc(malloc_zone_t *, void *ptr, size_t size) {
-  return replace_realloc(ptr, size);
-}
-
-void replace_malloc_zone_register(malloc_zone_t *) {}
-
-void *replace_malloc_zone_memalign(malloc_zone_t *, size_t alignment,
-                                   size_t size) {
-  return replace_memalign(alignment, size);
-}
-
-void replace_malloc_zone_unregister(malloc_zone_t *) {}
-
-void *replace_malloc_zone_valloc(malloc_zone_t *, size_t size) {
-  return replace_valloc(size);
-}
-
-void replace__malloc_fork_child() {
-  /* Called in the child process after a fork() to resume normal operation.  In
-   * the MTASK case we also have to change memory inheritance so that the child
-   * does not share memory with the parent. */
-  xxmalloc_unlock();
-}
-
-void replace__malloc_fork_parent() {
-  /* Called in the parent process after a fork() to resume normal operation. */
-  xxmalloc_unlock();
-}
-
-void replace__malloc_fork_prepare() {
-  /* Prepare the malloc module for a fork by insuring that no thread is in a
-   * malloc critical section */
-  xxmalloc_lock();
-}
-}
-
-extern "C" void vfree(void *);
-extern "C" int malloc_jumpstart(int);
+extern "C" void vfree (void *);
+extern "C" int malloc_jumpstart (int);
 
 // Now interpose everything.
 
@@ -440,12 +468,13 @@ extern "C" int malloc_jumpstart(int);
 
 #define HL_REPLACE_ZONES 1
 
+
 #if HL_REPLACE_MALLOC_OPS
 
 MAC_INTERPOSE(replace__malloc_fork_child, _malloc_fork_child);
 MAC_INTERPOSE(replace__malloc_fork_parent, _malloc_fork_parent);
 MAC_INTERPOSE(replace__malloc_fork_prepare, _malloc_fork_prepare);
-// MAC_INTERPOSE(replace_aligned_alloc, aligned_alloc);
+//MAC_INTERPOSE(replace_aligned_alloc, aligned_alloc);
 MAC_INTERPOSE(replace_calloc, calloc);
 MAC_INTERPOSE(xxfree, _ZdaPv);
 MAC_INTERPOSE(xxfree, _ZdaPvRKSt9nothrow_t);
@@ -460,8 +489,7 @@ MAC_INTERPOSE(xxmalloc, _ZnwmRKSt9nothrow_t);
 MAC_INTERPOSE(xxmalloc, malloc);
 #if HL_REPLACE_ZONES
 MAC_INTERPOSE(replace_malloc_create_zone, malloc_create_zone);
-MAC_INTERPOSE(replace_malloc_default_purgeable_zone,
-              malloc_default_purgeable_zone);
+MAC_INTERPOSE(replace_malloc_default_purgeable_zone, malloc_default_purgeable_zone);
 MAC_INTERPOSE(replace_malloc_default_zone, malloc_default_zone);
 MAC_INTERPOSE(replace_malloc_destroy_zone, malloc_destroy_zone);
 MAC_INTERPOSE(replace_malloc_get_all_zones, malloc_get_all_zones);
@@ -502,24 +530,24 @@ MAC_INTERPOSE(replace_valloc, valloc);
 // A class to initialize exactly one malloc zone with the calls used
 // by our replacement.
 
-static const char *theOneTrueZoneName = "DefaultMallocZone";
+static const char * theOneTrueZoneName = "DefaultMallocZone";
 
 class initializeDefaultZone {
 public:
   initializeDefaultZone() {
-    theDefaultZone.size = replace_internal_malloc_zone_size;
-    theDefaultZone.malloc = replace_malloc_zone_malloc;
-    theDefaultZone.calloc = replace_malloc_zone_calloc;
-    theDefaultZone.valloc = replace_malloc_zone_valloc;
-    theDefaultZone.free = replace_malloc_zone_free;
+    theDefaultZone.size    = replace_internal_malloc_zone_size;
+    theDefaultZone.malloc  = replace_malloc_zone_malloc;
+    theDefaultZone.calloc  = replace_malloc_zone_calloc;
+    theDefaultZone.valloc  = replace_malloc_zone_valloc;
+    theDefaultZone.free    = replace_malloc_zone_free;
     theDefaultZone.realloc = replace_malloc_zone_realloc;
     theDefaultZone.destroy = replace_malloc_destroy_zone;
     theDefaultZone.zone_name = theOneTrueZoneName;
     theDefaultZone.batch_malloc = replace_malloc_zone_batch_malloc;
-    theDefaultZone.batch_free = replace_malloc_zone_batch_free;
-    theDefaultZone.introspect = NULL;
-    theDefaultZone.version = 8;
-    theDefaultZone.memalign = replace_malloc_zone_memalign;
+    theDefaultZone.batch_free   = replace_malloc_zone_batch_free;
+    theDefaultZone.introspect   = NULL;
+    theDefaultZone.version      = 8;
+    theDefaultZone.memalign     = replace_malloc_zone_memalign;
     theDefaultZone.free_definite_size = replace_malloc_zone_free_definite_size;
     theDefaultZone.pressure_relief = NULL;
     // Unregister and reregister the default zone.  Unregistering swaps
@@ -530,7 +558,7 @@ public:
     // Things are not guaranteed to work that way, but it's how they work now.
     malloc_zone_t *default_zone = malloc_default_zone();
     malloc_zone_unregister(default_zone);
-    malloc_zone_register(&theDefaultZone);
+    malloc_zone_register (&theDefaultZone);
   }
 };
 
@@ -539,3 +567,4 @@ public:
 #if REPLACE_ZONES
 static initializeDefaultZone initMe;
 #endif
+

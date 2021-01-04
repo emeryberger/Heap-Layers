@@ -3,11 +3,11 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-
+  
   Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-
+  
   Heap Layers is distributed under the terms of the Apache 2.0 license.
 
   You may obtain a copy of the License at
@@ -18,8 +18,7 @@
 #ifndef HL_SPINLOCK_H
 #define HL_SPINLOCK_H
 
-#if (__cplusplus < 201103) ||                                                  \
-    defined(__SUNPRO_CC) // Still no support for atomic...
+#if (__cplusplus < 201103) || defined(__SUNPRO_CC) // Still no support for atomic...
 #include "spinlock-old.h"
 #else
 
@@ -48,6 +47,7 @@
 
 #endif // defined(_MSC_VER)
 
+
 #if defined(_WIN32) && !defined(_WIN64)
 
 #ifndef _WIN32_WINNT
@@ -58,10 +58,8 @@
 
 #define _MM_PAUSE
 
-// The use of the PAUSE instruction has now been disabled, as it can be insanely
-// costly.
-// See
-// https://aloiskraus.wordpress.com/2018/06/16/why-skylakex-cpus-are-sometimes-50-slower-how-intel-has-broken-existing-code/amp
+// The use of the PAUSE instruction has now been disabled, as it can be insanely costly.
+// See https://aloiskraus.wordpress.com/2018/06/16/why-skylakex-cpus-are-sometimes-50-slower-how-intel-has-broken-existing-code/amp
 
 /*
 
@@ -90,64 +88,73 @@
 
 namespace HL {
 
-class SpinLockType {
-private:
-  std::atomic<bool> _mutex;
+  class SpinLockType {
+  private:
+    std::atomic<bool> _mutex;
+  public:
+  
+    SpinLockType()
+      : _mutex (false)
+    {}
+  
+    ~SpinLockType()
+    {}
 
-public:
-  SpinLockType() : _mutex(false) {}
-
-  ~SpinLockType() {}
-
-  inline void lock() {
-    if (_mutex.exchange(true)) {
-      contendedLock();
-    }
-  }
-
-  inline bool didLock() { return !_mutex.exchange(true); }
-
-  inline void unlock() { _mutex = false; }
-
-private:
-  NO_INLINE
-  void contendedLock() {
-    const int MAX_SPIN = 1000;
-    while (true) {
-      if (!_mutex.exchange(true)) {
-        return;
-      }
-      int count = 0;
-      while (_mutex && (count < MAX_SPIN)) {
-        _MM_PAUSE;
-        count++;
-      }
-      if (count == MAX_SPIN) {
-        yieldProcessor();
+    inline void lock() {
+      if (_mutex.exchange(true)) {
+	contendedLock();
       }
     }
-  }
 
-  // Is this system a multiprocessor?
-  inline bool onMultiprocessor(void) {
-    static CPUInfo cpuInfo;
-    return (cpuInfo.getNumProcessors() > 1);
-  }
+    inline bool didLock() {
+      return !_mutex.exchange(true);
+    }
 
-  inline void yieldProcessor(void) {
+    inline void unlock() {
+      _mutex = false;
+    }
+
+  private:
+
+    NO_INLINE
+    void contendedLock() {
+      const int MAX_SPIN = 1000;
+      while (true) {
+	if (!_mutex.exchange(true)) {
+	  return;
+	}
+	int count = 0;
+	while (_mutex && (count < MAX_SPIN)) {
+	  _MM_PAUSE;
+	  count++;
+	}
+	if (count == MAX_SPIN) {
+	  yieldProcessor();
+	}
+      }
+    }
+
+    // Is this system a multiprocessor?
+    inline bool onMultiprocessor (void) {
+      static CPUInfo cpuInfo;
+      return (cpuInfo.getNumProcessors() > 1);
+    }
+
+    inline void yieldProcessor (void) {
 #if defined(_WIN32)
-    Sleep(0);
+      Sleep(0);
 #elif defined(__SVR4)
-    thr_yield();
+      thr_yield();
 #else
-    sched_yield();
+      sched_yield();
 #endif
-  }
+    }
 
-  enum { MAX_SPIN_LIMIT = 1024 };
-};
+    enum { MAX_SPIN_LIMIT = 1024 };
+  };
 
-typedef SpinLockType SpinLock;
+  typedef SpinLockType SpinLock;
+  
 }
 
 #endif

@@ -3,11 +3,11 @@
 /*
 
   Heap Layers: An Extensible Memory Allocation Infrastructure
-
+  
   Copyright (C) 2000-2020 by Emery Berger
   http://www.emeryberger.com
   emery@cs.umass.edu
-
+  
   Heap Layers is distributed under the terms of the Apache 2.0 license.
 
   You may obtain a copy of the License at
@@ -23,7 +23,7 @@
  * @brief A portable class for high-resolution timing.
  *
  * This class simplifies timing measurements across a number of platforms.
- *
+ * 
  * @code
  *  Timer t;
  *  t.start();
@@ -44,30 +44,34 @@
 
 namespace HL {
 
-class Timer {
-public:
-  Timer() {
-    _start = _end;
-    _elapsed = 0.0;
-  }
+  class Timer {
+  public:
 
-  void start() {
-    _start = std::chrono::high_resolution_clock::now();
-    _end = _start;
-  }
+    Timer() {
+      _start = _end;
+      _elapsed = 0.0;
+    }
 
-  void stop() {
-    _end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_seconds = _end - _start;
-    _elapsed = elapsed_seconds.count();
-  }
+    void start() {
+      _start = std::chrono::high_resolution_clock::now();
+      _end = _start;
+    }
 
-  operator double() { return _elapsed; }
+    void stop() {
+      _end = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> elapsed_seconds = _end - _start;
+      _elapsed = elapsed_seconds.count();
+    }
 
-private:
-  std::chrono::time_point<std::chrono::high_resolution_clock> _start, _end;
-  double _elapsed;
-};
+    operator double() {
+      return _elapsed;
+    }
+
+  private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> _start, _end;
+    double _elapsed;
+  };
+
 }
 
 #endif // version of C++
