@@ -116,7 +116,8 @@ extern "C" {
 #define MYCDECL
 #endif // defined(_WIN32)
 
-#if !defined(__GNUG__) && (defined(__linux__) || defined(__APPLE__))
+// #if !defined(__GNUG__) && (defined(__linux__) || defined(__APPLE__))
+#if (defined(__linux__) || defined(__APPLE__))
 #define HEAP_LAYERS_INLINE __attribute__((always_inline))
 #else
 #define HEAP_LAYERS_INLINE
@@ -155,7 +156,7 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
   void * ptr = xxmalloc(n);
 
   // Zero out the malloc'd block.
-  if (ptr != nullptr) {
+  if (ptr) {
     memset (ptr, 0, n);
   }
   return ptr;
@@ -231,7 +232,7 @@ extern "C" size_t MYCDECL CUSTOM_GOODSIZE (size_t sz) {
 
 extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 {
-  if (ptr == NULL) {
+  if (!ptr) {
     ptr = xxmalloc (sz);
     return ptr;
   }
@@ -243,7 +244,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
     return xxmalloc(1);
 #else
     // For POSIX, don't return anything.
-    return NULL;
+    return nullptr;
 #endif
   }
 
@@ -251,7 +252,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
   void * buf = xxmalloc(sz);
 
-  if (buf != NULL) {
+  if (buf) {
     if (objSize == CUSTOM_GETSIZE(buf)) {
       // The objects are the same actual size.
       // Free the new object and return the original.
@@ -275,8 +276,8 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
 extern "C" char * MYCDECL CUSTOM_STRNDUP(const char * s, size_t sz)
 {
-  char * newString = NULL;
-  if (s != NULL) {
+  char * newString = nullptr;
+  if (s) {
     size_t cappedLength = strnlen (s, sz);
     if ((newString = (char *) xxmalloc(cappedLength + 1))) {
       strncpy(newString, s, cappedLength);
@@ -289,8 +290,8 @@ extern "C" char * MYCDECL CUSTOM_STRNDUP(const char * s, size_t sz)
 
 extern "C" char * MYCDECL CUSTOM_STRDUP(const char * s)
 {
-  char * newString = NULL;
-  if (s != NULL) {
+  char * newString = nullptr;
+  if (s) {
     if ((newString = (char *) xxmalloc(strlen(s) + 1))) {
       strcpy(newString, s);
     }
@@ -343,7 +344,7 @@ extern "C" void xxmalloc_STATS() {
 }
 
 extern "C" void * xxmalloc_GET_STATE() {
-  return NULL; // always returns "error".
+  return nullptr; // always returns "error".
 }
 
 extern "C" int xxmalloc_SET_STATE(void * /* ptr */) {
@@ -383,11 +384,10 @@ void * operator new (size_t sz)
 #endif
 {
   void * ptr = xxmalloc (sz);
-  if (ptr == NULL) {
-    throw std::bad_alloc();
-  } else {
+  if (ptr) {
     return ptr;
   }
+  throw std::bad_alloc();
 }
 
 void operator delete (void * ptr)
@@ -409,11 +409,10 @@ void * operator new[] (size_t size)
 #endif
 {
   void * ptr = xxmalloc(size);
-  if (ptr == NULL) {
-    throw std::bad_alloc();
-  } else {
+  if (ptr) {
     return ptr;
   }
+  throw std::bad_alloc();
 }
 
 void * operator new[] (size_t sz, const std::nothrow_t&)
@@ -476,7 +475,7 @@ extern "C" void * MYCDECL CUSTOM_PVALLOC (size_t sz)
 extern "C" void * MYCDECL CUSTOM_RECALLOC (void * p, size_t num, size_t sz)
 {
   void * ptr = CUSTOM_REALLOC (p, num * sz);
-  if ((p == NULL) && (ptr != NULL)) {
+  if ((!p) && (!ptr)) {
     // Clear out the memory.
     memset (ptr, 0, CUSTOM_GETSIZE(ptr));
   }
@@ -498,7 +497,7 @@ char * CUSTOM_GETENV(const char * str) {
   char buf[32767];
   int len = GetEnvironmentVariable (str, buf, 32767);
   if (len == 0) {
-    return NULL;
+    return nullptr;
   } else {
     char * str = new char[len + 1];
     strncpy (str, buf, len + 1);
@@ -508,7 +507,7 @@ char * CUSTOM_GETENV(const char * str) {
 
 int CUSTOM_PUTENV(char * str) {
   char * eqpos = strchr (str, '=');
-  if (eqpos != NULL) {
+  if (eqpos) {
     char first[32767], second[32767];
     int namelen = (size_t) eqpos - (size_t) str;
     strncpy (first, str, namelen);
