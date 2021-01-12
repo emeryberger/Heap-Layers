@@ -43,7 +43,7 @@ namespace HL {
      */
     UniqueHeap() 
     {
-      volatile SuperHeap * forceCreationOfSuperHeap = getSuperHeap();
+      volatile SuperHeap * forceCreationOfSuperHeap __attribute__((unused)) = getSuperHeap();
       addRef();
     }
 
