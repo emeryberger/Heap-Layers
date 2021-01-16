@@ -134,18 +134,26 @@ extern "C" void MYCDECL HEAP_LAYERS_INLINE CUSTOM_FREE(void *);
 extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_MALLOC(size_t);
 extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_CALLOC(size_t nelem, size_t elsize);
 
-extern "C" __attribute__((flatten)) void MYCDECL CUSTOM_FREE (void * ptr)
+#ifndef FLATTEN
+#if 1
+#define FLATTEN __attribute__((flatten))
+#else
+#define FLATTEN
+#endif
+#endif
+
+extern "C" FLATTEN void MYCDECL CUSTOM_FREE (void * ptr)
 {
   xxfree (ptr);
 }
 
-extern "C" __attribute__((flatten)) void * MYCDECL CUSTOM_MALLOC(size_t sz)
+extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
 {
   void * ptr = xxmalloc(sz);
   return ptr;
 }
 
-extern "C" __attribute__((flatten)) void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
+extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 {
   size_t n = nelem * elsize;
   
@@ -170,7 +178,7 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
 #endif
 ;
 
-extern "C" __attribute__((flatten)) int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size)
+extern "C" FLATTEN int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size)
 #if !defined(__FreeBSD__) && !defined(__SVR4)
 throw()
 #endif
@@ -192,7 +200,7 @@ throw()
 #endif
 
 
-extern "C" __attribute__((flatten)) void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
+extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
 #if !defined(__FreeBSD__) && !defined(__SVR4)
   throw()
 #endif
@@ -200,7 +208,7 @@ extern "C" __attribute__((flatten)) void * MYCDECL CUSTOM_MEMALIGN (size_t align
   return xxmemalign(alignment, size);
 }
 
-extern "C" __attribute__((flatten)) void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t size)
+extern "C" FLATTEN void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t size)
 #if !defined(__FreeBSD__)
   throw()
 #endif
@@ -213,7 +221,7 @@ extern "C" __attribute__((flatten)) void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t a
   return CUSTOM_MEMALIGN(alignment, size);
 }
 
-extern "C" __attribute__((flatten)) size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
+extern "C" FLATTEN size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
 {
   return xxmalloc_usable_size (ptr);
 }
