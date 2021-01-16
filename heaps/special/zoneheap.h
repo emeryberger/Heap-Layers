@@ -43,8 +43,8 @@ namespace HL {
 
     ZoneHeap()
       : _sizeRemaining (0),
-	_currentArena (NULL),
-	_pastArenas (NULL)
+	_currentArena (nullptr),
+	_pastArenas (nullptr)
     {}
 
     ~ZoneHeap()
@@ -52,15 +52,14 @@ namespace HL {
       // printf ("deleting arenas!\n");
       // Delete all of our arenas.
       Arena * ptr = _pastArenas;
-      while (ptr != NULL) {
-	void * oldPtr = (void *) ptr;
+      while (ptr != nullptr) {
+	auto oldPtr = ptr;
 	ptr = ptr->nextArena;
-	//printf ("deleting %x\n", ptr);
-	SuperHeap::free (oldPtr);
+	SuperHeap::free (oldPtr, oldPtr->arenaSize);
       }
-      if (_currentArena != NULL)
+      if (_currentArena != nullptr)
 	//printf ("deleting %x\n", _currentArena);
-	SuperHeap::free ((void *) _currentArena);
+	SuperHeap::free ((void *) _currentArena, _currentArena->arenaSize);
     }
 
     inline void * malloc (size_t sz) {
@@ -86,9 +85,9 @@ namespace HL {
       // Round up size to an aligned value.
       sz = HL::align<HL::MallocInfo::Alignment>(sz);
       // Get more space in our arena if there's not enough room in this one.
-      if ((_currentArena == NULL) || (_sizeRemaining < sz)) {
+      if ((_currentArena == nullptr) || (_sizeRemaining < sz)) {
 	// First, add this arena to our past arena list.
-	if (_currentArena != NULL) {
+	if (_currentArena != nullptr) {
 	  _currentArena->nextArena = _pastArenas;
 	  _pastArenas = _currentArena;
 	}
@@ -99,18 +98,19 @@ namespace HL {
 	}
 	_currentArena =
 	  (Arena *) SuperHeap::malloc (allocSize + sizeof(Arena));
-	if (_currentArena == NULL) {
-	  return NULL;
+	if (_currentArena == nullptr) {
+	  return nullptr;
 	}
 	_currentArena->arenaSpace = (char *) (_currentArena + 1);
-	_currentArena->nextArena = NULL;
+	_currentArena->nextArena = nullptr;
+	_currentArena->arenaSize = allocSize + sizeof(Arena);
 	_sizeRemaining = allocSize;
       }
       // Bump the pointer and update the amount of memory remaining.
       _sizeRemaining -= sz;
       ptr = _currentArena->arenaSpace;
       _currentArena->arenaSpace += sz;
-      assert (ptr != NULL);
+      assert (ptr != nullptr);
       //      assert ((size_t) ptr % SuperHeap::Alignment == 0);
       return ptr;
     }
@@ -124,6 +124,7 @@ namespace HL {
 
       Arena * nextArena;
       char * arenaSpace;
+      size_t arenaSize;
     };
     
     /// Space left in the current arena.
