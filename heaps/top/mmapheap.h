@@ -148,9 +148,11 @@ namespace HL {
 
   private:
 
+    // (Now disabled)
     // Note: we never reclaim memory obtained for MyHeap, even when
     // this heap is destroyed.
-    class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<BumpAlloc<16384, PrivateMmapHeap> > > {
+    // class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<BumpAlloc<16384, PrivateMmapHeap>>> {
+    class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<ZoneHeap<PrivateMmapHeap, 16384>>> {
     };
 
     typedef MyHashMap<void *, size_t, MyHeap> mapType;
@@ -180,8 +182,7 @@ namespace HL {
       return sz;
     }
 
-#if 0
-    // WORKAROUND: apparent gcc bug.
+#if 1
     void free (void * ptr, size_t sz) {
       PrivateMmapHeap::free (ptr, sz);
     }
