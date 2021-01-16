@@ -30,10 +30,6 @@
 #include <assert.h>
 #include "utility/freesllist.h"
 
-#ifndef NULL
-#define NULL 0
-#endif
-
 namespace HL {
 
   template <class SuperHeap>
@@ -45,14 +41,14 @@ namespace HL {
       void * ptr = _freelist.get();
       // If it's empty, get more memory;
       // otherwise, advance the free list pointer.
-      if (ptr == 0) {
+      if (!ptr) {
         ptr = SuperHeap::malloc (sz);
       }
       return ptr;
     }
 
     inline void free (void * ptr) {
-      if (ptr == 0) {
+      if (!ptr) {
         return;
       }
       _freelist.insert (ptr);
