@@ -160,7 +160,7 @@ namespace HL {
 
       if (ptr == MAP_FAILED) {
 	tprintf::tprintf("MAP_FAILED\n");
-	perror("WTF");
+	perror("MmapWrapper");
 	return nullptr;
       } else {
 	return ptr;
