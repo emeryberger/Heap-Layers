@@ -67,7 +67,11 @@
 
 namespace HL {
 
-  class PrivateMmapHeap {
+  /**
+   * @class SizedMmapHeap
+   * @brief A heap around mmap, but only a sized-free is supported for Unix-like systems.
+   */
+  class SizedMmapHeap {
   public:
 
     /// All memory from here is zeroed.
@@ -78,7 +82,6 @@ namespace HL {
 #if defined(_WIN32) 
 
     static inline void * malloc (size_t sz) {
-      //    printf ("mmapheap: Size request = %d\n", sz);
 #if HL_EXECUTABLE_HEAP
       char * ptr = (char *) VirtualAlloc (NULL, sz, MEM_RESERVE | MEM_COMMIT | MEM_TOP_DOWN, PAGE_EXECUTE_READWRITE);
 #else
@@ -143,7 +146,7 @@ namespace HL {
   };
 
 
-  class MmapHeap : public PrivateMmapHeap {
+  class MmapHeap : public SizedMmapHeap {
 #if !defined(_WIN32)
 
   private:
@@ -151,8 +154,8 @@ namespace HL {
     // (Now disabled)
     // Note: we never reclaim memory obtained for MyHeap, even when
     // this heap is destroyed.
-    // class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<BumpAlloc<16384, PrivateMmapHeap>>> {
-    class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<ZoneHeap<PrivateMmapHeap, 16384>>> {
+    // class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<BumpAlloc<16384, SizedMmapHeap>>> {
+    class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<ZoneHeap<SizedMmapHeap, 16384>>> {
     };
 
     typedef MyHashMap<void *, size_t, MyHeap> mapType;
@@ -164,10 +167,10 @@ namespace HL {
 
   public:
 
-    enum { Alignment = PrivateMmapHeap::Alignment };
+    enum { Alignment = SizedMmapHeap::Alignment };
 
     inline void * malloc (size_t sz) {
-      void * ptr = PrivateMmapHeap::malloc (sz);
+      void * ptr = SizedMmapHeap::malloc (sz);
       MyMapLock.lock();
       MyMap.set (ptr, sz);
       MyMapLock.unlock();
@@ -184,7 +187,7 @@ namespace HL {
 
 #if 1
     void free (void * ptr, size_t sz) {
-      PrivateMmapHeap::free (ptr, sz);
+      SizedMmapHeap::free (ptr, sz);
     }
 #endif
 
@@ -192,7 +195,7 @@ namespace HL {
       assert (reinterpret_cast<size_t>(ptr) % Alignment == 0);
       MyMapLock.lock();
       size_t sz = MyMap.get (ptr);
-      PrivateMmapHeap::free (ptr, sz);
+      SizedMmapHeap::free (ptr, sz);
       MyMap.erase (ptr);
       MyMapLock.unlock();
     }
