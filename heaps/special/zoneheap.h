@@ -49,17 +49,7 @@ namespace HL {
 
     ~ZoneHeap()
     {
-      // printf ("deleting arenas!\n");
-      // Delete all of our arenas.
-      Arena * ptr = _pastArenas;
-      while (ptr != nullptr) {
-	auto oldPtr = ptr;
-	ptr = ptr->nextArena;
-	SuperHeap::free (oldPtr, oldPtr->arenaSize);
-      }
-      if (_currentArena != nullptr)
-	//printf ("deleting %x\n", _currentArena);
-	SuperHeap::free ((void *) _currentArena, _currentArena->arenaSize);
+      clear();
     }
 
     inline void * malloc (size_t sz) {
@@ -74,12 +64,29 @@ namespace HL {
     /// Remove in a zone allocator is a no-op.
     inline int remove (void *) { return 0; }
 
+    void clear() {
+      // printf ("deleting arenas!\n");
+      // Delete all of our arenas.
+      Arena * ptr = _pastArenas;
+      while (ptr != nullptr) {
+	auto oldPtr = ptr;
+	ptr = ptr->nextArena;
+	SuperHeap::free (oldPtr, oldPtr->arenaSize);
+      }
+      if (_currentArena != nullptr) {
+	//printf ("deleting %x\n", _currentArena);
+	SuperHeap::free ((void *) _currentArena, _currentArena->arenaSize);
+      }
+      _currentArena = nullptr;
+      _sizeRemaining = 0;
+      _pastArenas = nullptr;
+    }
 
   private:
 
     ZoneHeap (const ZoneHeap&);
     ZoneHeap& operator=(const ZoneHeap&);
-
+   
     inline void * zoneMalloc (size_t sz) {
       void * ptr;
       // Round up size to an aligned value.
