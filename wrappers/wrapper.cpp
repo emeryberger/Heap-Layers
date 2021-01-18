@@ -131,8 +131,8 @@ extern "C" {
 // compiler to inline their definitions into e.g. `operator new`,
 // removing branches and improving performance.
 extern "C" void MYCDECL HEAP_LAYERS_INLINE CUSTOM_FREE(void *);
-extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_MALLOC(size_t);
-extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_CALLOC(size_t nelem, size_t elsize);
+extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_MALLOC(size_t) __attribute__((alloc_size(1)));
+extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute__((alloc_size(1,2)));
 
 #ifndef FLATTEN
 #if 1
@@ -153,7 +153,7 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
   return ptr;
 }
 
-extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
+extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) 
 {
   size_t n = nelem * elsize;
   
@@ -176,6 +176,7 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
 #if !defined(__FreeBSD__) && !defined(__SVR4)
   throw()
 #endif
+  __attribute__((alloc_size(2))) __attribute__((alloc_align(1))) 
 ;
 
 extern "C" FLATTEN int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size)
@@ -386,7 +387,7 @@ extern "C" struct mallinfo CUSTOM_MALLINFO() {
 #ifndef NEW_INCLUDED
 #define NEW_INCLUDED
 
-void * operator new (size_t sz)
+void * FLATTEN operator new (size_t sz)
 #if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
@@ -398,7 +399,7 @@ void * operator new (size_t sz)
   throw std::bad_alloc();
 }
 
-void operator delete (void * ptr)
+void FLATTEN operator delete (void * ptr)
 #if !defined(linux_)
   throw ()
 #endif
@@ -407,11 +408,11 @@ void operator delete (void * ptr)
 }
 
 #if !defined(__SUNPRO_CC) || __SUNPRO_CC > 0x420
-void * operator new (size_t sz, const std::nothrow_t&) throw() {
+void * FLATTEN operator new (size_t sz, const std::nothrow_t&) throw() {
   return xxmalloc(sz);
 }
 
-void * operator new[] (size_t size)
+void * FLATTEN operator new[] (size_t size)
 #if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
@@ -423,13 +424,13 @@ void * operator new[] (size_t size)
   throw std::bad_alloc();
 }
 
-void * operator new[] (size_t sz, const std::nothrow_t&)
+void * FLATTEN operator new[] (size_t sz, const std::nothrow_t&)
   throw()
  {
   return xxmalloc(sz);
 }
 
-void operator delete[] (void * ptr)
+void FLATTEN operator delete[] (void * ptr)
 #if defined(_GLIBCXX_USE_NOEXCEPT)
   _GLIBCXX_USE_NOEXCEPT
 #else
@@ -444,7 +445,7 @@ void operator delete[] (void * ptr)
 
 #if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309
 
-void operator delete(void * ptr, size_t)
+void FLATTEN operator delete(void * ptr, size_t)
 #if !defined(linux_)
   throw ()
 #endif
@@ -452,7 +453,7 @@ void operator delete(void * ptr, size_t)
   CUSTOM_FREE (ptr);
 }
 
-void operator delete[](void * ptr, size_t)
+void FLATTEN operator delete[](void * ptr, size_t)
 #if defined(__GNUC__)
   _GLIBCXX_USE_NOEXCEPT
 #endif
