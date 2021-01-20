@@ -96,7 +96,7 @@ namespace HL {
   __thread PerThreadHeap * ThreadSpecificHeap<PerThreadHeap>::heap INITIAL_EXEC_ATTR = nullptr;
 
 
-#else
+#else // USE_THREAD_KEYWORD
   
   template <class PerThreadHeap>
   class ThreadSpecificHeap {
@@ -158,7 +158,7 @@ namespace HL {
     static PerThreadHeap * getHeap() {
       PerThreadHeap * heap =
 	(PerThreadHeap *) pthread_getspecific (getHeapKey());
-      if (heap == NULL)  {
+      if (heap == nullptr)  {
 	// Grab some memory from a source, initialize the heap inside,
 	// and store it in the thread-local area.
 	void * buf = HL::MmapWrapper::map (sizeof(PerThreadHeap));
