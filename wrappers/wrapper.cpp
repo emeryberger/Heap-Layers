@@ -116,7 +116,8 @@ extern "C" {
 #define MYCDECL
 #endif // defined(_WIN32)
 
-#if !defined(__GNUG__) && (defined(__linux__) || defined(__APPLE__))
+// #if !defined(__GNUG__) && (defined(__linux__) || defined(__APPLE__))
+#if (defined(__linux__) || defined(__APPLE__))
 #define HEAP_LAYERS_INLINE __attribute__((always_inline))
 #else
 #define HEAP_LAYERS_INLINE
@@ -130,21 +131,29 @@ extern "C" {
 // compiler to inline their definitions into e.g. `operator new`,
 // removing branches and improving performance.
 extern "C" void MYCDECL HEAP_LAYERS_INLINE CUSTOM_FREE(void *);
-extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_MALLOC(size_t);
-extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_CALLOC(size_t nelem, size_t elsize);
+extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_MALLOC(size_t) __attribute__((alloc_size(1))) __attribute((malloc));
+extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute__((alloc_size(1,2)))  __attribute((malloc));
 
-extern "C" void MYCDECL CUSTOM_FREE (void * ptr)
+#ifndef FLATTEN
+#if 1
+#define FLATTEN __attribute__((flatten))
+#else
+#define FLATTEN
+#endif
+#endif
+
+extern "C" FLATTEN void MYCDECL CUSTOM_FREE (void * ptr)
 {
   xxfree (ptr);
 }
 
-extern "C" void * MYCDECL CUSTOM_MALLOC(size_t sz)
+extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
 {
   void * ptr = xxmalloc(sz);
   return ptr;
 }
 
-extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
+extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) 
 {
   size_t n = nelem * elsize;
   
@@ -155,7 +164,7 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
   void * ptr = xxmalloc(n);
 
   // Zero out the malloc'd block.
-  if (ptr != nullptr) {
+  if (ptr) {
     memset (ptr, 0, n);
   }
   return ptr;
@@ -167,9 +176,10 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
 #if !defined(__FreeBSD__) && !defined(__SVR4)
   throw()
 #endif
+  __attribute__((alloc_size(2))) __attribute__((alloc_align(1))) 
 ;
 
-extern "C" int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size)
+extern "C" FLATTEN int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size)
 #if !defined(__FreeBSD__) && !defined(__SVR4)
 throw()
 #endif
@@ -191,7 +201,7 @@ throw()
 #endif
 
 
-extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
+extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
 #if !defined(__FreeBSD__) && !defined(__SVR4)
   throw()
 #endif
@@ -199,7 +209,7 @@ extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
   return xxmemalign(alignment, size);
 }
 
-extern "C" void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t size)
+extern "C" FLATTEN void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t size)
 #if !defined(__FreeBSD__)
   throw()
 #endif
@@ -212,7 +222,7 @@ extern "C" void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t size)
   return CUSTOM_MEMALIGN(alignment, size);
 }
 
-extern "C" size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
+extern "C" FLATTEN size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
 {
   return xxmalloc_usable_size (ptr);
 }
@@ -231,7 +241,7 @@ extern "C" size_t MYCDECL CUSTOM_GOODSIZE (size_t sz) {
 
 extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 {
-  if (ptr == NULL) {
+  if (!ptr) {
     ptr = xxmalloc (sz);
     return ptr;
   }
@@ -243,7 +253,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
     return xxmalloc(1);
 #else
     // For POSIX, don't return anything.
-    return NULL;
+    return nullptr;
 #endif
   }
 
@@ -251,7 +261,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
   void * buf = xxmalloc(sz);
 
-  if (buf != NULL) {
+  if (buf) {
     if (objSize == CUSTOM_GETSIZE(buf)) {
       // The objects are the same actual size.
       // Free the new object and return the original.
@@ -275,8 +285,8 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
 extern "C" char * MYCDECL CUSTOM_STRNDUP(const char * s, size_t sz)
 {
-  char * newString = NULL;
-  if (s != NULL) {
+  char * newString = nullptr;
+  if (s) {
     size_t cappedLength = strnlen (s, sz);
     if ((newString = (char *) xxmalloc(cappedLength + 1))) {
       strncpy(newString, s, cappedLength);
@@ -289,8 +299,8 @@ extern "C" char * MYCDECL CUSTOM_STRNDUP(const char * s, size_t sz)
 
 extern "C" char * MYCDECL CUSTOM_STRDUP(const char * s)
 {
-  char * newString = NULL;
-  if (s != NULL) {
+  char * newString = nullptr;
+  if (s) {
     if ((newString = (char *) xxmalloc(strlen(s) + 1))) {
       strcpy(newString, s);
     }
@@ -343,7 +353,7 @@ extern "C" void xxmalloc_STATS() {
 }
 
 extern "C" void * xxmalloc_GET_STATE() {
-  return NULL; // always returns "error".
+  return nullptr; // always returns "error".
 }
 
 extern "C" int xxmalloc_SET_STATE(void * /* ptr */) {
@@ -377,20 +387,19 @@ extern "C" struct mallinfo CUSTOM_MALLINFO() {
 #ifndef NEW_INCLUDED
 #define NEW_INCLUDED
 
-void * operator new (size_t sz)
+void * FLATTEN operator new (size_t sz)
 #if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
 {
   void * ptr = xxmalloc (sz);
-  if (ptr == NULL) {
-    throw std::bad_alloc();
-  } else {
+  if (ptr) {
     return ptr;
   }
+  throw std::bad_alloc();
 }
 
-void operator delete (void * ptr)
+void FLATTEN operator delete (void * ptr)
 #if !defined(linux_)
   throw ()
 #endif
@@ -399,30 +408,29 @@ void operator delete (void * ptr)
 }
 
 #if !defined(__SUNPRO_CC) || __SUNPRO_CC > 0x420
-void * operator new (size_t sz, const std::nothrow_t&) throw() {
+void * FLATTEN operator new (size_t sz, const std::nothrow_t&) throw() {
   return xxmalloc(sz);
 }
 
-void * operator new[] (size_t size)
+void * FLATTEN operator new[] (size_t size)
 #if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
 {
   void * ptr = xxmalloc(size);
-  if (ptr == NULL) {
-    throw std::bad_alloc();
-  } else {
+  if (ptr) {
     return ptr;
   }
+  throw std::bad_alloc();
 }
 
-void * operator new[] (size_t sz, const std::nothrow_t&)
+void * FLATTEN operator new[] (size_t sz, const std::nothrow_t&)
   throw()
  {
   return xxmalloc(sz);
 }
 
-void operator delete[] (void * ptr)
+void FLATTEN operator delete[] (void * ptr)
 #if defined(_GLIBCXX_USE_NOEXCEPT)
   _GLIBCXX_USE_NOEXCEPT
 #else
@@ -437,7 +445,7 @@ void operator delete[] (void * ptr)
 
 #if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309
 
-void operator delete(void * ptr, size_t)
+void FLATTEN operator delete(void * ptr, size_t)
 #if !defined(linux_)
   throw ()
 #endif
@@ -445,7 +453,7 @@ void operator delete(void * ptr, size_t)
   CUSTOM_FREE (ptr);
 }
 
-void operator delete[](void * ptr, size_t)
+void FLATTEN operator delete[](void * ptr, size_t)
 #if defined(__GNUC__)
   _GLIBCXX_USE_NOEXCEPT
 #endif
@@ -476,7 +484,7 @@ extern "C" void * MYCDECL CUSTOM_PVALLOC (size_t sz)
 extern "C" void * MYCDECL CUSTOM_RECALLOC (void * p, size_t num, size_t sz)
 {
   void * ptr = CUSTOM_REALLOC (p, num * sz);
-  if ((p == NULL) && (ptr != NULL)) {
+  if ((!p) && (!ptr)) {
     // Clear out the memory.
     memset (ptr, 0, CUSTOM_GETSIZE(ptr));
   }
@@ -498,7 +506,7 @@ char * CUSTOM_GETENV(const char * str) {
   char buf[32767];
   int len = GetEnvironmentVariable (str, buf, 32767);
   if (len == 0) {
-    return NULL;
+    return nullptr;
   } else {
     char * str = new char[len + 1];
     strncpy (str, buf, len + 1);
@@ -508,7 +516,7 @@ char * CUSTOM_GETENV(const char * str) {
 
 int CUSTOM_PUTENV(char * str) {
   char * eqpos = strchr (str, '=');
-  if (eqpos != NULL) {
+  if (eqpos) {
     char first[32767], second[32767];
     int namelen = (size_t) eqpos - (size_t) str;
     strncpy (first, str, namelen);

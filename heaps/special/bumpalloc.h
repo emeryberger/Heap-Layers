@@ -44,7 +44,7 @@ namespace HL {
     enum { Alignment = Alignment_ };
 
     BumpAlloc()
-      : _bump (NULL),
+      : _bump (nullptr),
 	_remaining (0)
     {
       static_assert((int) gcd<ChunkSize, Alignment>::VALUE == Alignment,

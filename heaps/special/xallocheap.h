@@ -33,7 +33,7 @@ namespace HL {
       start_of_array = (char *) SuperHeap::malloc (ArenaSize);
       end_of_array = start_of_array + HL::align<sizeof(double)>(sizeof(Nuggie));
       size_lval(end_of_array) = 0;
-      last_block = NULL;
+      last_block = nullptr;
     }
 
     inline ~XallocHeap() {
@@ -45,7 +45,7 @@ namespace HL {
       end_of_array += HL::align<sizeof(double)>(size + sizeof(Nuggie));
       if (old_end_of_array + size >= start_of_array + ArenaSize) {
         // We're out of memory.
-        return NULL;
+        return nullptr;
       }
       size_lval(end_of_array) = end_of_array - old_end_of_array;
       clear_use(end_of_array);  /* this is not necessary, cause it will be zero */
@@ -64,7 +64,7 @@ namespace HL {
         while (1) {
           q = prev_block(p);
           if (q == p) {
-            last_block = NULL;
+            last_block = nullptr;
             end_of_array = p;
             break;  /* only happens when we get to the beginning */
           }

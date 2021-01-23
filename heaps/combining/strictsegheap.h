@@ -98,6 +98,10 @@ namespace HL {
 
     inline void free (void * ptr) {
       const auto objectSize = SuperHeap::getSize(ptr);
+      free(ptr, objectSize);
+    }
+
+    inline void free(void * ptr, size_t objectSize) {
       if (objectSize > SuperHeap::_maxObjectSize) {
         SuperHeap::bigheap.free (ptr);
       } else {

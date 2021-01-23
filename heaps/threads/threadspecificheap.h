@@ -102,7 +102,7 @@ namespace HL {
   __thread PerThreadHeap * ThreadSpecificHeap<PerThreadHeap>::heap INITIAL_EXEC_ATTR = nullptr;
 
 
-#else
+#else // USE_THREAD_KEYWORD
   
   template <class PerThreadHeap>
   class ThreadSpecificHeap {

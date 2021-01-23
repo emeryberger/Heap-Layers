@@ -17,7 +17,7 @@ using namespace std;
 namespace tprintf {
   
   const int MAXBUF = 65536;
-  const int FD = 1; // 2
+  static int FD { 1 }; // 2
 
   template <typename T>
   inline void writeval(T v);
@@ -90,6 +90,10 @@ namespace tprintf {
   }
 
   inline void writeval(const char * str) {
+    auto _ __attribute__((unused)) = write(FD, str, strlen(str));
+  }
+
+  inline void writeval(char * str) {
     auto _ __attribute__((unused)) = write(FD, str, strlen(str));
   }
 
