@@ -149,11 +149,9 @@ namespace HL {
       return initOnce;
     }
 
-    static void deleteHeap (void *) {
-      PerThreadHeap * heap = getHeap();
-      heap->~PerThreadHeap();
+    static void deleteHeap (void * heap) {
+      ((PerThreadHeap *) heap)->~PerThreadHeap();
       HL::MmapWrapper::unmap (heap, sizeof(PerThreadHeap));
-      pthread_setspecific (getHeapKey(), 0);
     }
 
     // Access the given heap.
