@@ -64,6 +64,12 @@ namespace HL {
     {
     }
 
+    ~ThreadSpecificHeap() {
+      if (heap) {
+	heap->~PerThreadHeap();
+      }
+    }
+    
     inline void * malloc(size_t sz) {
       if (heap == nullptr) {
 	heap = new (heapbuf) PerThreadHeap();
@@ -106,10 +112,6 @@ namespace HL {
     {
       // Initialize the heap exactly once.
       pthread_once (&(getOnce()), initializeHeap);
-    }
-
-    virtual ~ThreadSpecificHeap()
-    {
     }
 
     inline void * malloc (size_t sz) {
@@ -158,7 +160,7 @@ namespace HL {
     static PerThreadHeap * getHeap() {
       PerThreadHeap * heap =
 	(PerThreadHeap *) pthread_getspecific (getHeapKey());
-      if (heap == NULL)  {
+      if (heap == nullptr)  {
 	// Grab some memory from a source, initialize the heap inside,
 	// and store it in the thread-local area.
 	void * buf = HL::MmapWrapper::map (sizeof(PerThreadHeap));
