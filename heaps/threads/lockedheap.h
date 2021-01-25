@@ -39,6 +39,11 @@ namespace HL {
       return Super::free (ptr);
     }
 
+    inline auto free (void * ptr, size_t sz) {
+      std::lock_guard<LockType> l (thelock);
+      return Super::free (ptr, sz);
+    }
+
     inline size_t getSize (void * ptr) const {
       std::lock_guard<LockType> l (thelock);
       return Super::getSize (ptr);

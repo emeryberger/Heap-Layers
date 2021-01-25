@@ -34,6 +34,9 @@ namespace HL {
     inline void free (void * ptr) {
       (*this)().free (ptr);
     }
+    inline void free (void * ptr, size_t sz) {
+      (*this)().free (ptr, sz);
+    }
     inline size_t getSize (void * ptr) {
       return (*this)().getSize (ptr);
     }
