@@ -22,8 +22,8 @@ namespace HL {
   template <class SuperHeap, int stackSize = 32>
   class BacktraceHeap : public SuperHeap {
     struct TraceObj {
-      int frames;
-      void* stack[stackSize];
+      int nFrames;
+      void* callStack[stackSize];
     };
 
     static char* skipToken(char* s, int count) {
@@ -53,7 +53,7 @@ namespace HL {
       TraceObj* ptr = (TraceObj*) SuperHeap::malloc(sz + sizeof(TraceObj));
       if (ptr == NULL) return ptr;
 
-      ptr->frames = backtrace(ptr->stack, stackSize);
+      ptr->nFrames = backtrace(ptr->callStack, stackSize);
       return ptr + 1;
     }
 
@@ -66,9 +66,9 @@ namespace HL {
       TraceObj* obj = (TraceObj*)ptr;
       --obj;
 
-      char** strs = backtrace_symbols(obj->stack, obj->frames);
+      char** strs = backtrace_symbols(obj->callStack, obj->nFrames);
       string ret;
-      for (int i=0; i<obj->frames; i++) {
+      for (int i=0; i<obj->nFrames; i++) {
         // lines are formatted like:
         // 0   x                                   0x000000010f720e70 _Z3barv + 32
         // 1   x                                   0x000000010f7211e9 _Z3foov + 9
