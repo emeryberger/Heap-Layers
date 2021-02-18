@@ -26,28 +26,6 @@ namespace HL {
       void* callStack[stackSize];
     };
 
-    static char* skipToken(char* s, int count) {
-      while (count-- > 0) {
-        s += strspn(s, " ");
-        s += strcspn(s, " ");
-      }
-
-      s += strspn(s, " ");
-      return s;
-    }
-
-    static char* tryDemangle(char* pFunction) {
-        char function[64];
-        int offset;
-
-        // "symbolName + offset" expected
-        sscanf(pFunction, "%64s %*s %d", function, &offset);
-        int gotCppName = 0;
-
-        char* cppName = abi::__cxa_demangle(function, NULL, 0, &gotCppName);
-        return gotCppName == 0 ? cppName : 0;
-    }
-
   public:
     void* malloc(size_t sz) {
       TraceObj* ptr = (TraceObj*) SuperHeap::malloc(sz + sizeof(TraceObj));
@@ -69,20 +47,32 @@ namespace HL {
       char** strs = backtrace_symbols(obj->callStack, obj->nFrames);
       string ret;
       for (int i=0; i<obj->nFrames; i++) {
-        // lines are formatted like:
-        // 0   x                                   0x000000010f720e70 _Z3barv + 32
-        // 1   x                                   0x000000010f7211e9 _Z3foov + 9
-        char* pFunction = skipToken(strs[i], 3);
+        char function[128] = "";
 
-        ret.append(strs[i], pFunction);
+        bool understood = false;
+        #if defined(__linux__)
+          // "./x(_ZN2HL13BacktraceHeapINS_10MallocHeapELi32EE6mallocEm+0x54) [0x55b472bd8cba]"
+          understood = (sscanf(strs[i], "%*[^(](%128[^+]+0x%*x)]", function) == 1);
+        #elif defined(__APPLE__)
+          // "0   x                                   0x000000010f720e70 _Z3barv + 32"
+          understood = (sscanf(strs[i], "%*s %*s %*s %128s + %*d", function) == 1);
+        #endif
 
-        if (char* cppName = tryDemangle(pFunction)) {
+        if (!understood) {
+            ret.append(strs[i]).append("\n");
+            continue;
+        }
+
+        int demangleStatus = 0;
+        char* cppName = abi::__cxa_demangle(function, NULL, 0, &demangleStatus);
+
+        if (demangleStatus == 0) {
           ret.append(cppName);
-          ::free(cppName);
         }
         else {
-          ret.append(pFunction);
+          ret.append(function);
         }
+        ::free(cppName);
 
         ret.append("\n");
       }
