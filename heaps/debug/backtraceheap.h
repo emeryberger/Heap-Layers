@@ -9,9 +9,12 @@
  **/
 
 #include <cxxabi.h>
+#include <iomanip>
+
 
 #if defined(__linux__) || defined(__APPLE__)
     #include <execinfo.h>
+    #include <dlfcn.h>
 #else
     #error "needs port"
 #endif
@@ -53,7 +56,7 @@ namespace HL {
 
     void* malloc(size_t sz) {
       TraceObj* obj = (TraceObj*) SuperHeap::malloc(sz + sizeof(TraceObj));
-      if (obj == NULL) return obj;
+      if (obj == 0) return obj;
 
       obj->nFrames = backtrace(obj->callStack, stackSize);
       link(obj);
@@ -83,42 +86,35 @@ namespace HL {
 
       for (auto obj = _objects; obj; obj = obj->next) {
         if (any) {
-          std::cerr << "---\n";
+          std::cerr << "---\n";     // XXX does cerr output use malloc?
         }
         std::cerr << SuperHeap::getSize(obj) << " byte(s) leaked @ " << obj+1 << "\n";
 
-        char** strs = backtrace_symbols(obj->callStack, obj->nFrames);
         for (int i=0; i<obj->nFrames; i++) {
-          char function[128] = "";
-  
-          bool understood = false;
-          #if defined(__linux__)
-            // "./x(_ZN2HL13BacktraceHeapINS_10MallocHeapELi32EE6mallocEm+0x54) [0x55b472bd8cba]"
-            understood = (sscanf(strs[i], "%*[^(](%128[^+]+0x%*x)]", function) == 1);
-          #elif defined(__APPLE__)
-            // "0   x                                   0x000000010f720e70 _Z3barv + 32"
-            understood = (sscanf(strs[i], "%*s %*s %*s %128s + %*d", function) == 1);
-          #endif
-  
-          if (!understood) {
-            std::cerr << indent << strs[i] << "\n";
-            continue;
-          }
-  
-          int demangleStatus = 0;
-          char* cppName = abi::__cxa_demangle(function, NULL, 0, &demangleStatus);
-  
-          if (demangleStatus == 0) {
-            std::cerr << indent << cppName << "\n";
-          }
-          else {
-            std::cerr << indent << function << "\n";
+          std::cerr << indent << std::setw(2+2*8) // "0x" + 64-bit ptr
+                              << obj->callStack[i];
+
+          Dl_info info;
+          if (dladdr(obj->callStack[i], &info) && info.dli_sname != 0) {
+            // XXX now looking for non-malloc __cxa_demangle
+            int demangleStatus = 0;
+            char* cppName = abi::__cxa_demangle(info.dli_sname, 0, 0, &demangleStatus);
+    
+            if (demangleStatus == 0) {
+              std::cerr << " " << cppName;
+            }
+            else {
+              std::cerr << " " << info.dli_sname;
+            }
+            ::free(cppName);
+
+            typedef unsigned long long int ull;
+            std::cerr << " + " << (ull)obj->callStack[i] - (ull)info.dli_saddr;
           }
 
-          ::free(cppName);
-          any = true;
+          std::cerr << "\n";
         }
-        ::free(strs);
+        any = true;
       }
     }
   };
