@@ -117,7 +117,7 @@ extern "C" {
 #endif // defined(_WIN32)
 
 // #if !defined(__GNUG__) && (defined(__linux__) || defined(__APPLE__))
-#if (defined(__linux__) || defined(__APPLE__))
+#if defined(NDEBUG) && ((defined(__linux__) || defined(__APPLE__)))
 #define HEAP_LAYERS_INLINE __attribute__((always_inline))
 #else
 #define HEAP_LAYERS_INLINE
