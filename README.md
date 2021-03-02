@@ -1,7 +1,7 @@
 [Heap Layers: An Extensible Memory Allocation Infrastructure](http://www.heaplayers.org)
 -----------------------------------------------------------
 
-Copyright (C) 2000 - 2018 by [Emery Berger](http://www.emeryberger.com)
+Copyright (C) 2000 - 2021 by [Emery Berger](http://www.emeryberger.com)
 
 Heap Layers is distributed under the terms of the Apache 2.0 license.
 
