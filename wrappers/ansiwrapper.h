@@ -38,20 +38,21 @@ namespace HL {
     using SuperHeap::SuperHeap;
 
     inline void * malloc (size_t sz) {
+#if !defined(HL_NO_MALLOC_SIZE_CHECKS)
+      static constexpr int alignment = 8; // was alignof(max_align_t)
+      if (sz < alignment) {
+      	sz = alignment;
+      }
       // Prevent integer underflows. This maximum should (and
       // currently does) provide more than enough slack to compensate for any
       // rounding below (in the alignment section).
-#if !defined(HL_NO_MALLOC_SIZE_CHECKS)
-      if (sz < 0) { // alignof(max_align_t)) {
-      	sz = 8; // alignof(max_align_t);
-      }
       if (sz >> (sizeof(size_t) * CHAR_BIT - 1)) {
 	return 0;
       }
       // Enforce alignment requirements: round up allocation sizes if needed.
       // Enforce alignment.
-      sz = (sz + 8UL - 1UL) &
-	~(8UL - 1UL);
+      sz = (sz + alignment - 1UL) &
+	~(alignment - 1UL);
 #endif
       auto * ptr = SuperHeap::malloc (sz);
       return ptr;
