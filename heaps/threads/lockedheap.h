@@ -44,6 +44,11 @@ namespace HL {
       return Super::free (ptr, sz);
     }
 
+    inline void * memalign (size_t alignment, size_t sz) {
+      std::lock_guard<LockType> l (thelock);
+      return Super::memalign (alignment, sz);
+    }
+
     inline size_t getSize (void * ptr) const {
       std::lock_guard<LockType> l (thelock);
       return Super::getSize (ptr);
