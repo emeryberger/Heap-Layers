@@ -312,7 +312,15 @@ extern "C" {
   void _malloc_fork_child ();
 }
 
-static malloc_zone_t theDefaultZone;
+static const char * theOneTrueZoneName = "DefaultMallocZone";
+
+static bool initializeZone(malloc_zone_t& zone);
+
+malloc_zone_t * getDefaultZone() {
+  static malloc_zone_t theDefaultZone;
+  static bool initialized = initializeZone(theDefaultZone);
+  return &theDefaultZone;
+}
 
 extern "C" {
 
@@ -320,15 +328,16 @@ extern "C" {
 					     unsigned)
   {
     //    auto zone = (malloc_zone_t *) replace_malloc(sizeof(malloc_zone_t));
-    return nullptr; // zone;
+    return getDefaultZone();
+    // return nullptr; // zone;
   }
 
   malloc_zone_t * replace_malloc_default_zone () {
-    return &theDefaultZone;
+    return getDefaultZone();
   }
 
   malloc_zone_t * replace_malloc_default_purgeable_zone() {
-    return &theDefaultZone;
+    return getDefaultZone();
   }
 
   void replace_malloc_destroy_zone (malloc_zone_t *) {
@@ -527,44 +536,38 @@ MAC_INTERPOSE(replace_valloc, valloc);
 
 #endif
 
-// A class to initialize exactly one malloc zone with the calls used
-// by our replacement.
-
-static const char * theOneTrueZoneName = "DefaultMallocZone";
-
-class initializeDefaultZone {
-public:
-  initializeDefaultZone() {
-    theDefaultZone.size    = replace_internal_malloc_zone_size;
-    theDefaultZone.malloc  = replace_malloc_zone_malloc;
-    theDefaultZone.calloc  = replace_malloc_zone_calloc;
-    theDefaultZone.valloc  = replace_malloc_zone_valloc;
-    theDefaultZone.free    = replace_malloc_zone_free;
-    theDefaultZone.realloc = replace_malloc_zone_realloc;
-    theDefaultZone.destroy = replace_malloc_destroy_zone;
-    theDefaultZone.zone_name = theOneTrueZoneName;
-    theDefaultZone.batch_malloc = replace_malloc_zone_batch_malloc;
-    theDefaultZone.batch_free   = replace_malloc_zone_batch_free;
-    theDefaultZone.introspect   = NULL;
-    theDefaultZone.version      = 8;
-    theDefaultZone.memalign     = replace_malloc_zone_memalign;
-    theDefaultZone.free_definite_size = replace_malloc_zone_free_definite_size;
-    theDefaultZone.pressure_relief = NULL;
-    // Unregister and reregister the default zone.  Unregistering swaps
-    // the specified zone with the last one registered which for the
-    // default zone makes the more recently registered zone the default
-    // zone.  The default zone is then re-registered to ensure that
-    // allocations made from it earlier will be handled correctly.
-    // Things are not guaranteed to work that way, but it's how they work now.
-    malloc_zone_t *default_zone = malloc_default_zone();
-    malloc_zone_unregister(default_zone);
-    malloc_zone_register (&theDefaultZone);
-  }
-};
 
 // Force initialization of the default zone.
 
 #if REPLACE_ZONES
-static initializeDefaultZone initMe;
+static bool initializeZone(malloc_zone_t& zone) {
+  zone.size    = replace_internal_malloc_zone_size;
+  zone.malloc  = replace_malloc_zone_malloc;
+  zone.calloc  = replace_malloc_zone_calloc;
+  zone.valloc  = replace_malloc_zone_valloc;
+  zone.free    = replace_malloc_zone_free;
+  zone.realloc = replace_malloc_zone_realloc;
+  zone.destroy = replace_malloc_destroy_zone;
+  zone.zone_name = theOneTrueZoneName;
+  zone.batch_malloc = replace_malloc_zone_batch_malloc;
+  zone.batch_free   = replace_malloc_zone_batch_free;
+  zone.introspect   = NULL;
+  zone.version      = 8;
+  zone.memalign     = replace_malloc_zone_memalign;
+  zone.free_definite_size = replace_malloc_zone_free_definite_size;
+  zone.pressure_relief = NULL;
+  // Unregister and reregister the default zone.  Unregistering swaps
+  // the specified zone with the last one registered which for the
+  // default zone makes the more recently registered zone the default
+  // zone.  The default zone is then re-registered to ensure that
+  // allocations made from it earlier will be handled correctly.
+  // Things are not guaranteed to work that way, but it's how they work now.
+  malloc_zone_t *default_zone = malloc_default_zone();
+  malloc_zone_unregister(default_zone);
+  malloc_zone_register (&zone);
+  return true;
+}
+#else
+static bool initializeZone(malloc_zone_t& zone) { return true; }
 #endif
 
