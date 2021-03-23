@@ -37,13 +37,10 @@ namespace HL {
     std::recursive_mutex _mutex;
     TraceObj* _objects{nullptr};
 
-    // Protects from infinite recursion in case backtrace() invokes malloc()
-    inline static thread_local bool _in_bt{false};
-
     void link(TraceObj* obj) {
       std::lock_guard<std::recursive_mutex> guard(_mutex);
 
-      obj->prev = 0;
+      obj->prev = nullptr;
       obj->next = _objects;
       if (_objects) _objects->prev = obj;
       _objects = obj;
@@ -60,15 +57,9 @@ namespace HL {
   public:
     void* malloc(size_t sz) {
       TraceObj* obj = (TraceObj*) SuperHeap::malloc(sz + sizeof(TraceObj));
-      if (obj == 0) return obj;
+      if (obj == nullptr) return obj;
 
-      std::lock_guard<std::recursive_mutex> guard(_mutex);
-      if (!_in_bt) {
-        _in_bt = true;
-        obj->nFrames = backtrace(obj->callStack, stackSize);
-        _in_bt = false;
-      }
-
+      obj->nFrames = backtrace(obj->callStack, stackSize);
       link(obj);
 
       return obj + 1;
@@ -86,6 +77,12 @@ namespace HL {
 
     size_t getSize(void *ptr) {
       return SuperHeap::getSize(((TraceObj*)ptr)-1) - sizeof(TraceObj);
+    }
+
+
+    void clear_leaks() {
+      std::lock_guard<std::recursive_mutex> guard(_mutex);
+      _objects = nullptr;
     }
 
 
@@ -120,7 +117,9 @@ namespace HL {
             else {
               std::cerr << " " << info.dli_sname;
             }
-            ::free(cppName);
+            #if !defined(__APPLE__)
+              ::free(cppName); // FIXME how to reach the new free without knowing if interposition is in place?
+            #endif
 
             typedef unsigned long long int ull;
             std::cerr << " + " << (ull)obj->callStack[i] - (ull)info.dli_saddr;
