@@ -38,8 +38,8 @@
                      + __GNUC_PATCHLEVEL__)
 
 #if (((defined(GCC_VERSION) && (GCC_VERSION >= 30300)) &&	\
-      !defined(__SVR4) &&					\
-      !defined(__APPLE__))					\
+      !defined(__SVR4))						\
+  && !defined(__APPLE__) \
      || defined(__SUNPRO_CC)					\
      || defined(__FreeBSD__))
 #define USE_THREAD_KEYWORD 1
@@ -50,8 +50,9 @@
 namespace HL {
 
 #if USE_THREAD_KEYWORD
-
+#if !defined(INITIAL_EXEC_ATTR)
 #define INITIAL_EXEC_ATTR __attribute__((tls_model ("initial-exec")))
+#endif
 
   template <class PerThreadHeap>
   class ThreadSpecificHeap {
