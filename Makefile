@@ -26,4 +26,6 @@ x: x.cxx
 
 clean:
 	-rm -f x leak.so
+ifeq ($(shell uname -s),Darwin)
 	-rm -rf *.dSYM
+endif
