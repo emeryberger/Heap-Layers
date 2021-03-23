@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 #include <unistd.h>
 
 void bar() {
@@ -12,5 +13,8 @@ void foo() {
 
 int main() {
     foo();
+    std::thread* t = new std::thread{foo};
+    t->join();
+    delete t;
     return 0;
 }
