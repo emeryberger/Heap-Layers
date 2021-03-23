@@ -1,37 +1,28 @@
 #include <heaplayers>
 #include "common.hpp"
 #include "sysmallocheap.hpp"
+#include "heapredirect.hpp"
 
 
 class LeakHeap : public HL::ANSIWrapper<HL::BacktraceHeap<SysMallocHeap>> {
     typedef HL::BacktraceHeap<SysMallocHeap> super;
 
 public:
-    ~LeakHeap() {
-        super::print_leaks();
-    }
+    void lock() {}
+    void unlock() {}
 };
 
-static LeakHeap leakHeap;
+HEAP_REDIRECT(LeakHeap, 8 * 1024 * 1024);
 
-extern "C" {
-    void* malloc(size_t sz) {
-        return leakHeap.malloc(sz);
+class LeaksPrinter {
+public:
+    LeaksPrinter() {
+        // ignore allocations from program initialization (before this object's constructor)
+        Wrapper::getTheCustomHeap().clear_leaks();
     }
 
-    void* calloc(size_t s1, size_t s2) {
-        return leakHeap.calloc(s1, s2);
+    ~LeaksPrinter() {
+        Wrapper::getTheCustomHeap().print_leaks();
     }
 
-    void* realloc(void* ptr, size_t sz) {
-        return leakHeap.realloc(ptr, sz);
-    }
-
-    void free(void* ptr) {
-        return leakHeap.free(ptr);
-    }
-
-    void* memalign(size_t alignment, size_t sz) {
-        return leakHeap.memalign(alignment, sz);
-    }
-}
+} printer;
