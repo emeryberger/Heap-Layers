@@ -3,15 +3,24 @@ SCALENE=../scalene
 
 CXX=clang++
 CXXFLAGS=-std=c++14 -O3 -g -DNDEBUG -fno-builtin-malloc -fPIC
+LEAKCXXFLAGS=-I. -I$(SCALENE)/include
+LEAKLDFLAGS=-shared
+LEAKLDLIBS=-ldl
+
+LIBBACKTRACE=../libbacktrace
+ifdef LIBBACKTRACE
+  LEAKCXXFLAGS+=-DUSE_LIBBACKTRACE=1 -I$(LIBBACKTRACE)
+  LEAKLDLIBS+=$(LIBBACKTRACE)/.libs/libbacktrace.a
+endif
 
 ifeq ($(shell uname -s),Darwin)
   LD_PRELOAD=DYLD_INSERT_LIBRARIES
   WRAPPER=wrappers/macwrapper.cpp
-  WRAPPER_FLAGS=
 else
   LD_PRELOAD=LD_PRELOAD
   WRAPPER=wrappers/gnuwrapper.cpp
-  WRAPPER_FLAGS=-D'CUSTOM_PREFIX(x)=xx\#\#x' -fvisibility=hidden -Bsymbolic
+  LEAKCXXFLAGS+=-D'CUSTOM_PREFIX(x)=xx\#\#x' -fvisibility=hidden
+  LEAKLDFLAGS+=-Bsymbolic
 endif
 
 all: leak.so x
@@ -19,7 +28,7 @@ all: leak.so x
 
 LEAK_SRC=leak.cxx $(WRAPPER)
 leak.so: $(LEAK_SRC)
-	$(CXX) $(CXXFLAGS) $(WRAPPERFLAGS) -I. -I$(SCALENE)/include -o $@ $(LEAK_SRC) -shared -ldl
+	$(CXX) $(CXXFLAGS) $(LEAKCXXFLAGS) -o $@ $(LEAK_SRC) $(LEAKLDFLAGS) $(LEAKLDLIBS)
 
 x: x.cxx
 	$(CXX) $(CXXFLAGS) -rdynamic -o $@ $< -lpthread

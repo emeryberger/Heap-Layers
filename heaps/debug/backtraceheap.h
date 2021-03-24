@@ -1,11 +1,13 @@
 // -*- C++ -*-
 
+#pragma once
 #ifndef HL_BACKTRACE_H
 #define HL_BACKTRACE_H
 
 /**
  * @class BacktraceHeap
  * @brief Saves the call stack for each allocation, displaying them on demand.
+ * @author Juan Altmayer Pizzorno
  **/
 
 #include <cxxabi.h>
@@ -14,16 +16,23 @@
 #include <atomic>
 
 
-#if defined(__linux__) || defined(__APPLE__)
-    #include <execinfo.h>
-    #include <dlfcn.h>
+#if defined(USE_LIBBACKTRACE) && USE_LIBBACKTRACE
+  #include "backtrace.h"
+#elif defined(__linux__) || defined(__APPLE__)
+  #include <dlfcn.h>
 #else
-    #error "needs port"
+  #error "needs port"
+#endif
+
+#if defined(__linux__) || defined(__APPLE__)
+  #include <execinfo.h>
+#else
+  #error "needs port"
 #endif
 
 namespace HL {
 
-  template <class SuperHeap, int stackSize = 16>
+  template <class SuperHeap, decltype(::free)* free_wrapper, int stackSize = 16>
   class BacktraceHeap : public SuperHeap {
     struct alignas(SuperHeap::Alignment) TraceObj {
       int nFrames{0};
@@ -52,6 +61,18 @@ namespace HL {
       if (_objects == obj) _objects = obj->next;
       if (obj->prev) obj->prev->next = obj->next;
       if (obj->next) obj->next->prev = obj->prev;
+    }
+
+    static char* demangle(const char* function) {
+      int demangleStatus = 0;
+      char* cppName = abi::__cxa_demangle(function, 0, 0, &demangleStatus);
+
+      if (demangleStatus == 0) {
+        return cppName;
+      }
+
+      free_wrapper(cppName);
+      return 0;
     }
 
   public:
@@ -94,6 +115,13 @@ namespace HL {
       // some such mechanism.
       std::lock_guard<std::recursive_mutex> guard(_mutex);
 
+      #if defined(USE_LIBBACKTRACE) && USE_LIBBACKTRACE
+        static backtrace_state* btstate{nullptr};
+        if (btstate == nullptr) {
+          btstate = backtrace_create_state(nullptr, true, nullptr, nullptr);
+        }
+      #endif
+
       bool any = false;
 
       for (auto obj = _objects; obj; obj = obj->next) {
@@ -106,24 +134,39 @@ namespace HL {
           std::cerr << indent << std::setw(2+2*8) // "0x" + 64-bit ptr
                               << obj->callStack[i];
 
-          Dl_info info;
-          if (dladdr(obj->callStack[i], &info) && info.dli_sname != 0) {
-            int demangleStatus = 0;
-            char* cppName = abi::__cxa_demangle(info.dli_sname, 0, 0, &demangleStatus);
-    
-            if (demangleStatus == 0) {
-              std::cerr << " " << cppName;
-            }
-            else {
-              std::cerr << " " << info.dli_sname;
-            }
-            #if !defined(__APPLE__)
-              ::free(cppName); // FIXME how to reach the new free without knowing if interposition is in place?
-            #endif
+          #if defined(USE_LIBBACKTRACE) && USE_LIBBACKTRACE
+            backtrace_pcinfo(btstate, (uintptr_t)obj->callStack[i], [](void *data, uintptr_t pc,
+                                                                       const char *filename, int lineno,
+                                                                       const char *function) {
+                    if (filename != nullptr && lineno != 0) {
+                      std::cerr << " " << filename << ":" << lineno;
+                    } 
+                    else if (function) {
+                      if (char* cppName = demangle(function)) {
+                        std::cerr << " " << cppName;
+                        free_wrapper(cppName);
+                      }
+                      else {
+                        std::cerr << " " << function;
+                      }
+                    }
 
-            typedef unsigned long long int ull;
-            std::cerr << " + " << (ull)obj->callStack[i] - (ull)info.dli_saddr;
-          }
+                    return 1;
+                }, nullptr, nullptr);
+          #else
+            Dl_info info;
+            if (dladdr(obj->callStack[i], &info) && info.dli_sname != 0) {
+              if (char* cppName = demangle(info.dli_sname)) {
+                std::cerr << " " << cppName;
+                free_wrapper(cppName);
+              }
+              else {
+                std::cerr << " " << info.dli_sname;
+              }
+
+              std::cerr << " + " << (uintptr_t)obj->callStack[i] - (uintptr_t)info.dli_saddr;
+            }
+          #endif
 
           std::cerr << "\n";
         }

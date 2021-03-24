@@ -4,9 +4,9 @@
 #include "heapredirect.hpp"
 
 
-class LeakHeap : public HL::ANSIWrapper<HL::BacktraceHeap<SysMallocHeap>> {
-    typedef HL::BacktraceHeap<SysMallocHeap> super;
+extern "C" decltype(::free) xxfree;
 
+class LeakHeap : public HL::ANSIWrapper<HL::BacktraceHeap<SysMallocHeap, xxfree>> {
 public:
     void lock() {}
     void unlock() {}
