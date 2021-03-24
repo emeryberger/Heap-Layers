@@ -79,6 +79,7 @@ extern "C" {
 #define CUSTOM_FREE(x)       CUSTOM_PREFIX(free)(x)
 #define CUSTOM_CFREE(x)      CUSTOM_PREFIX(cfree)(x)
 #define CUSTOM_REALLOC(x,y)  CUSTOM_PREFIX(realloc)(x,y)
+#define CUSTOM_REALLOCARRAY(x,y,z)  CUSTOM_PREFIX(reallocarray)(x,y,z)
 #define CUSTOM_CALLOC(x,y)   CUSTOM_PREFIX(calloc)(x,y)
 #define CUSTOM_MEMALIGN(x,y) CUSTOM_PREFIX(memalign)(x,y)
 #define CUSTOM_POSIX_MEMALIGN(x,y,z) CUSTOM_PREFIX(posix_memalign)(x,y,z)
@@ -279,6 +280,15 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
   // Return a pointer to the new one.
   return buf;
+}
+
+extern "C" void * MYCDECL CUSTOM_REALLOCARRAY (void * ptr, size_t sz1, size_t sz2)
+{
+  if ((sz1 * sz2 < sz1) || (sz1 * sz2 < sz2)) { // overflow
+    errno = ENOMEM;
+    return nullptr;
+  }
+  return CUSTOM_REALLOC(ptr, sz1 * sz2);
 }
 
 #if defined(__linux)

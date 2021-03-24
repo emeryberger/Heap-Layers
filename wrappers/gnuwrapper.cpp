@@ -18,6 +18,8 @@
 #error "This file requires the GNU compiler."
 #endif
 
+#undef _GNU_SOURCE
+
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -74,6 +76,7 @@ extern "C" {
   WEAK_REDEF1(void, cfree, void *);
   WEAK_REDEF2(void *, calloc, size_t, size_t);
   WEAK_REDEF2(void *, realloc, void *, size_t);
+  WEAK_REDEF2(void *, reallocarray, void *, size_t, size_t);
   WEAK_REDEF2(void *, memalign, size_t, size_t);
   WEAK_REDEF3(int, posix_memalign, void **, size_t, size_t);
   WEAK_REDEF2(void *, aligned_alloc, size_t, size_t);
