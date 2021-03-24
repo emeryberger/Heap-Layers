@@ -18,13 +18,10 @@
 
 #if defined(USE_LIBBACKTRACE) && USE_LIBBACKTRACE
   #include "backtrace.h"
-#elif defined(__linux__) || defined(__APPLE__)
-  #include <dlfcn.h>
-#else
-  #error "needs port"
 #endif
 
 #if defined(__linux__) || defined(__APPLE__)
+  #include <dlfcn.h>
   #include <execinfo.h>
 #else
   #error "needs port"
@@ -130,18 +127,20 @@ namespace HL {
         }
         std::cerr << SuperHeap::getSize(obj) - sizeof(TraceObj) << " byte(s) leaked @ " << obj+1 << "\n";
 
-        for (int i=0; i<obj->nFrames; i++) {
+        for (int i=0; i<obj->nFrames; i++) { // XXX skip 1st because it's invariably our malloc() above?
           std::cerr << indent << std::setw(2+2*8) // "0x" + 64-bit ptr
                               << obj->callStack[i];
+
+          bool hasFunction{false};
 
           #if defined(USE_LIBBACKTRACE) && USE_LIBBACKTRACE
             backtrace_pcinfo(btstate, (uintptr_t)obj->callStack[i], [](void *data, uintptr_t pc,
                                                                        const char *filename, int lineno,
                                                                        const char *function) {
-                    if (filename != nullptr && lineno != 0) {
-                      std::cerr << " " << filename << ":" << lineno;
-                    } 
-                    else if (function) {
+                    if (function) {
+                      bool* hasFunction = (bool*)data;
+                      *hasFunction = true;
+
                       if (char* cppName = demangle(function)) {
                         std::cerr << " " << cppName;
                         free_wrapper(cppName);
@@ -151,9 +150,17 @@ namespace HL {
                       }
                     }
 
+                    if (filename != nullptr && lineno != 0) {
+                      std::cerr << " " << filename << ":" << lineno;
+                    } 
+
                     return 1;
-                }, nullptr, nullptr);
-          #else
+                }, [](void *data, const char *msg, int errnum) {
+                  // error ignored
+                  // std::cerr << "(libbacktrace: " << msg << ")";
+                }, &hasFunction);
+          #endif
+          if (!hasFunction) {
             Dl_info info;
             if (dladdr(obj->callStack[i], &info) && info.dli_sname != 0) {
               if (char* cppName = demangle(info.dli_sname)) {
@@ -166,7 +173,7 @@ namespace HL {
 
               std::cerr << " + " << (uintptr_t)obj->callStack[i] - (uintptr_t)info.dli_saddr;
             }
-          #endif
+          }
 
           std::cerr << "\n";
         }
