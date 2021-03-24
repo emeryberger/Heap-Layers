@@ -18,8 +18,6 @@
 #error "This file requires the GNU compiler."
 #endif
 
-#undef _GNU_SOURCE
-
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
