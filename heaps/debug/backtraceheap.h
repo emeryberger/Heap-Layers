@@ -131,6 +131,15 @@ namespace HL {
           std::cerr << indent << std::setw(2+2*8) // "0x" + 64-bit ptr
                               << obj->callStack[i];
 
+          Dl_info info;
+          if (!dladdr(obj->callStack[i], &info)) {
+            memset(&info, 0, sizeof(info));
+          }
+
+          if (info.dli_fname) {
+            std::cerr << " " << info.dli_fname;
+          }
+
           bool hasFunction{false};
 
           #if defined(USE_LIBBACKTRACE) && USE_LIBBACKTRACE
@@ -160,19 +169,16 @@ namespace HL {
                   // std::cerr << "(libbacktrace: " << msg << ")";
                 }, &hasFunction);
           #endif
-          if (!hasFunction) {
-            Dl_info info;
-            if (dladdr(obj->callStack[i], &info) && info.dli_sname != 0) {
-              if (char* cppName = demangle(info.dli_sname)) {
-                std::cerr << " " << cppName;
-                free_wrapper(cppName);
-              }
-              else {
-                std::cerr << " " << info.dli_sname;
-              }
-
-              std::cerr << " + " << (uintptr_t)obj->callStack[i] - (uintptr_t)info.dli_saddr;
+          if (!hasFunction && info.dli_sname != 0) {
+            if (char* cppName = demangle(info.dli_sname)) {
+              std::cerr << " " << cppName;
+              free_wrapper(cppName);
             }
+            else {
+              std::cerr << " " << info.dli_sname;
+            }
+
+            std::cerr << " + " << (uintptr_t)obj->callStack[i] - (uintptr_t)info.dli_saddr;
           }
 
           std::cerr << "\n";
