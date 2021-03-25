@@ -137,18 +137,23 @@ namespace HL {
           }
 
           if (info.dli_fname) {
-            std::cerr << " " << info.dli_fname;
+            std::cerr << " [" << info.dli_fname << "]";
           }
 
-          bool hasFunction{false};
+          bool hasInfo{false};
 
           #if defined(USE_LIBBACKTRACE) && USE_LIBBACKTRACE
             backtrace_pcinfo(btstate, (uintptr_t)obj->callStack[i], [](void *data, uintptr_t pc,
                                                                        const char *filename, int lineno,
                                                                        const char *function) {
+                    bool* hasInfo = (bool*)data;
+
+		    if (*hasInfo) {
+		    	std::cerr << "\n" << indent << std::string(18, ' ') << indent;
+		    }
+
                     if (function) {
-                      bool* hasFunction = (bool*)data;
-                      *hasFunction = true;
+                      *hasInfo = true;
 
                       if (char* cppName = demangle(function)) {
                         std::cerr << " " << cppName;
@@ -160,16 +165,17 @@ namespace HL {
                     }
 
                     if (filename != nullptr && lineno != 0) {
+                      *hasInfo = true;
                       std::cerr << " " << filename << ":" << lineno;
                     } 
 
-                    return 1;
+                    return 0;
                 }, [](void *data, const char *msg, int errnum) {
                   // error ignored
                   // std::cerr << "(libbacktrace: " << msg << ")";
-                }, &hasFunction);
+                }, &hasInfo);
           #endif
-          if (!hasFunction && info.dli_sname != 0) {
+          if (!hasInfo && info.dli_sname != 0) {
             if (char* cppName = demangle(info.dli_sname)) {
               std::cerr << " " << cppName;
               free_wrapper(cppName);
@@ -178,7 +184,7 @@ namespace HL {
               std::cerr << " " << info.dli_sname;
             }
 
-            std::cerr << " + " << (uintptr_t)obj->callStack[i] - (uintptr_t)info.dli_saddr;
+            std::cerr << "+" << (uintptr_t)obj->callStack[i] - (uintptr_t)info.dli_saddr;
           }
 
           std::cerr << "\n";
