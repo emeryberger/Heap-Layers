@@ -5,7 +5,7 @@ CXX=clang++
 CXXFLAGS=-std=c++14 -O3 -g -DNDEBUG -fno-builtin-malloc -fPIC
 LEAKCXXFLAGS=-I. -I$(SCALENE)/include
 LEAKLDFLAGS=-shared
-LEAKLDLIBS=-ldl
+LEAKLDLIBS=-ldl -lpthread
 
 LIBBACKTRACE=../libbacktrace
 ifdef LIBBACKTRACE
