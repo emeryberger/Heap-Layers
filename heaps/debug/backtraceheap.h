@@ -29,7 +29,7 @@
 
 namespace HL {
 
-  template <class SuperHeap, decltype(::free)* free_wrapper, int stackSize = 16>
+  template <class SuperHeap, int stackSize = 16>
   class BacktraceHeap : public SuperHeap {
     struct alignas(SuperHeap::Alignment) TraceObj {
       int nFrames{0};
@@ -60,6 +60,15 @@ namespace HL {
       if (obj->next) obj->next->prev = obj->prev;
     }
 
+    static void cxa_free(char* demangled) {
+      // On Linux, even using LD_PRELOAD wrapping we could just use ::free here,
+      // but on MacOS, if malloc and free are interposed, "::free" still points
+      // to the original library code, whereas __cxa_demangle will see (and use)
+      // the interposed.  We need thus to look for the free wrapper, if any.
+      static decltype(::free)* freep = (decltype(::free)*) dlsym(RTLD_DEFAULT, "free");
+      (*freep)(demangled);
+    }
+
     static char* demangle(const char* function) {
       int demangleStatus = 0;
       char* cppName = abi::__cxa_demangle(function, 0, 0, &demangleStatus);
@@ -68,7 +77,7 @@ namespace HL {
         return cppName;
       }
 
-      free_wrapper(cppName);
+      cxa_free(cppName);
       return 0;
     }
 
@@ -148,16 +157,16 @@ namespace HL {
                                                                        const char *function) {
                     bool* hasInfo = (bool*)data;
 
-		    if (*hasInfo) {
-		    	std::cerr << "\n" << indent << std::string(18, ' ') << indent;
-		    }
+                    if (*hasInfo) {
+                      std::cerr << "\n" << indent << std::string(18, ' ') << indent;
+                    }
 
                     if (function) {
                       *hasInfo = true;
 
                       if (char* cppName = demangle(function)) {
                         std::cerr << " " << cppName;
-                        free_wrapper(cppName);
+                        cxa_free(cppName);
                       }
                       else {
                         std::cerr << " " << function;
@@ -178,7 +187,7 @@ namespace HL {
           if (!hasInfo && info.dli_sname != 0) {
             if (char* cppName = demangle(info.dli_sname)) {
               std::cerr << " " << cppName;
-              free_wrapper(cppName);
+              cxa_free(cppName);
             }
             else {
               std::cerr << " " << info.dli_sname;
