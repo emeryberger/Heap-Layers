@@ -86,6 +86,9 @@ namespace HL {
       TraceObj* obj = (TraceObj*) SuperHeap::malloc(sz + sizeof(TraceObj));
       if (obj == nullptr) return obj;
 
+      // Note that backtrace() may invoke malloc; this code assumes that if
+      // malloc has been interposed and forwards to here, the interposed malloc
+      // detects and avoids an infinite recursion.
       obj->nFrames = backtrace(obj->callStack, stackSize);
       link(obj);
 
