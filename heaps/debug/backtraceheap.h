@@ -13,7 +13,6 @@
 #include <cxxabi.h>
 #include <iostream>
 #include <iomanip>
-#include <atomic>
 
 
 #if defined(USE_LIBBACKTRACE) && USE_LIBBACKTRACE
