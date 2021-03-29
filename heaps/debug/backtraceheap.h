@@ -17,7 +17,7 @@
 
 
 #if defined(USE_LIBBACKTRACE) && USE_LIBBACKTRACE
-  #include "backtrace.h"
+  #include "backtrace.h"    // // https://github.com/ianlancetaylor/libbacktrace
 #endif
 
 #if defined(__linux__) || defined(__APPLE__)
@@ -181,7 +181,7 @@ namespace HL {
                       std::cerr << " " << filename << ":" << lineno;
                     } 
 
-                    return 0;
+                    return 0;   // alternatively, return 1 to stop at the 1st level
                 }, [](void *data, const char *msg, int errnum) {
                   // error ignored
                   // std::cerr << "(libbacktrace: " << msg << ")";
