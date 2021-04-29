@@ -57,15 +57,24 @@ namespace HL {
  */
 template<typename CustomHeapType, int STATIC_HEAP_SIZE> 
 class HeapWrapper {
-  static pthread_key_t* getKey() {
-    // C++14 version of "inline static" data member
-    static pthread_key_t _inMallocKey;
-    return &_inMallocKey;
+  typedef LockedHeap<std::mutex, StaticBufferHeap<STATIC_HEAP_SIZE>> StaticHeapType;
+
+  static StaticHeapType& getTheStaticHeap() {
+    static StaticHeapType theStaticHeap;
+    return theStaticHeap;
   }
 
-  static bool isInMalloc() {
+// Using a static bool is not thread safe, but gives us a benchmarking
+// baseline for this implementation.
+#define HW_USE_STATIC_BOOL 0
+
+  // returns 'true' if the static heap needs to be used;
+  // if returning 'false', 'flag' is also set to the thread-specific flag
+  static bool isInMalloc(bool*& flag) {
+#if !HW_USE_STATIC_BOOL
     // modified double-checked locking pattern (https://en.wikipedia.org/wiki/Double-checked_locking)
     static enum {NEEDS_KEY=0, CREATING_KEY=1, DONE=2} inMallocKeyState{NEEDS_KEY};
+    static pthread_key_t inMallocKey;
     static std::recursive_mutex m;
 
     auto state = __atomic_load_n(&inMallocKeyState, __ATOMIC_ACQUIRE);
@@ -78,25 +87,36 @@ class HeapWrapper {
       }
       else if (unlikely(state == NEEDS_KEY)) {
         __atomic_store_n(&inMallocKeyState, CREATING_KEY, __ATOMIC_RELAXED);
-        if (pthread_key_create(getKey(), 0) != 0) { // may call malloc/calloc/...
+        if (pthread_key_create(&inMallocKey, 0) != 0) { // may call malloc/calloc/...
           abort();
         }
         __atomic_store_n(&inMallocKeyState, DONE, __ATOMIC_RELEASE);
       }
     }
 
-    return pthread_getspecific(*getKey()) != 0;
-  }
+    flag = (bool*)pthread_getspecific(inMallocKey); // not expected to call malloc
+    if (unlikely(flag == nullptr)) {
+      std::lock_guard<decltype(m)> g{m};
 
-  static void setInMalloc(bool state) {
-    pthread_setspecific(*getKey(), state ? (void*)1 : 0);
-  }
+      static bool initializing = false;
+      if (initializing) {
+        return true; // recursively invoked, so use static heap
+      }
 
-  typedef LockedHeap<std::mutex, StaticBufferHeap<STATIC_HEAP_SIZE>> StaticHeapType;
+      initializing = true;
+      flag = (bool*)getTheStaticHeap().malloc(sizeof(bool));
+      *flag = false;
+      if (pthread_setspecific(inMallocKey, flag) != 0) { // may call malloc/calloc/...
+        abort();
+      }
+      initializing = false;
+    }
+#else
+    static bool inMalloc = false;
+    flag = &inMalloc;
+#endif
 
-  static StaticHeapType& getTheStaticHeap() {
-    static StaticHeapType theStaticHeap;
-    return theStaticHeap;
+    return *flag;
   }
 
  public:
@@ -106,24 +126,26 @@ class HeapWrapper {
   }
 
   static void* xxmalloc(size_t sz) {
-    if (unlikely(isInMalloc())) {
+    bool* inMallocFlag;
+    if (unlikely(isInMalloc(inMallocFlag))) {
       return getTheStaticHeap().malloc(sz);
     }
 
-    setInMalloc(true);
+    *inMallocFlag = true;
     void* ptr = getTheCustomHeap().malloc(sz);
-    setInMalloc(false);
+    *inMallocFlag = false;
     return ptr;
   }
 
   static void *xxmemalign(size_t alignment, size_t sz) {
-    if (unlikely(isInMalloc())) {
+    bool* inMallocFlag;
+    if (unlikely(isInMalloc(inMallocFlag))) {
       return getTheStaticHeap().memalign(alignment, sz);
     }
 
-    setInMalloc(true);
+    *inMallocFlag = true;
     void* ptr = getTheCustomHeap().memalign(alignment, sz);
-    setInMalloc(false);
+    *inMallocFlag = false;
     return ptr;
   }
 
