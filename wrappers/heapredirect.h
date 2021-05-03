@@ -59,18 +59,11 @@ template<typename CustomHeapType, int STATIC_HEAP_SIZE>
 class HeapWrapper {
   typedef LockedHeap<std::mutex, StaticBufferHeap<STATIC_HEAP_SIZE>> StaticHeapType;
 
-  static StaticHeapType& getTheStaticHeap() {
-    static StaticHeapType theStaticHeap;
-    return theStaticHeap;
-  }
-
 // Using a static bool is not thread safe, but gives us a benchmarking
 // baseline for this implementation.
 #define HW_USE_STATIC_BOOL 0
 
-  // returns 'true' if the static heap needs to be used;
-  // if returning 'false', 'flag' is also set to the thread-specific flag
-  static bool isInMalloc(bool*& flag) {
+  static bool* getInMallocFlag() {
 #if !HW_USE_STATIC_BOOL
     // modified double-checked locking pattern (https://en.wikipedia.org/wiki/Double-checked_locking)
     static enum {NEEDS_KEY=0, CREATING_KEY=1, DONE=2} inMallocKeyState{NEEDS_KEY};
@@ -83,7 +76,7 @@ class HeapWrapper {
 
       state = __atomic_load_n(&inMallocKeyState, __ATOMIC_RELAXED);
       if (unlikely(state == CREATING_KEY)) {
-        return true;
+        return nullptr; // recursively invoked
       }
       else if (unlikely(state == NEEDS_KEY)) {
         __atomic_store_n(&inMallocKeyState, CREATING_KEY, __ATOMIC_RELAXED);
@@ -94,81 +87,85 @@ class HeapWrapper {
       }
     }
 
-    flag = (bool*)pthread_getspecific(inMallocKey); // not expected to call malloc
+    bool* flag = (bool*)pthread_getspecific(inMallocKey); // not expected to call malloc
     if (unlikely(flag == nullptr)) {
       std::lock_guard<decltype(m)> g{m};
 
       static bool initializing = false;
       if (initializing) {
-        return true; // recursively invoked, so use static heap
+        return nullptr; // recursively invoked
       }
 
       initializing = true;
-      flag = (bool*)getTheStaticHeap().malloc(sizeof(bool));
+      flag = (bool*)getHeap<StaticHeapType>()->malloc(sizeof(bool));
       *flag = false;
       if (pthread_setspecific(inMallocKey, flag) != 0) { // may call malloc/calloc/...
         abort();
       }
       initializing = false;
     }
+
+    return flag;
 #else
     static bool inMalloc = false;
-    flag = &inMalloc;
+    return &inMalloc;
 #endif
-
-    return *flag;
   }
 
  public:
-  static CustomHeapType &getTheCustomHeap() {
-    static CustomHeapType thang;
-    return thang;
+  template<class HEAP>
+  static HEAP* getHeap() {
+    // Allocate heap on first use and never destroy it, for malloc and such
+    // may still be used in atexit() 
+    alignas(std::max_align_t) static char buffer[sizeof(HEAP)];
+    static HEAP* heap = new (buffer) HEAP;
+    return heap;
   }
 
   static void* xxmalloc(size_t sz) {
-    bool* inMallocFlag;
-    if (unlikely(isInMalloc(inMallocFlag))) {
-      return getTheStaticHeap().malloc(sz);
+    bool* inMalloc = getInMallocFlag();
+    if (unlikely(inMalloc == nullptr || *inMalloc)) {
+      return getHeap<StaticHeapType>()->malloc(sz);
     }
 
-    *inMallocFlag = true;
-    void* ptr = getTheCustomHeap().malloc(sz);
-    *inMallocFlag = false;
+    *inMalloc = true;
+    void* ptr = getHeap<CustomHeapType>()->malloc(sz);
+    *inMalloc = false;
     return ptr;
   }
 
   static void *xxmemalign(size_t alignment, size_t sz) {
-    bool* inMallocFlag;
-    if (unlikely(isInMalloc(inMallocFlag))) {
-      return getTheStaticHeap().memalign(alignment, sz);
+    bool* inMalloc = getInMallocFlag();
+    if (unlikely(inMalloc == nullptr || *inMalloc)) {
+      return getHeap<StaticHeapType>()->memalign(alignment, sz);
     }
 
-    *inMallocFlag = true;
-    void* ptr = getTheCustomHeap().memalign(alignment, sz);
-    *inMallocFlag = false;
+    *inMalloc = true;
+    void* ptr = getHeap<CustomHeapType>()->memalign(alignment, sz);
+    *inMalloc = false;
     return ptr;
   }
 
   static void xxfree(void* ptr) {
-    if (likely(!getTheStaticHeap().isValid(ptr))) {
-      getTheCustomHeap().free(ptr);
+    if (likely(!getHeap<StaticHeapType>()->isValid(ptr))) {
+      getHeap<CustomHeapType>()->free(ptr);
     }
   }
 
   static size_t xxmalloc_usable_size(void *ptr) {
-    if (unlikely(getTheStaticHeap().isValid(ptr))) {
-      return getTheStaticHeap().getSize(ptr);
+    if (unlikely(getHeap<StaticHeapType>()->isValid(ptr))) {
+      return getHeap<StaticHeapType>()->getSize(ptr);
     }
 
-    return getTheCustomHeap().getSize(ptr);
+    return getHeap<CustomHeapType>()->getSize(ptr);
   }
 
   static void xxmalloc_lock() {
-    getTheCustomHeap().lock();
+    getHeap<CustomHeapType>()->lock();
   }
 
   static void xxmalloc_unlock() {
-    getTheCustomHeap().unlock();
+    getHeap<CustomHeapType>()->unlock();
   }
 };
 
