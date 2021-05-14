@@ -66,6 +66,7 @@
 
 #define WEAK_REDEF1(type,fname,arg1) ATTRIBUTE_EXPORT type fname(arg1) __THROW WEAK(custom##fname)
 #define WEAK_REDEF2(type,fname,arg1,arg2) ATTRIBUTE_EXPORT type fname(arg1,arg2) __THROW WEAK(custom##fname)
+#define WEAK_REDEF2_NOTHROW(type,fname,arg1,arg2) ATTRIBUTE_EXPORT type fname(arg1,arg2) WEAK(custom##fname)
 #define WEAK_REDEF3(type,fname,arg1,arg2,arg3) ATTRIBUTE_EXPORT type fname(arg1,arg2,arg3) __THROW WEAK(custom##fname)
 
 extern "C" {
@@ -77,7 +78,11 @@ extern "C" {
   WEAK_REDEF3(void *, reallocarray, void *, size_t, size_t);
   WEAK_REDEF2(void *, memalign, size_t, size_t);
   WEAK_REDEF3(int, posix_memalign, void **, size_t, size_t);
+#ifdef __USE_XOPEN2K // a work-around for an exception anomaly
+  WEAK_REDEF2_NOTHROW(void *, aligned_alloc, size_t, size_t);
+#else
   WEAK_REDEF2(void *, aligned_alloc, size_t, size_t);
+#endif
   WEAK_REDEF1(size_t, malloc_usable_size, void *);
 }
 
