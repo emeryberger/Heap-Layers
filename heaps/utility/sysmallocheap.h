@@ -56,7 +56,7 @@ class SysMallocHeap {
   }
 };
 
-#else // __APPLE__
+#elif !defined(_WIN32) // __APPLE__
 
 #include <dlfcn.h>
 
@@ -96,7 +96,7 @@ class SysMallocHeap {
   }
 };
 
-#endif // __APPLE__
+#endif
 
 } // namespace
 
