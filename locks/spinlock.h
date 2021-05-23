@@ -18,7 +18,7 @@
 #ifndef HL_SPINLOCK_H
 #define HL_SPINLOCK_H
 
-#if (__cplusplus < 201103) || defined(__SUNPRO_CC) // Still no support for atomic...
+#if !defined(_WIN32) && ((__cplusplus < 201103) || defined(__SUNPRO_CC)) // Still no support for atomic...
 #include "spinlock-old.h"
 #else
 
