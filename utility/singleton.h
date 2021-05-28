@@ -16,7 +16,10 @@ namespace HL {
       static C theSingleton;
       return theSingleton;
 #else
-      static char buf[sizeof(C)];
+      // This is used with heaps, and when a heap replaces the system heap it needs
+      // to continue existing past global destructor invocation, as it may be called
+      // from atexit(), etc.
+      alignas(std::max_align_t) static char buf[sizeof(C)];
       static C * theSingleton = new (buf) C;
       return *theSingleton;
 #endif
