@@ -16,8 +16,9 @@ namespace HL {
     static inline void * malloc (size_t sz) {
       return singleton<TheHeap>::getInstance().malloc (sz);
     }
-    
-    static inline bool free (void * ptr) {
+
+    // 'auto' because some free() return bool, others void
+    static inline auto free (void * ptr) {
       return singleton<TheHeap>::getInstance().free (ptr);
     }
     
