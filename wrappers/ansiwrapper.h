@@ -39,7 +39,7 @@ namespace HL {
 
     inline void * malloc (size_t sz) {
 #if !defined(HL_NO_MALLOC_SIZE_CHECKS)
-      static constexpr int alignment = 8; // was alignof(max_align_t)
+      static constexpr int alignment = 16; // safe for all platforms
       if (sz < alignment) {
       	sz = alignment;
       }
