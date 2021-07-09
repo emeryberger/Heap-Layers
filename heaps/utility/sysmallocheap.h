@@ -27,7 +27,7 @@ namespace HL {
  * @author Emery Berger, Juan Altmayer Pizzorno
  **/
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 
 // FIXME use the non-__APPLE__ code on __APPLE__ as well to reduce unnecessary variants?
 class SysMallocHeap {
@@ -52,7 +52,11 @@ class SysMallocHeap {
   }
 
   inline size_t getSize(void *ptr) {
+#if defined(__APPLE__)
     return ::malloc_size(ptr);
+#else
+    return ::malloc_usable_size(const_cast<void *>(ptr));
+#endif
   }
 };
 
