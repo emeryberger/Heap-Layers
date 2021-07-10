@@ -27,7 +27,7 @@ namespace HL {
  * @author Emery Berger, Juan Altmayer Pizzorno
  **/
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
 
 // FIXME use the non-__APPLE__ code on __APPLE__ as well to reduce unnecessary variants?
 class SysMallocHeap {
