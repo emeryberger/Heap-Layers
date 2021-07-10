@@ -46,7 +46,7 @@ extern "C" {
 
 #if defined(__APPLE__)
 #include <malloc/malloc.h>
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
 #include <stdlib.h>
 #else
 #include <malloc.h> // for memalign
@@ -174,14 +174,14 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 
 #if !defined(_WIN32)
 extern "C" void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
-#if !defined(__FreeBSD__) && !defined(__SVR4)
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__SVR4)
   throw()
 #endif
   __attribute__((alloc_size(2))) __attribute__((alloc_align(1))) 
 ;
 
 extern "C" FLATTEN int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, size_t size)
-#if !defined(__FreeBSD__) && !defined(__SVR4)
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__SVR4)
 throw()
 #endif
 {
@@ -203,7 +203,7 @@ throw()
 
 
 extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
-#if !defined(__FreeBSD__) && !defined(__SVR4)
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__SVR4)
   throw()
 #endif
 {
@@ -211,7 +211,7 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size
 }
 
 extern "C" FLATTEN void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t size)
-#if !defined(__FreeBSD__)
+#if !defined(__FreeBSD__) && !defined(__NetBSD__)
   throw()
 #endif
 {
@@ -370,7 +370,7 @@ extern "C" int xxmalloc_SET_STATE(void * /* ptr */) {
   return 0; // success.
 }
 
-#if defined(__GNUC__) && !defined(__FreeBSD__)
+#if defined(__GNUC__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
 extern "C" struct mallinfo CUSTOM_MALLINFO() {
   // For now, we return useless stats.
   struct mallinfo m;
