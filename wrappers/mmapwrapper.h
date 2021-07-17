@@ -37,10 +37,7 @@ extern "C" int madvise (caddr_t, size_t, int);
 
 #if !defined(HL_MMAP_PROTECTION_MASK)
 #if HL_EXECUTABLE_HEAP
-#ifndef MAP_JIT
-#define MAP_JIT 0
-#endif
-#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC | MAP_JIT)
+#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC)
 #else
 #if !defined(PROT_MAX)
 #define PROT_MAX(p) 0
@@ -154,6 +151,11 @@ namespace HL {
       int fd = -1;
       //      mapFlag |= MAP_ANONYMOUS | MAP_PRIVATE;
       mapFlag |= MAP_ANON | MAP_PRIVATE;
+#if HL_EXECUTABLE_HEAP
+#if defined(MAP_JIT)
+      mapFlag |= MAP_JIT;
+#endif
+#endif
 #endif
 
       ptr = mmap(startAddress, sz, HL_MMAP_PROTECTION_MASK, mapFlag, fd, 0);

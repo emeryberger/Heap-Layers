@@ -44,10 +44,7 @@
 
 #ifndef HL_MMAP_PROTECTION_MASK
 #if HL_EXECUTABLE_HEAP
-#if !defined(MAP_JIT)
-#define MAP_JIT 0
-#endif
-#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC | MAP_JIT)
+#define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE | PROT_EXEC)
 #else
 #define HL_MMAP_PROTECTION_MASK (PROT_READ | PROT_WRITE)
 #endif
@@ -124,6 +121,11 @@ namespace HL {
       flags |= MAP_PRIVATE;
 #else
       flags |= MAP_PRIVATE | MAP_ANONYMOUS;
+#if HL_EXECUTABLE_HEAP
+#if defined(MAP_JIT)
+      flags |= MAP_JIT;
+#endif
+#endif
 #endif
 
       auto ptr = mmap (addr, sz, HL_MMAP_PROTECTION_MASK, flags, fd, 0);
