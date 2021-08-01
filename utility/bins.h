@@ -18,7 +18,7 @@
 #ifndef HL_BINS_H
 #define HL_BINS_H
 
-#include <cstdlib>
+#include <stdlib.h>
 #include <assert.h>
 #include <stddef.h>
 
