@@ -20,7 +20,7 @@
 #if !defined(HL_BINSPOW2_H)
 #define HL_BINSPOW2_H
 
-#include <cstdlib>
+#include <stdlib.h>
 #include <assert.h>
 #include <stddef.h>
 
