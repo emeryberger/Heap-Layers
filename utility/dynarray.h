@@ -19,7 +19,7 @@
 #define HL_DYNARRAY_H
 
 #include <assert.h>
-#include <cstdlib>
+#include <stdlib.h>
 
 /**
  * @class DynamicArray
