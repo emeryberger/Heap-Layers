@@ -22,6 +22,8 @@
  * @author Emery Berger <http://www.emeryberger.org>
  */
 
+#if defined(__cplusplus) // ignore if not compiling C++
+
 #include <new>
 
 namespace HL {
@@ -43,3 +45,4 @@ namespace HL {
 
 #endif
 
+#endif
