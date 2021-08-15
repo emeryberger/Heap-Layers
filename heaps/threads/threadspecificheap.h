@@ -104,7 +104,7 @@ namespace HL {
 
 
 #else // USE_THREAD_KEYWORD
-  
+
   template <class PerThreadHeap>
   class ThreadSpecificHeap {
   public:
@@ -123,6 +123,14 @@ namespace HL {
       getHeap()->free (ptr);
     }
 
+    void register_malloc(size_t sz, void * ptr) {
+      getHeap()->register_malloc(sz, ptr);
+    }
+
+    void register_free(size_t sz, void * ptr) {
+      getHeap()->register_free(sz, ptr);
+    }
+    
     inline size_t getSize (void * ptr) {
       return getHeap()->getSize(ptr);
     }

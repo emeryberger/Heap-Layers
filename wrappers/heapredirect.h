@@ -167,6 +167,16 @@ class HeapWrapper {
   static void xxmalloc_unlock() {
     getHeap<CustomHeapType>()->unlock();
   }
+
+  // For use with sampling allocation from https://github.com/plasma-umass/scalene
+  static void register_malloc(size_t sz, void * ptr) {
+    getHeap<CustomHeapType>()->register_malloc(sz, ptr);
+  }
+
+  static void register_free(size_t sz, void * ptr) {
+    getHeap<CustomHeapType>()->register_free(sz, ptr);
+  }
+
 };
 
 } // namespace
