@@ -85,6 +85,20 @@ namespace HL {
       heap->free(ptr);
     }
 
+    inline void register_malloc(size_t sz, void * ptr) {
+      if (heap == nullptr) {
+	heap = new (heapbuf) PerThreadHeap();
+      }
+      heap->register_malloc(sz, ptr);
+    }
+
+    inline void register_free(size_t sz, void * ptr) {
+      if (heap == nullptr) {
+	heap = new (heapbuf) PerThreadHeap();
+      }
+      heap->register_free(sz, ptr);
+    }
+    
     inline void * memalign(size_t alignment, size_t sz) {
       return heap->memalign(alignment, sz);
     }
