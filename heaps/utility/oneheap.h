@@ -25,6 +25,10 @@ namespace HL {
     static inline size_t getSize (void * ptr) {
       return singleton<TheHeap>::getInstance().getSize (ptr);
     }
+
+    static inline void * memalign (size_t alignment, size_t sz) {
+      return singleton<TheHeap>::getInstance().memalign(alignment, sz);
+    }
   };
 
 }
