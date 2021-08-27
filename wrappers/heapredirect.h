@@ -27,6 +27,8 @@
   #define ATTRIBUTE_EXPORT __attribute__((visibility("default")))
 #endif
 
+#include "printf.h"
+
 namespace HL {
 
 /**
@@ -55,6 +57,9 @@ namespace HL {
  *
  * @author Juan Altmayer Pizzorno
  */
+
+  // NOTE: The static heap functionality is currently disabled (as of 8/27/2021).
+  
 template<typename CustomHeapType, int STATIC_HEAP_SIZE> 
 class HeapWrapper {
   typedef LockedHeap<std::mutex, StaticBufferHeap<STATIC_HEAP_SIZE>> StaticHeapType;
@@ -122,41 +127,21 @@ class HeapWrapper {
     return heap;
   }
 
-  static void* xxmalloc(size_t sz) {
-    bool* inMalloc = getInMallocFlag();
-    if (unlikely(inMalloc == nullptr || *inMalloc)) {
-      return getHeap<StaticHeapType>()->malloc(sz);
-    }
-
-    *inMalloc = true;
-    void* ptr = getHeap<CustomHeapType>()->malloc(sz);
-    *inMalloc = false;
+  static void* malloc(size_t sz) {
+    auto ptr = getHeap<CustomHeapType>()->malloc(sz);
     return ptr;
   }
 
-  static void *xxmemalign(size_t alignment, size_t sz) {
-    bool* inMalloc = getInMallocFlag();
-    if (unlikely(inMalloc == nullptr || *inMalloc)) {
-      return getHeap<StaticHeapType>()->memalign(alignment, sz);
-    }
-
-    *inMalloc = true;
-    void* ptr = getHeap<CustomHeapType>()->memalign(alignment, sz);
-    *inMalloc = false;
+  static void *memalign(size_t alignment, size_t sz) {
+    auto ptr = getHeap<CustomHeapType>()->memalign(alignment, sz);
     return ptr;
   }
 
-  static void xxfree(void* ptr) {
-    if (likely(!getHeap<StaticHeapType>()->isValid(ptr))) {
-      getHeap<CustomHeapType>()->free(ptr);
-    }
+  static void free(void* ptr) {
+    getHeap<CustomHeapType>()->free(ptr);
   }
 
-  static size_t xxmalloc_usable_size(void *ptr) {
-    if (unlikely(getHeap<StaticHeapType>()->isValid(ptr))) {
-      return getHeap<StaticHeapType>()->getSize(ptr);
-    }
-
+  static size_t getSize(void *ptr) {
     return getHeap<CustomHeapType>()->getSize(ptr);
   }
 
@@ -185,19 +170,19 @@ class HeapWrapper {
   typedef HL::HeapWrapper<CustomHeap, staticSize> TheHeapWrapper;\
   extern "C" {\
     ATTRIBUTE_EXPORT void *xxmalloc(size_t sz) {\
-      return TheHeapWrapper::xxmalloc(sz);\
+      return TheHeapWrapper::malloc(sz);\
     }\
     \
     ATTRIBUTE_EXPORT void xxfree(void *ptr) {\
-      TheHeapWrapper::xxfree(ptr);\
+      TheHeapWrapper::free(ptr);\
     }\
     \
     ATTRIBUTE_EXPORT void *xxmemalign(size_t alignment, size_t sz) {\
-      return TheHeapWrapper::xxmemalign(alignment, sz);\
+      return TheHeapWrapper::memalign(alignment, sz);\
     }\
     \
     ATTRIBUTE_EXPORT size_t xxmalloc_usable_size(void *ptr) {\
-      return TheHeapWrapper::xxmalloc_usable_size(ptr);\
+      return TheHeapWrapper::getSize(ptr);	\
     }\
     \
     ATTRIBUTE_EXPORT void xxmalloc_lock() {\
