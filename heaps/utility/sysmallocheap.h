@@ -64,27 +64,32 @@ class SysMallocHeap {
 
 #include <dlfcn.h>
 
+extern "C" void * my_dlsym(void *, const char*);
+
 /**
  * Provides access to the original system heap, even if the standard malloc/free/...
  * have been redirected by way of LD_PRELOAD, MacOS interpose, etc.
  */
 class SysMallocHeap {
+
   decltype(::malloc)* _malloc{0};
   decltype(::free)* _free{0};
   decltype(::memalign)* _memalign{0};
   decltype(::malloc_usable_size)* _malloc_usable_size{0};
-
+  
  public:
   enum { Alignment = alignof(max_align_t) };
 
-  SysMallocHeap() :
-      _malloc((decltype(_malloc)) dlsym(RTLD_NEXT, "malloc")),
-      _free((decltype(_free)) dlsym(RTLD_NEXT, "free")),
-      _memalign((decltype(_memalign)) dlsym(RTLD_NEXT, "memalign")),
-      _malloc_usable_size((decltype(_malloc_usable_size)) dlsym(RTLD_NEXT, "malloc_usable_size")) {}
+  SysMallocHeap()
+    : _malloc ((decltype(::malloc) *) my_dlsym(RTLD_NEXT, "malloc")),
+      _memalign ((decltype(::memalign) *) my_dlsym(RTLD_NEXT, "memalign")),
+      _free ((decltype(::free) *) my_dlsym(RTLD_NEXT, "free")),
+      _malloc_usable_size ((decltype(::malloc_usable_size) *) my_dlsym(RTLD_NEXT, "malloc_usable_size"))
+  {}
 
   inline void *malloc(size_t sz) {
-    return (*_malloc)(sz);
+    auto ptr = (*_malloc)(sz);
+    return ptr;
   }
 
   inline void *memalign(size_t alignment, size_t sz) {
@@ -96,7 +101,8 @@ class SysMallocHeap {
   }
 
   inline size_t getSize(void *ptr) {
-    return (*_malloc_usable_size)(ptr);
+    auto sz = (*_malloc_usable_size)(ptr);
+    return sz;
   }
 };
 
