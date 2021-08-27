@@ -156,7 +156,7 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
 
 #include <atomic>
 
-static std::atomic<int> in_dlsym { 0 };
+static __thread int in_dlsym { 0 };
 
 // Wrapper around dlsym that we use in calloc, below.
 extern "C" void * my_dlsym(void * handle, const char * symbol) {
