@@ -154,8 +154,23 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
   return ptr;
 }
 
+static int in_dlsym = false;
+
+// Wrapper around dlsym that we use in calloc, below.
+extern "C" void * my_dlsym(void * handle, const char * symbol) {
+  ++in_dlsym;
+  auto ptr = dlsym(handle, symbol);
+  --in_dlsym;
+  return ptr;
+}
+
 extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) 
 {
+  // Reject calls from dlsym so it uses its own internal buffer.
+  if (in_dlsym) {
+    return nullptr;
+  }
+  
   size_t n = nelem * elsize;
   
   if (elsize && (nelem != n / elsize)) {
