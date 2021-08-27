@@ -129,20 +129,53 @@ class HeapWrapper {
 
   static void* malloc(size_t sz) {
     auto ptr = getHeap<CustomHeapType>()->malloc(sz);
+    assert(isValid(ptr));
     return ptr;
   }
 
   static void *memalign(size_t alignment, size_t sz) {
     auto ptr = getHeap<CustomHeapType>()->memalign(alignment, sz);
+    assert(isValid(ptr));
     return ptr;
   }
 
+  static bool isValid(void * ptr) {
+#if !defined(__GLIBC__)
+    return true;
+#else
+    // Special handling for glibc, adapted from
+    // https://sources.debian.org/src/glibc/2.31-17/malloc/malloc.c/
+    if (!ptr) {
+      return false;
+    }
+    enum {
+      PREV_INUSE = 0x01,
+      IS_MMAPPED = 0x02,
+      NON_MAIN_ARENA = 0x04 };
+    struct malloc_chunk {
+      size_t mchunk_prev_size;
+      size_t mchunk_size;
+    };
+    auto mchunk = (malloc_chunk *) ptr - 1;
+    auto size = mchunk->mchunk_size & ~(PREV_INUSE | IS_MMAPPED | NON_MAIN_ARENA);
+    if ((uintptr_t) ptr > (uintptr_t) -size) {
+      return false;
+    }
+    return true;
+#endif
+  }
+  
   static void free(void* ptr) {
-    getHeap<CustomHeapType>()->free(ptr);
+    if (isValid(ptr)) {
+      getHeap<CustomHeapType>()->free(ptr);
+    }
   }
 
   static size_t getSize(void *ptr) {
-    return getHeap<CustomHeapType>()->getSize(ptr);
+    if (isValid(ptr)) {
+      return getHeap<CustomHeapType>()->getSize(ptr);
+    }
+    return 0;
   }
 
   static void xxmalloc_lock() {
@@ -155,11 +188,15 @@ class HeapWrapper {
 
   // For use with sampling allocation from https://github.com/plasma-umass/scalene
   static void register_malloc(size_t sz, void * ptr) {
-    getHeap<CustomHeapType>()->register_malloc(sz, ptr);
+    if (isValid(ptr)) {
+      getHeap<CustomHeapType>()->register_malloc(sz, ptr);
+    }
   }
 
   static void register_free(size_t sz, void * ptr) {
-    getHeap<CustomHeapType>()->register_free(sz, ptr);
+    if (isValid(ptr)) {
+      getHeap<CustomHeapType>()->register_free(sz, ptr);
+    }
   }
 
 };
