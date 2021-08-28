@@ -146,7 +146,7 @@ class HeapWrapper {
     // Special handling for glibc, adapted from
     // https://sources.debian.org/src/glibc/2.31-17/malloc/malloc.c/
     if (!ptr) {
-      return false;
+      return true;
     }
     enum {
       PREV_INUSE = 0x01,
