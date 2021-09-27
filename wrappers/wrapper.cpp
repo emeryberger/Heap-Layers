@@ -128,13 +128,6 @@ extern "C" {
 
 #include <stdio.h>
 
-// since we're in a cpp file, marking these as inline allows the
-// compiler to inline their definitions into e.g. `operator new`,
-// removing branches and improving performance.
-extern "C" void MYCDECL HEAP_LAYERS_INLINE CUSTOM_FREE(void *);
-extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_MALLOC(size_t) __attribute__((alloc_size(1))) __attribute((malloc));
-extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute__((alloc_size(1,2)))  __attribute((malloc));
-
 #ifndef FLATTEN
 #if 1
 #define FLATTEN __attribute__((flatten))
@@ -142,6 +135,11 @@ extern "C" void * MYCDECL HEAP_LAYERS_INLINE CUSTOM_CALLOC(size_t nelem, size_t 
 #define FLATTEN
 #endif
 #endif
+
+
+extern "C" void MYCDECL CUSTOM_FREE(void *);
+extern "C" void * MYCDECL CUSTOM_MALLOC(size_t) __attribute__((alloc_size(1))) __attribute((malloc));
+extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute__((alloc_size(1,2)))  __attribute((malloc));
 
 extern "C" FLATTEN void MYCDECL CUSTOM_FREE (void * ptr)
 {
