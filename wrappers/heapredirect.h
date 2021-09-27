@@ -119,7 +119,7 @@ class HeapWrapper {
 
  public:
   template<class HEAP>
-  static HEAP* getHeap() {
+  static inline HEAP* getHeap() {
     // Allocate heap on first use and never destroy it, for malloc and such
     // may still be used in atexit() 
     alignas(std::max_align_t) static char buffer[sizeof(HEAP)];
@@ -127,19 +127,19 @@ class HeapWrapper {
     return heap;
   }
 
-  static void* malloc(size_t sz) {
+  static inline void* malloc(size_t sz) {
     auto ptr = getHeap<CustomHeapType>()->malloc(sz);
     assert(isValid(ptr));
     return ptr;
   }
 
-  static void *memalign(size_t alignment, size_t sz) {
+  static inline void *memalign(size_t alignment, size_t sz) {
     auto ptr = getHeap<CustomHeapType>()->memalign(alignment, sz);
     assert(isValid(ptr));
     return ptr;
   }
 
-  static bool isValid(void * ptr) {
+  static inline bool isValid(void * ptr) {
 #if !defined(__GLIBC__)
     return true;
 #else
@@ -165,35 +165,35 @@ class HeapWrapper {
 #endif
   }
   
-  static void free(void* ptr) {
+  static inline void free(void* ptr) {
     if (isValid(ptr)) {
       getHeap<CustomHeapType>()->free(ptr);
     }
   }
 
-  static size_t getSize(void *ptr) {
+  static inline size_t getSize(void *ptr) {
     if (isValid(ptr)) {
       return getHeap<CustomHeapType>()->getSize(ptr);
     }
     return 0;
   }
 
-  static void xxmalloc_lock() {
+  static inline void xxmalloc_lock() {
     getHeap<CustomHeapType>()->lock();
   }
 
-  static void xxmalloc_unlock() {
+  static inline void xxmalloc_unlock() {
     getHeap<CustomHeapType>()->unlock();
   }
 
   // For use with sampling allocation from https://github.com/plasma-umass/scalene
-  static void register_malloc(size_t sz, void * ptr) {
+  static inline void register_malloc(size_t sz, void * ptr) {
     if (isValid(ptr)) {
       getHeap<CustomHeapType>()->register_malloc(sz, ptr);
     }
   }
 
-  static void register_free(size_t sz, void * ptr) {
+  static inline void register_free(size_t sz, void * ptr) {
     if (isValid(ptr)) {
       getHeap<CustomHeapType>()->register_free(sz, ptr);
     }
