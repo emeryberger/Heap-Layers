@@ -82,8 +82,8 @@ class SysMallocHeap {
 
   SysMallocHeap()
     : _malloc ((decltype(::malloc) *) my_dlsym(RTLD_NEXT, "malloc")),
-      _memalign ((decltype(::memalign) *) my_dlsym(RTLD_NEXT, "memalign")),
       _free ((decltype(::free) *) my_dlsym(RTLD_NEXT, "free")),
+      _memalign ((decltype(::memalign) *) my_dlsym(RTLD_NEXT, "memalign")),
       _malloc_usable_size ((decltype(::malloc_usable_size) *) my_dlsym(RTLD_NEXT, "malloc_usable_size"))
   {}
 
