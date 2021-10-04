@@ -141,6 +141,7 @@ class HeapWrapper {
 
   static inline bool isValid(void * ptr) {
 #if !defined(__GLIBC__)
+    (void) ptr;
     return true;
 #else
     // Special handling for glibc, adapted from

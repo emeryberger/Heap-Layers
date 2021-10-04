@@ -319,6 +319,7 @@ static bool initializeZone(malloc_zone_t& zone);
 malloc_zone_t * getDefaultZone() {
   static malloc_zone_t theDefaultZone;
   static bool initialized = initializeZone(theDefaultZone);
+  (void) initialized;
   return &theDefaultZone;
 }
 
