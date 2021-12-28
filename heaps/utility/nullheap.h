@@ -30,7 +30,9 @@ namespace HL {
   template <class SuperHeap>
   class NullHeap : public SuperHeap {
   public:
+    enum { Alignment = 0 };
     inline void * malloc (size_t) const { return 0; }
+    inline void * memalign(size_t, size_t) const { return 0; }
     inline void free (void *) const {}
     inline int remove (void *) const { return 0; }
     inline void clear (void) const {}
