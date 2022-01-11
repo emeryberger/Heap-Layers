@@ -195,7 +195,7 @@ class HeapWrapper {
   }
 
   static inline void register_free(size_t sz, void * ptr) {
-    if (isValid(ptr)) {
+    if (ptr) {
       getHeap<CustomHeapType>()->register_free(sz, ptr);
     }
   }
