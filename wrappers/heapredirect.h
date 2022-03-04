@@ -139,14 +139,6 @@ class HeapWrapper {
     return ptr;
   }
 
-  #if HL_USE_XXREALLOC
-  static inline void* realloc(void * ptr, size_t sz) {
-    auto buf = getHeap<CustomHeapType>()->realloc(ptr, sz);
-    assert(isValid(buf));
-    return buf;
-  }
-  #endif
-
   static inline bool isValid(void * ptr) {
 #if !defined(__GLIBC__)
     (void) ptr;
@@ -212,38 +204,6 @@ class HeapWrapper {
 
 } // namespace
 
-#if HL_USE_XXREALLOC
-#define HEAP_REDIRECT(CustomHeap, staticSize)\
-  typedef HL::HeapWrapper<CustomHeap, staticSize> TheHeapWrapper;\
-  extern "C" {\
-    ATTRIBUTE_EXPORT void *xxmalloc(size_t sz) {\
-      return TheHeapWrapper::malloc(sz);\
-    }\
-    \
-    ATTRIBUTE_EXPORT void xxfree(void *ptr) {\
-      TheHeapWrapper::free(ptr);\
-    }\
-    \
-    ATTRIBUTE_EXPORT void *xxmemalign(size_t alignment, size_t sz) {\
-      return TheHeapWrapper::memalign(alignment, sz);\
-    }\
-    \
-    ATTRIBUTE_EXPORT size_t xxmalloc_usable_size(void *ptr) {\
-      return TheHeapWrapper::getSize(ptr);	\
-    }\
-    \
-    ATTRIBUTE_EXPORT void xxmalloc_lock() {\
-      TheHeapWrapper::xxmalloc_lock();\
-    }\
-    \
-    ATTRIBUTE_EXPORT void xxmalloc_unlock() {\
-      TheHeapWrapper::xxmalloc_unlock();\
-    }\
-    ATTRIBUTE_EXPORT void* xxrealloc(void * ptr, size_t sz) {\
-      return TheHeapWrapper::realloc(ptr, sz); \
-    }\
-  }
-#else
 #define HEAP_REDIRECT(CustomHeap, staticSize)\
   typedef HL::HeapWrapper<CustomHeap, staticSize> TheHeapWrapper;\
   extern "C" {\
