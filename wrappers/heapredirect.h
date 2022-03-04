@@ -273,3 +273,4 @@ class HeapWrapper {
   }
 
 #endif
+#endif
