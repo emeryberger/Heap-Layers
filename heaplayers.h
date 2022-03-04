@@ -93,6 +93,10 @@ namespace HL {}
 #pragma warning( disable:4786 4512 )
 #endif
 
+#if !defined(HL_USE_XXREALLOC)
+#define HL_USE_XXREALLOC 0
+#endif
+
 #include "utility/all.h"
 #include "heaps/all.h"
 #include "locks/all.h"
