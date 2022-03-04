@@ -146,8 +146,13 @@ namespace HL {
       mapFlag |= MAP_PRIVATE | MAP_ALIGN | MAP_ANON;
 #elif defined(MAP_ALIGNED)
       int fd = -1;
-      size_t alignment = (sizeof(size_t) * sizeof(void *)) - 1ul - (size_t)__builtin_clzl(sz);
-      mapFlag |= MAP_PRIVATE | MAP_ANON | MAP_ALIGNED(alignment);
+      // On allocations equal or larger than page size, we align it to the log2 boundary
+      // in those contexts, sometimes (on NetBSD notably) large mappings tends to fail
+      // without this flag.
+      size_t alignment = ilog2(sz);
+      mapFlag |= MAP_PRIVATE | MAP_ANON;
+      if (alignment >= 12ul)
+          mapFlag |= MAP_ALIGNED(alignment);
 #elif !defined(MAP_ANONYMOUS)
       static int fd = ::open ("/dev/zero", O_RDWR);
       mapFlag |= MAP_PRIVATE;
