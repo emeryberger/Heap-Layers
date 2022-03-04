@@ -32,7 +32,9 @@ extern "C" {
   void * xxmalloc (size_t);
   void   xxfree (void *);
   void * xxmemalign(size_t, size_t);
-  
+  #if HL_USE_XXREALLOC
+  void * xxrealloc(void *, size_t);
+  #endif
   // Takes a pointer and returns how much space it holds.
   size_t xxmalloc_usable_size (void *);
 
@@ -257,6 +259,10 @@ extern "C" size_t MYCDECL CUSTOM_GOODSIZE (size_t sz) {
 
 extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 {
+#if HL_USE_XXREALLOC
+  void* buf = xxrealloc(ptr, sz);
+  return buf;
+#else
   if (!ptr) {
     ptr = xxmalloc (sz);
     return ptr;
@@ -295,6 +301,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
   // Return a pointer to the new one.
   return buf;
+#endif
 }
 
 extern "C" void * MYCDECL CUSTOM_REALLOCARRAY (void * ptr, size_t sz1, size_t sz2)
