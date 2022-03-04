@@ -144,6 +144,10 @@ namespace HL {
       int fd = -1;
       startAddress = (char *) Alignment;
       mapFlag |= MAP_PRIVATE | MAP_ALIGN | MAP_ANON;
+#elif defined(MAP_ALIGNED)
+      int fd = -1;
+      size_t alignment = (sizeof(size_t) * sizeof(void *)) - 1ul - (size_t)__builtin_clzl(sz);
+      mapFlag |= MAP_PRIVATE | MAP_ANON | MAP_ALIGNED(alignment);
 #elif !defined(MAP_ANONYMOUS)
       static int fd = ::open ("/dev/zero", O_RDWR);
       mapFlag |= MAP_PRIVATE;
