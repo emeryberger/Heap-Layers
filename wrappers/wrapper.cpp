@@ -138,6 +138,13 @@ extern "C" {
 #endif
 #endif
 
+#if !defined(_WIN32)
+#include <dlfcn.h>
+#include <limits.h>
+
+#if !defined(RTLD_NEXT)
+#define RTLD_NEXT ((void *) -1)
+#endif
 
 extern "C" void MYCDECL CUSTOM_FREE(void *);
 extern "C" void * MYCDECL CUSTOM_MALLOC(size_t) __attribute__((alloc_size(1))) __attribute((malloc));
@@ -339,15 +346,6 @@ extern "C" char * MYCDECL CUSTOM_STRDUP(const char * s)
   }
   return newString;
 }
-
-#if !defined(_WIN32)
-#include <dlfcn.h>
-#include <limits.h>
-
-#if !defined(RTLD_NEXT)
-#define RTLD_NEXT ((void *) -1)
-#endif
-
 
 typedef char * getcwdFunction (char *, size_t);
 
