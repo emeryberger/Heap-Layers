@@ -140,6 +140,11 @@ namespace HL {
     inline void * malloc (size_t sz) {
       return getHeap()->malloc (sz);
     }
+    #if HL_USE_XXREALLOC
+    inline void * realloc(void* ptr, size_t sz) {
+      return getHeap()->realloc(ptr, sz);
+    }
+    #endif
 
     inline void free (void * ptr) {
       getHeap()->free (ptr);
