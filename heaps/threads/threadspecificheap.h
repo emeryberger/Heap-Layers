@@ -77,14 +77,6 @@ namespace HL {
       }
       return heap->malloc(sz);
     }
-    #if HL_USE_XXREALLOC
-    inline void * realloc(void* ptr, size_t sz) {
-      if (heap == nullptr) {
-        heap = new (heapbuf) PerThreadHeap();
-      }
-      return heap->realloc(ptr, sz);
-    }
-    #endif
 
     inline void free(void * ptr) {
       if (heap == nullptr) {
