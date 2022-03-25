@@ -197,9 +197,7 @@ class HeapWrapper {
 
   // For use with sampling allocation from https://github.com/plasma-umass/scalene
   static inline void register_malloc(size_t sz, void * ptr) {
-    if (isValid(ptr)) {
-      getHeap<CustomHeapType>()->register_malloc(sz, ptr);
-    }
+    getHeap<CustomHeapType>()->register_malloc(sz, ptr);
   }
 
   static inline void register_free(size_t sz, void * ptr) {
