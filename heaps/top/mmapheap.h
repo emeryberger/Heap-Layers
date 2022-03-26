@@ -112,7 +112,7 @@ namespace HL {
       int flags = 0;
       static int fd = -1;
 #if defined(MAP_ALIGN) && defined(MAP_ANON)
-      addr = Alignment;
+      addr = (void *)Alignment;
       flags |= MAP_PRIVATE | MAP_ALIGN | MAP_ANON;
 #elif !defined(MAP_ANONYMOUS)
       if (fd == -1) {
