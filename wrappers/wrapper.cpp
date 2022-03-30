@@ -390,7 +390,8 @@ extern "C" int xxmalloc_SET_STATE(void * /* ptr */) {
   return 0; // success.
 }
 
-#if defined(__GNUC__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
+// NOTE-- MUSL defines GNUC for some reason but does not have mallinfo
+#if defined(__GNUC__) && defined(__GLIBC__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
 extern "C" struct mallinfo CUSTOM_MALLINFO() {
   // For now, we return useless stats.
   struct mallinfo m;
