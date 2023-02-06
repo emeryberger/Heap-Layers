@@ -514,10 +514,11 @@ extern "C" void * MYCDECL CUSTOM_PVALLOC (size_t sz)
 // The wacky recalloc function, for Windows.
 extern "C" void * MYCDECL CUSTOM_RECALLOC (void * p, size_t num, size_t sz)
 {
-  void * ptr = CUSTOM_REALLOC (p, num * sz);
-  if ((!p) && (!ptr)) {
+  auto n = num * sz;
+  void * ptr = CUSTOM_REALLOC (p, n);
+  if (ptr) {
     // Clear out the memory.
-    memset (ptr, 0, CUSTOM_GETSIZE(ptr));
+    memset (ptr, 0, n);
   }
   return ptr;
 }
