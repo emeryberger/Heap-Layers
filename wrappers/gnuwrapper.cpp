@@ -25,7 +25,6 @@
 #include <malloc.h>
 #include <new>
 #include <pthread.h>
-#include <sys/cdefs.h>
 
 #include "heaplayers.h"
 

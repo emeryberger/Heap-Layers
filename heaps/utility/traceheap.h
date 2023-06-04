@@ -93,21 +93,21 @@ namespace HL {
  
     friend FileObject& operator<<(FileObject& f, int n) {
       char buf[255];
-      sprintf (buf, "%d", n);
+      snprintf (buf, 255, "%d", n);
       f.writeString (buf);
       return f;
     }
  
     friend FileObject& operator<<(FileObject& f, char * s) {
       char buf[255];
-      sprintf (buf, "%s", s);
+      snprintf (buf, 255, "%s", s);
       f.writeString (buf);
       return f;
     }
  
     friend FileObject& operator<<(FileObject& f, void * s) {
       char buf[255];
-      sprintf (buf, "%p", s);
+      snprintf (buf, 255, "%p", s);
       f.writeString (buf);
       return f;
     }
@@ -147,7 +147,7 @@ namespace HL {
     {
       if (!theFile().is_open()) {
 	char fname[255];
-	sprintf (fname, "trace-%d", Number);
+	snprintf (fname, 255, "trace-%d", Number);
 	theFile().open (fname);
 	printf ("OPEN %s\n", fname);
       }

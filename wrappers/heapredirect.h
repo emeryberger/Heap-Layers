@@ -175,13 +175,14 @@ class HeapWrapper {
   }
   
   static inline void free(void* ptr) {
-    if (isValid(ptr)) {
+    if (ptr) {
       getHeap<CustomHeapType>()->free(ptr);
     }
   }
 
   static inline size_t getSize(void *ptr) {
-    if (isValid(ptr)) {
+    if (ptr) {
+      // if (isValid(ptr)) {
       return getHeap<CustomHeapType>()->getSize(ptr);
     }
     return 0;
