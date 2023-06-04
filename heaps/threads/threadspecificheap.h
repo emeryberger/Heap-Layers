@@ -108,10 +108,16 @@ namespace HL {
     }
     
     inline void * memalign(size_t alignment, size_t sz) {
+      if (heap == nullptr) {
+	heap = new (heapbuf) PerThreadHeap();
+      }
       return heap->memalign(alignment, sz);
     }
     
     inline size_t getSize(void * ptr) {
+      if (heap == nullptr) {
+	heap = new (heapbuf) PerThreadHeap();
+      }
       return heap->getSize(ptr);
     }
 
