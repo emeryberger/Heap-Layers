@@ -11,6 +11,8 @@
 #error "This file is for use on Mac OS only."
 #endif
 
+#include <AvailabilityMacros.h>
+
 #include <cstdlib>
 using namespace std;
 
@@ -555,8 +557,10 @@ static bool initializeZone(malloc_zone_t& zone) {
   zone.introspect   = NULL;
   zone.version      = 8;
   zone.memalign     = replace_malloc_zone_memalign;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060 && !defined(__POWERPC__)
   zone.free_definite_size = replace_malloc_zone_free_definite_size;
   zone.pressure_relief = NULL;
+#endif
   return true;
 }
 #else
