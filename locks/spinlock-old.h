@@ -71,9 +71,13 @@ extern "C" size_t MyInterlockedExchange (size_t * oldval,
 #define _MM_PAUSE  {__asm{_emit 0xf3};__asm {_emit 0x90}}
 #include <windows.h>
 
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
 #define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : : "memory"); }
+
+#elif defined(__POWERPC__)
+
+#define _MM_PAUSE  { __asm__ volatile ("or r27,r27,r27"); }
 
 #else
 
@@ -221,7 +225,7 @@ HL::SpinLockType::MyInterlockedExchange (size_t * oldval,
 		: "m" (*oldval), "0" (newval)
 		: "memory");
 
-#elif defined(__ppc) || defined(__powerpc__) || defined(PPC)
+#elif defined(__ppc) || defined(__powerpc__) || defined(PPC) || defined(__POWERPC__)
   // PPC assembly contributed by Maged Michael.
   int ret; 
   asm volatile ( 
