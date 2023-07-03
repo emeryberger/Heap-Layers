@@ -183,9 +183,11 @@ namespace HL {
       } else {
 #if HL_NAMED_HEAP
         // For every anonymous map (assuming CONFIG_ANON_VMA_NAME is on), the range appears in /proc/<pid>/maps as
-	// `560215e4f000-560215e81000 rw-p 00000000 00:00 0 7ffaf89c0000-7ffaf8aa1000 rw-p 00000000 00:00 0 [anon:Heap Layer]`
+	// `560215e4f000-560215e81000 rw-p 00000000 00:00 0 7ffaf89c0000-7ffaf8aa1000 rw-p 00000000 00:00 0 [anon:Heap Layers]`
 	//
-	// However since it's cherry on cake, if it fails because of kernel version/config, it is inconsequential.
+    // By default the region name is `Heap Layers` but can be defined in heaplayers.h via the HL_HEAP_NAME constant.
+    // If the kernel did not optin the `CONFIG_ANON_VMA_NAME` option, or even with old kernels prior to 5.17
+    // the following call will be a no-op
         (void)prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME,
 			reinterpret_cast<uintptr_t>(ptr),
 			sz,
