@@ -38,6 +38,13 @@ namespace HL {}
 
 // #define HL_EXECUTABLE_HEAP 1
 
+// Define HL_NAMED_HEAP as 1 to id an address range (on Linux)
+
+// #define HL_NAMED_HEAP 1
+#if !defined(HL_HEAP_NAME)
+#define HL_HEAP_NAME "Heap Layers"
+#endif
+
 #if defined(_MSC_VER)
 
 // Microsoft Visual Studio

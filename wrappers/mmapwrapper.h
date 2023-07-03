@@ -27,6 +27,13 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#if defined(__linux__)
+#include <sys/prctl.h>
+#if !defined(PR_SET_VMA)
+#define PR_SET_VMA 0x53564d41
+#define PR_SET_VMA_ANON_NAME 0
+#endif
+#endif
 #include <map>
 #endif
 
@@ -174,6 +181,18 @@ namespace HL {
 	perror("MmapWrapper");
 	return nullptr;
       } else {
+#if HL_NAMED_HEAP
+        // For every anonymous map (assuming CONFIG_ANON_VMA_NAME is on), the range appears in /proc/<pid>/maps as
+	// `560215e4f000-560215e81000 rw-p 00000000 00:00 0 7ffaf89c0000-7ffaf8aa1000 rw-p 00000000 00:00 0 [anon:Heap Layers]`
+	//
+    // By default the region name is `Heap Layers` but can be defined in heaplayers.h via the HL_HEAP_NAME constant.
+    // If the kernel did not optin the `CONFIG_ANON_VMA_NAME` option, or even with old kernels prior to 5.17
+    // the following call will be a no-op
+        (void)prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME,
+			reinterpret_cast<uintptr_t>(ptr),
+			sz,
+			reinterpret_cast<uintptr_t>(HL_HEAP_NAME));
+#endif
 	return ptr;
       }
     }
