@@ -352,7 +352,7 @@ extern "C" {
 					      vm_address_t **addresses,
 					      unsigned *count) {
     *addresses = 0;
-    count = 0;
+    *count = 0;
     return KERN_SUCCESS;
   }
   
