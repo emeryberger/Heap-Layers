@@ -67,6 +67,11 @@ extern "C" size_t MyInterlockedExchange (size_t * oldval,
 // hyperthreading.  See
 // http://www.usenix.org/events/wiess02/tech/full_papers/nakajima/nakajima.pdf
 // for discussion.
+// On PowerPC `or Rx Rx Rx` is a nop, but may have extra effects like setting
+// priority etc. `or r27 r27 r27` is an equivanent of "pause", and in ISA 2.06+
+// has an alias `yield`. For examples of usage, see Boost libfiber, catch2, seqan3.
+// https://stackoverflow.com/questions/5425506/equivalent-of-x86-pause-instruction-for-ppc
+// https://utcc.utoronto.ca/~cks/space/blog/tech/PowerPCInstructionOddity?showcomments
 
 #define _MM_PAUSE  {__asm{_emit 0xf3};__asm {_emit 0x90}}
 #include <windows.h>
