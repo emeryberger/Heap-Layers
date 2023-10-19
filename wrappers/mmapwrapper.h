@@ -57,6 +57,13 @@ extern "C" int madvise (caddr_t, size_t, int);
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
+#if __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_CPU_ARM64
+#define HL_APPLE_SILICON
+#endif
+#endif
+
 namespace HL {
 
   class MmapWrapper {
@@ -72,6 +79,12 @@ namespace HL {
     // Solaris aligns 8K pages to a 64K boundary.
     enum { Size = 8 * 1024UL };
     enum { Alignment = 64 * 1024UL };
+
+#elif defined(HL_APPLE_SILICON)
+    // macOS on Apple Silicon aligns 16K pages to a 16K boundary.
+    // FIXME: is this the correct alignment?
+    enum { Size = 16 * 1024UL };
+    enum { Alignment = 16 * 1024UL };
 
 #else
     // Linux and most other operating systems align memory to a 4K boundary.
