@@ -18,6 +18,8 @@
 #ifndef HL_MMAPWRAPPER_H
 #define HL_MMAPWRAPPER_H
 
+#include "utility/arch.h"
+
 #if defined(_WIN32)
 #include <windows.h>
 #else
@@ -55,13 +57,6 @@ extern "C" int madvise (caddr_t, size_t, int);
 
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
 #define MAP_ANONYMOUS MAP_ANON
-#endif
-
-#if __APPLE__
-#include <TargetConditionals.h>
-#if TARGET_CPU_ARM64
-#define HL_APPLE_SILICON
-#endif
 #endif
 
 namespace HL {

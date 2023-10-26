@@ -47,7 +47,7 @@ using namespace HL;
 template <class Sbrk>
 class LeaHeap2 :
   public
-  Threshold<4096,
+  Threshold<4096, // FIXME: is this page-size dependent?
 	    DLSmallHeapType<DLBigHeapType<CoalesceableHeap<Sbrk> > > >
 {};
 

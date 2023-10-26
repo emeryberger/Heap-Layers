@@ -18,6 +18,8 @@
 #ifndef HL_CPUINFO_H
 #define HL_CPUINFO_H
 
+#include "utility/arch.h"
+
 #if defined(_WIN32)
 #include <windows.h>
 #include <process.h>
@@ -81,8 +83,12 @@ namespace HL {
 class CPUInfo {
 public:
 
+  #ifdef HL_APPLE_SILICON
+  enum { PageSize = 16384UL };
+  #else
   // Good for practically all platforms.
   enum { PageSize = 4096UL };
+  #endif
 
   inline static int getNumProcessors() {
     static int _numProcessors = computeNumProcessors();
@@ -135,6 +141,7 @@ unsigned int CPUInfo::getThreadId() {
   // It looks like thread id's are always multiples of 4, so...
   return GetCurrentThreadId() >> 2;
 #elif defined(__APPLE__)
+  // FIXME: is this page size dependent?
   // Consecutive thread id's in Mac OS are 4096 apart;
   // dividing off the 4096 gives us an appropriate thread id.
   unsigned int tid = (unsigned int) (((size_t) pthread_self()) >> 12);
