@@ -38,7 +38,7 @@ namespace HL {
     inline void * malloc (size_t sz) HL_THROW_BAD_ALLOC {
       void * ptr = Super::malloc (sz);
       if (ptr == NULL) {
-        throw new std::bad_alloc;
+        throw std::bad_alloc();
       }
       return ptr;
     }
