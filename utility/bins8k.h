@@ -20,7 +20,6 @@ namespace HL {
   enum { NUM_BINS = 32 };
   enum { NUM_SIZECLASSES = 1018 };
 
-  // FIXME: is this page size dependent?
   enum { BIG_OBJECT = 4096 - sizeof(Header) };
   
   static const size_t _bins[NUM_BINS];
