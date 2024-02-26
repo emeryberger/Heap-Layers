@@ -21,6 +21,8 @@
  * @author Emery Berger <http://www.emeryberger.com>
  */
 
+#include "threads/cpuinfo.h"
+
 #include <string.h> // for memcpy and memset
 #include <stdlib.h> // size_t
 #include <stdint.h>
@@ -500,15 +502,16 @@ void FLATTEN operator delete[](void * ptr, size_t)
 
 extern "C" void * MYCDECL CUSTOM_VALLOC (size_t sz)
 {
-  return CUSTOM_MEMALIGN (4096UL, sz); // Default page size on most architectures.
+  return CUSTOM_MEMALIGN (HL::CPUInfo::PageSize, sz); // Default page size on most architectures.
 }
 
 
 extern "C" void * MYCDECL CUSTOM_PVALLOC (size_t sz)
 {
+  size_t pgsize_minus1 = HL::CPUInfo::PageSize - 1;
   // Rounds up to the next pagesize and then calls valloc. Hoard
   // doesn't support aligned memory requests.
-  return CUSTOM_VALLOC ((sz + 4095UL) & ~4095UL);
+  return CUSTOM_VALLOC ((sz + pgsize_minus1) & ~pgsize_minus1);
 }
 
 // The wacky recalloc function, for Windows.
