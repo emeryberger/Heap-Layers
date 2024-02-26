@@ -77,7 +77,6 @@ namespace HL {
 
 #elif defined(HL_APPLE_SILICON)
     // macOS on Apple Silicon aligns 16K pages to a 16K boundary.
-    // FIXME: is this the correct alignment?
     enum { Size = 16 * 1024UL };
     enum { Alignment = 16 * 1024UL };
 
@@ -183,6 +182,11 @@ namespace HL {
 #endif
 
       ptr = mmap(startAddress, sz, HL_MMAP_PROTECTION_MASK, mapFlag, fd, 0);
+      #ifdef HL_APPLE_SILICON
+        #include <mach/vm_page_size.h>
+        assert(sz % vm_page_size == 0);
+        assert((ptr % vm_page_size) == 0);
+      #endif
 
       if (ptr == MAP_FAILED) {
 	tprintf::tprintf("MAP_FAILED\n");
