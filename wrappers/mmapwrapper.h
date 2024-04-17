@@ -185,7 +185,7 @@ namespace HL {
       #ifdef HL_APPLE_SILICON
         #include <mach/vm_page_size.h>
         assert(sz % vm_page_size == 0);
-        assert((ptr % vm_page_size) == 0);
+        assert((reinterpret_cast<uintptr_t>(ptr) % vm_page_size) == 0);
       #endif
 
       if (ptr == MAP_FAILED) {
