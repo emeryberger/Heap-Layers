@@ -99,7 +99,7 @@ int CPUInfo::computeNumProcessors (void)
 {
   static int np = 0;
   if (!np) {
-#if defined(__linux) || defined(__APPLE__)
+#if defined(_SC_NPROCESSORS_ONLN)
     np = (int) sysconf(_SC_NPROCESSORS_ONLN);
 #elif defined(_WIN32)
     SYSTEM_INFO infoReturn[1];
@@ -109,8 +109,6 @@ int CPUInfo::computeNumProcessors (void)
     np = (int) sysmp(MP_NAPROCS);
 #elif defined(hpux)
     np = mpctl(MPC_GETNUMSPUS, NULL, NULL); // or pthread_num_processors_np()?
-#elif defined(_SC_NPROCESSORS_ONLN)
-    np = (int) (sysconf(_SC_NPROCESSORS_ONLN));
 #else
     np = 2;
     // Unsupported platform.

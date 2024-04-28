@@ -26,6 +26,8 @@ extern "C" size_t malloc_usable_size (void *);
 #include <malloc/malloc.h>
 #elif defined(__linux__)
 #include <malloc.h>
+#elif defined(__FreeBSD__)
+#include <malloc_np.h>
 #else
 extern "C" size_t malloc_usable_size (void *) throw ();
 #endif
