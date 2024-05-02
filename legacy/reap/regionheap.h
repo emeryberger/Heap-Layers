@@ -48,7 +48,7 @@ using namespace HL;
 template <class Sbrk>
 class LeaHeap2 :
   public
-  Threshold<HL::CPUINfo::PageSize,
+  Threshold<HL::CPUInfo::PageSize,
 	    DLSmallHeapType<DLBigHeapType<CoalesceableHeap<Sbrk> > > >
 {};
 
