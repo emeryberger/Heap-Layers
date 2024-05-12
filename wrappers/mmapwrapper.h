@@ -18,6 +18,8 @@
 #ifndef HL_MMAPWRAPPER_H
 #define HL_MMAPWRAPPER_H
 
+#include "utility/arch.h"
+
 #if defined(_WIN32)
 #include <windows.h>
 #else
@@ -72,6 +74,11 @@ namespace HL {
     // Solaris aligns 8K pages to a 64K boundary.
     enum { Size = 8 * 1024UL };
     enum { Alignment = 64 * 1024UL };
+
+#elif defined(HL_APPLE_SILICON)
+    // macOS on Apple Silicon aligns 16K pages to a 16K boundary.
+    enum { Size = 16 * 1024UL };
+    enum { Alignment = 16 * 1024UL };
 
 #else
     // Linux and most other operating systems align memory to a 4K boundary.
@@ -175,6 +182,11 @@ namespace HL {
 #endif
 
       ptr = mmap(startAddress, sz, HL_MMAP_PROTECTION_MASK, mapFlag, fd, 0);
+      #ifdef HL_APPLE_SILICON
+        #include <mach/vm_page_size.h>
+        assert(sz % vm_page_size == 0);
+        assert((reinterpret_cast<uintptr_t>(ptr) % vm_page_size) == 0);
+      #endif
 
       if (ptr == MAP_FAILED) {
 	tprintf::tprintf("MAP_FAILED\n");

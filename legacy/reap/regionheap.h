@@ -30,6 +30,7 @@
 #include "chunkheap.h"
 #include "nestedheap.h"
 #include "slopheap.h"
+#include "threads/cpuinfo.h"
 
 // Reap-specific.
 #include "addheader.h"
@@ -47,7 +48,7 @@ using namespace HL;
 template <class Sbrk>
 class LeaHeap2 :
   public
-  Threshold<4096,
+  Threshold<HL::CPUInfo::PageSize,
 	    DLSmallHeapType<DLBigHeapType<CoalesceableHeap<Sbrk> > > >
 {};
 
