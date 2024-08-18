@@ -37,6 +37,9 @@ namespace HL {}
 // dynamic code generation).
 
 // #define HL_EXECUTABLE_HEAP 1
+#if !defined(HL_EXECUTABLE_HEAP)
+#define HL_EXECUTABLE_HEAP 0
+#endif
 
 // Define HL_NAMED_HEAP as 1 to id an address range (on Linux)
 
