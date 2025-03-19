@@ -31,6 +31,7 @@
 #endif
 
 #include <new>
+#include <unordered_map>
 
 #include "heaps/buildingblock/freelistheap.h"
 #include "heaps/special/zoneheap.h"
@@ -38,7 +39,6 @@
 #include "heaps/threads/lockedheap.h"
 #include "locks/posixlock.h"
 #include "threads/cpuinfo.h"
-#include "utility/myhashmap.h"
 #include "wrappers/mmapwrapper.h"
 #include "wrappers/stlallocator.h"
 
@@ -160,11 +160,14 @@ namespace HL {
     class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<ZoneHeap<SizedMmapHeap, 16384>>> {
     };
 
-    typedef MyHashMap<void *, size_t, MyHeap> mapType;
+    typedef std::unordered_map<void *,
+			       size_t,
+			       std::hash<void *>,
+			       std::equal_to<void *>,
+			       HL::STLAllocator<std::pair<void * const, size_t>, MyHeap>>
+    mapType;
 
-  protected:
     mapType MyMap;
-
     PosixLockType MyMapLock;
 
   public:
@@ -174,7 +177,7 @@ namespace HL {
     inline void * malloc (size_t sz) {
       void * ptr = SizedMmapHeap::malloc (sz);
       MyMapLock.lock();
-      MyMap.set (ptr, sz);
+      MyMap[ptr] = sz;
       MyMapLock.unlock();
       assert (reinterpret_cast<size_t>(ptr) % Alignment == 0);
       return const_cast<void *>(ptr);
@@ -182,7 +185,7 @@ namespace HL {
 
     inline size_t getSize (void * ptr) {
       MyMapLock.lock();
-      size_t sz = MyMap.get (ptr);
+      size_t sz = MyMap[ptr];
       MyMapLock.unlock();
       return sz;
     }
@@ -196,7 +199,7 @@ namespace HL {
     inline void free (void * ptr) {
       assert (reinterpret_cast<size_t>(ptr) % Alignment == 0);
       MyMapLock.lock();
-      size_t sz = MyMap.get (ptr);
+      size_t sz = MyMap[ptr];
       SizedMmapHeap::free (ptr, sz);
       MyMap.erase (ptr);
       MyMapLock.unlock();
