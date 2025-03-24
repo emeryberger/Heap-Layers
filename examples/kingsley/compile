@@ -1,13 +1,13 @@
 #! /bin/sh
 
-case "$OSTYPE" in
-darwin*)
+case $(uname) in
+[Dd]arwin*)
 echo "Compiling for Darwin"
   clang++ --std=c++14 -pipe -O3 -ffast-math -fomit-frame-pointer -DNDEBUG  -I. -I../.. -I../../util -D_REENTRANT=1 -compatibility_version 1 -current_version 1 -dynamiclib libkingsley.cpp -o libkingsley.dylib;;
 [Ll]inux*)
   echo "Compiling for Linux"
-  g++ --std=c++14 -pipe -march=pentiumpro -O3 -finline-limit=65000 -fkeep-inline-functions -finline-functions -ffast-math -fomit-frame-pointer -DNDEBUG  -I. -I../.. -I../../util -D_REENTRANT=1 -shared libkingsley.cpp -o libkingsley.so -ldl -lpthread;;
-solaris)
+  g++ --std=c++14 -pipe -O3 -finline-limit=65000 -fkeep-inline-functions -finline-functions -ffast-math -fomit-frame-pointer -DNDEBUG  -I. -I../.. -I../../util -D_REENTRANT=1 -shared libkingsley.cpp -o libkingsley.so -ldl -lpthread -fPIC;;
+[Ss]olaris)
   echo "Compiling for Solaris"
   #CC -xildoff -native -noex -xipo=2 -xO5 -mt -DNDEBUG -I. -I.. -D_REENTRANT=1 -G -PIC libkingsley.cpp -o libkingsley.so;;
 #  g++ -pipe -DNDEBUG -I. -I.. -D_REENTRANT=1 -fPIC -shared libkingsley.cpp -o libkingsley.so;;
