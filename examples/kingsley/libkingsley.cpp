@@ -71,6 +71,7 @@ extern "C" {
 extern "C" {
   
   void * xxmalloc (size_t sz) {
+    // printf_("xxmalloc\n");
     auto ptr = getCustomHeap()->malloc (sz);
     // printf_("xxmalloc %lu = %p\n", sz, ptr);
     return ptr;

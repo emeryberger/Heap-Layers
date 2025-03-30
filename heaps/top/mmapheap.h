@@ -153,12 +153,10 @@ namespace HL {
 
   private:
 
-    // (Now disabled)
     // Note: we never reclaim memory obtained for MyHeap, even when
     // this heap is destroyed.
-    // class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<BumpAlloc<16384, SizedMmapHeap>>> {
-    class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<ZoneHeap<SizedMmapHeap, 16384>>> {
-    };
+    class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<BumpAlloc<65536, SizedMmapHeap>>> {};
+      //class MyHeap : public LockedHeap<PosixLockType, FreelistHeap<ZoneHeap<SizedMmapHeap, 65536>>> {};
 
     typedef std::unordered_map<void *,
 			       size_t,
