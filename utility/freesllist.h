@@ -17,26 +17,26 @@
 class FreeSLList {
 public:
 
-  inline void clear (void) {
-    head.next = NULL;
+  inline void clear() {
+    head.next = nullptr;
   }
 
   class Entry;
   
   /// Get the head of the list.
-  inline Entry * get (void) {
+  inline Entry * get() {
     const Entry * e = head.next;
-    if (e == NULL) {
-      return NULL;
+    if (e == nullptr) {
+      return nullptr;
     }
     head.next = e->next;
     return const_cast<Entry *>(e);
   }
 
-  inline Entry * remove (void) {
+  inline Entry * remove() {
     const Entry * e = head.next;
-    if (e == NULL) {
-      return NULL;
+    if (e == nullptr) {
+      return nullptr;
     }
     head.next = e->next;
     return const_cast<Entry *>(e);
@@ -50,8 +50,8 @@ public:
 
   class Entry {
   public:
-    Entry (void)
-      : next (NULL)
+    Entry()
+      : next (nullptr)
     {}
     Entry * next;
   private:
