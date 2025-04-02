@@ -24,10 +24,7 @@
  */
 
 #include <assert.h>
-
-#include "wrappers/mallocinfo.h"
-#include "heaps/objectrep/addheap.h"
-#include "utility/gcd.h"
+#include "heaps/objectrep/headerheap.h"
 
 namespace HL {
 
@@ -36,62 +33,32 @@ namespace HL {
    * @brief Allocates extra room for the size of an object.
    */
 
-  template <class SuperHeap>
-  class SizeHeap : public SuperHeap {
+  enum { MAGIC_NUMBER = 0xCAFEBABE };
 
-  private:
-    struct freeObject {
-      size_t _sz;
-      size_t _magic;
-      //      char _buf[HL::MallocInfo::Alignment];
-    };
-
-    enum { MAGIC_NUMBER = 0xCAFEBABE };
-    
-  public:
-
-    enum { Alignment = gcd<(int) SuperHeap::Alignment,
-	   (int) sizeof(freeObject)>::value };
-
-    virtual ~SizeHeap (void) {}
-
-    inline void * malloc (size_t sz) {
-      freeObject * p = (freeObject *) SuperHeap::malloc (sz + sizeof(freeObject));
-      p->_sz = sz;
-      p->_magic = MAGIC_NUMBER;
-      return (void *) (p + 1);
-    }
-
-    inline void free (void * ptr) {
-      if (getHeader(ptr)->_magic == MAGIC_NUMBER) {
-	// Probably one of our objects.
-	SuperHeap::free (getHeader(ptr));
-      }
-    }
-
-    inline static size_t getSize (const void * ptr) {
-      if (getHeader(ptr)->_magic == MAGIC_NUMBER) {
-	size_t size = getHeader(ptr)->_sz;
-	return size;
-      } else {
-	// Probably not one of our objects.
-	return 0;
-      }
-    }
-
-  private:
-
-    inline static void setSize (void * ptr, size_t sz) {
-      assert (getHeader(ptr)->_magic == MAGIC_NUMBER);
-      getHeader(ptr)->_sz = sz;
-    }
-
-    inline static freeObject * getHeader (const void * ptr) {
-      return ((freeObject *) ptr - 1);
-    }
-
+  struct sizeHeap_t {
+    size_t _sz;
+#ifndef NDEBUG
+    size_t _magic;
+#endif
   };
 
+  inline void sizeHeap_func(sizeHeap_t* headerObjectPtr, size_t sz, void *ptr) {
+    headerObjectPtr->_sz = sz;
+#ifndef NDEBUG
+    headerObjectPtr->_magic = MAGIC_NUMBER;
+#endif
+  }
+
+  template <class SuperHeap>
+  class SizeHeap : public HeaderHeap<SuperHeap, sizeHeap_t, sizeHeap_func> {
+      using HeaderHeapT = HeaderHeap<SuperHeap, sizeHeap_t, sizeHeap_func>;
+    public:
+      inline static size_t getSize (const void * ptr) {
+        assert(HeaderHeapT::getHeader(ptr)->_magic == MAGIC_NUMBER);
+        size_t size = HeaderHeapT::getHeader(ptr)->_sz;
+        return size;
+      }
+  };
 }
 
 #endif
