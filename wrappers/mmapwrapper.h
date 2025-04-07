@@ -189,8 +189,7 @@ namespace HL {
       #endif
 
       if (ptr == MAP_FAILED) {
-	tprintf::tprintf("MAP_FAILED\n");
-	perror("MmapWrapper");
+	// tprintf::tprintf("MmapWrapper: MAP_FAILED\n");
 	return nullptr;
       } else {
 #if HL_NAMED_HEAP
