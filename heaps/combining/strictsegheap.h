@@ -59,6 +59,10 @@ namespace HL {
 
   public:
 
+    static constexpr size_t num_size_classes = NumBins;
+    int get_size_class(const size_t sz) const { return size2class(sz); }
+    size_t get_class_size(int i) const { return class2size(i); }
+    
     void clear () {
       for (auto i = 0; i < NumBins; i++) {
         const size_t sz = class2size(i);
