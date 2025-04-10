@@ -63,6 +63,10 @@ namespace HL {
 
     enum { Alignment = gcd<LittleHeap::Alignment, BigHeap::Alignment>::VALUE };
 
+    static constexpr size_t num_size_classes = NumBins;
+    int get_size_class(const size_t sz) const { return getSizeClass(sz); }
+    size_t get_class_size(int i) const { return getClassMaxSize(i); }
+    
     inline SegHeap()
       : _memoryHeld (0),
 	_maxObjectSize (getClassMaxSize(NumBins - 1))
