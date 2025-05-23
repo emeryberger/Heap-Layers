@@ -115,16 +115,19 @@ namespace HL {
 	assert (class2size(objectSizeClass) >= objectSize);
 
         // Put the freed object into the right sizeclass heap.
-#if 0
+	
         // Ensure that the bin that we are going to put it in is for
         // objects that are no bigger than the actual size of the
-        // object.
+        // object. Ensure we don't run forever.
 	
-        while (class2size(objectSizeClass) > objectSize)
-          objectSizeClass--;
-#endif
-	
-        SuperHeap::myLittleHeap[objectSizeClass].free (ptr);
+        while ((objectSizeClass > 0) &&
+	       (class2size(objectSizeClass) > objectSize)) {
+	    objectSizeClass--;
+	}
+	// Leak objects if something went wrong.
+	if (class2size(objectSizeClass) >= objectSize) {
+	  SuperHeap::myLittleHeap[objectSizeClass].free (ptr);
+	}
       }
     }
 
