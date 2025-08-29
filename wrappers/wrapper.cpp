@@ -245,8 +245,8 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t 
   // memalign(), except for the added restriction that size should be
   // a multiple of alignment." Rather than check and potentially fail,
   // we just enforce this by rounding up the size, if necessary.
-  size = size + alignment - (size % alignment);
-  return CUSTOM_MEMALIGN(alignment, size);
+  size_t aligned_size = ((size + alignment - 1) / alignment) * alignment;
+  return CUSTOM_MEMALIGN(alignment, aligned_size);
 }
 
 extern "C" FLATTEN size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
