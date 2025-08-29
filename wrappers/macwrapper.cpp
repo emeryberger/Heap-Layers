@@ -246,16 +246,14 @@ extern "C" {
 #endif
   }
 
-#if 0
   void * replace_aligned_alloc (size_t alignment, size_t size) {
     // Per the man page: "The function aligned_alloc() is the same as
     // memalign(), except for the added restriction that size should be
     // a multiple of alignment." Rather than check and potentially fail,
     // we just enforce this by rounding up the size, if necessary.
-    size = size + alignment - (size % alignment);
-    return replace_memalign (alignment, size);
+    size_t aligned_size = ((size + alignment - 1) / alignment) * alignment;
+    return replace_memalign (alignment, aligned_size);
   }
-#endif
   
   int replace_posix_memalign(void **memptr, size_t alignment, size_t size)
   {
@@ -486,7 +484,7 @@ extern "C" int malloc_jumpstart (int);
 MAC_INTERPOSE(replace__malloc_fork_child, _malloc_fork_child);
 MAC_INTERPOSE(replace__malloc_fork_parent, _malloc_fork_parent);
 MAC_INTERPOSE(replace__malloc_fork_prepare, _malloc_fork_prepare);
-//MAC_INTERPOSE(replace_aligned_alloc, aligned_alloc);
+MAC_INTERPOSE(replace_aligned_alloc, aligned_alloc);
 MAC_INTERPOSE(replace_calloc, calloc);
 MAC_INTERPOSE(xxfree, _ZdaPv);
 MAC_INTERPOSE(xxfree, _ZdaPvRKSt9nothrow_t);
