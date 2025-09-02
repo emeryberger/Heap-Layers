@@ -105,10 +105,8 @@ extern "C" {
   }
 
   size_t replace_malloc_good_size (size_t sz) {
-    auto * ptr = xxmalloc(sz);
-    auto objSize = xxmalloc_usable_size(ptr);
-    xxfree(ptr);
-    return objSize;
+    // Just trust the size, Luke
+    return sz ? sz : 1;
   }
 
   static void * _extended_realloc (void * ptr, size_t sz, bool isReallocf) 
