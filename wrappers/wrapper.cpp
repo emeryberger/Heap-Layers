@@ -168,7 +168,7 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
 static __thread int in_dlsym { 0 };
 
 // Wrapper around dlsym that we use in calloc, below.
-extern "C" void * my_dlsym(void * handle, const char * symbol) {
+extern "C" __attribute__((noinline)) void * my_dlsym(void * handle, const char * symbol) {
   ++in_dlsym;
   auto ptr = dlsym(handle, symbol);
   --in_dlsym;
@@ -211,9 +211,10 @@ extern "C" FLATTEN int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, s
 throw()
 #endif
 {
-  // Check for non power-of-two alignment.
-  if ((alignment == 0) ||
-      (alignment & (alignment - 1)))
+  *memptr = nullptr;
+  if (alignment == 0 ||
+      (alignment % sizeof(void*)) != 0 ||
+      (alignment & (alignment - 1)) != 0)
     {
       return EINVAL;
     }
@@ -228,7 +229,7 @@ throw()
 #endif
 
 
-extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
+extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN size_t alignment, size_t size)
 #if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__SVR4)
   throw()
 #endif
@@ -243,10 +244,12 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t 
 {
   // Per the man page: "The function aligned_alloc() is the same as
   // memalign(), except for the added restriction that size should be
-  // a multiple of alignment." Rather than check and potentially fail,
-  // we just enforce this by rounding up the size, if necessary.
-  size_t aligned_size = ((size + alignment - 1) / alignment) * alignment;
-  return CUSTOM_MEMALIGN(alignment, aligned_size);
+  // a multiple of alignment."
+  if (alignment == 0 || (size % alignment) != 0) {
+    // C11: return NULL on violation (errno is unspecified).
+    return nullptr;
+  }
+  return CUSTOM_MEMALIGN(alignment, size);
 }
 
 extern "C" FLATTEN size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
@@ -260,10 +263,7 @@ extern "C" void MYCDECL CUSTOM_CFREE (void * ptr)
 }
 
 extern "C" size_t MYCDECL CUSTOM_GOODSIZE (size_t sz) {
-  void * ptr = xxmalloc(sz);
-  size_t objSize = CUSTOM_GETSIZE(ptr);
-  CUSTOM_FREE(ptr);
-  return objSize;
+  return sz ? sz : 1;
 }
 
 extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
@@ -315,7 +315,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
 extern "C" void * MYCDECL CUSTOM_REALLOCARRAY (void * ptr, size_t sz1, size_t sz2)
 {
-  if ((sz1 * sz2 < sz1) || (sz1 * sz2 < sz2)) { // overflow
+  if (sz2 != 0 && sz1 > SIZE_MAX / sz2) { // overflow
     errno = ENOMEM;
     return nullptr;
   }
@@ -356,7 +356,7 @@ extern "C"  char * MYCDECL CUSTOM_GETCWD(char * buf, size_t size)
 {
   static getcwdFunction * real_getcwd
     = reinterpret_cast<getcwdFunction *>
-    (reinterpret_cast<uintptr_t>(dlsym (RTLD_NEXT, "getcwd")));
+    (reinterpret_cast<uintptr_t>(my_dlsym (RTLD_NEXT, "getcwd")));
 
   if (!buf) {
     if (size == 0) {
