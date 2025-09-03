@@ -229,7 +229,7 @@ throw()
 #endif
 
 
-extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN size_t alignment, size_t size)
+extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN(size_t alignment, size_t size)
 #if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__SVR4)
   throw()
 #endif
