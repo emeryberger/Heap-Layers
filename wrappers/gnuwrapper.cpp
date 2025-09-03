@@ -77,13 +77,8 @@ extern "C" {
   WEAK_REDEF3(void *, reallocarray, void *, size_t, size_t);
   WEAK_REDEF2(void *, memalign, size_t, size_t);
   WEAK_REDEF3(int, posix_memalign, void **, size_t, size_t);
-#ifdef __USE_XOPEN2K // a work-around for an exception anomaly
-  //  WEAK_REDEF2_NOTHROW(void *, aligned_alloc, size_t, size_t);
-#else
   WEAK_REDEF2(void *, aligned_alloc, size_t, size_t);
-#endif
   WEAK_REDEF1(size_t, malloc_usable_size, void *);
 }
 
 #include "wrapper.cpp"
-//// #include "gnuwrapper-hooks.cpp"
