@@ -288,25 +288,28 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 #endif
   }
 
-  size_t objSize = CUSTOM_GETSIZE (ptr);
+  size_t objSize = CUSTOM_GETSIZE(ptr);
 
   void * buf = xxmalloc(sz);
 
-  if (buf) {
-    if (objSize == CUSTOM_GETSIZE(buf)) {
-      // The objects are the same actual size.
-      // Free the new object and return the original.
-      CUSTOM_FREE (buf);
-      return ptr;
-    }
-    // Copy the contents of the original object
-    // up to the size of the new block.
-    size_t minSize = (objSize < sz) ? objSize : sz;
-    memcpy (buf, ptr, minSize);
+  if (!buf) {
+    // Leave the original ptr intact.
+    return nullptr;
   }
+  
+  if (objSize == CUSTOM_GETSIZE(buf)) {
+    // The objects are the same actual size.
+    // Free the new object and return the original.
+    CUSTOM_FREE(buf);
+    return ptr;
+  }
+  // Copy the contents of the original object
+  // up to the size of the new block.
+  size_t minSize = (objSize < sz) ? objSize : sz;
+  memcpy(buf, ptr, minSize);
 
   // Free the old block.
-  CUSTOM_FREE (ptr);
+  CUSTOM_FREE(ptr);
 
   // Return a pointer to the new one.
   return buf;
