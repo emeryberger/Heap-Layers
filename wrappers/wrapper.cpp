@@ -106,18 +106,6 @@ extern "C" {
 #define CUSTOM_MALLOC_SET_STATE(p)  CUSTOM_PREFIX(malloc_set_state)(p)
 #define CUSTOM_MALLINFO(a)          CUSTOM_PREFIX(mallinfo)(a)
 
-#if defined(__GNUC__) && defined(__GLIBC__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
-extern "C" void* __libc_malloc(size_t n)        __attribute__((visibility("default")));
-extern "C" void  __libc_free(void* p)           __attribute__((visibility("default")));
-extern "C" void* __libc_calloc(size_t a,size_t b) __attribute__((visibility("default")));
-extern "C" void* __libc_realloc(void* p,size_t n) __attribute__((visibility("default")));
-
-extern "C" void* __libc_malloc(size_t n){ return CUSTOM_MALLOC(n); }
-extern "C" void  __libc_free(void* p){     CUSTOM_FREE(p); }
-extern "C" void* __libc_calloc(size_t a,size_t b){ return CUSTOM_CALLOC(a,b); }
-extern "C" void* __libc_realloc(void* p,size_t n){ return CUSTOM_REALLOC(p,n); }
-#endif
-
 #if defined(_WIN32)
 #define MYCDECL __cdecl
 #if !defined(NO_INLINE)
@@ -584,3 +572,16 @@ int CUSTOM_PUTENV(char * str) {
 }
 
 #endif
+
+#if defined(__GNUC__) && defined(__GLIBC__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
+extern "C" void* __libc_malloc(size_t n)        __attribute__((visibility("default")));
+extern "C" void  __libc_free(void* p)           __attribute__((visibility("default")));
+extern "C" void* __libc_calloc(size_t a,size_t b) __attribute__((visibility("default")));
+extern "C" void* __libc_realloc(void* p,size_t n) __attribute__((visibility("default")));
+
+extern "C" void* __libc_malloc(size_t n){ return CUSTOM_MALLOC(n); }
+extern "C" void  __libc_free(void* p){     CUSTOM_FREE(p); }
+extern "C" void* __libc_calloc(size_t a,size_t b){ return CUSTOM_CALLOC(a,b); }
+extern "C" void* __libc_realloc(void* p,size_t n){ return CUSTOM_REALLOC(p,n); }
+#endif
+
