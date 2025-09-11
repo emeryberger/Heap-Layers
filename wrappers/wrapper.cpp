@@ -34,9 +34,9 @@ extern "C" {
   void * xxmalloc (size_t);
   void   xxfree (void *);
   void * xxmemalign(size_t, size_t);
-  #if HL_USE_XXREALLOC
+#if HL_USE_XXREALLOC
   void * xxrealloc(void *, size_t);
-  #endif
+#endif
   // Takes a pointer and returns how much space it holds.
   size_t xxmalloc_usable_size (void *);
 
@@ -45,7 +45,7 @@ extern "C" {
 
   // Unlocks the heap(s), after fork().
   void xxmalloc_unlock();
-
+  
 }
 
 #if defined(__APPLE__)
@@ -572,3 +572,19 @@ int CUSTOM_PUTENV(char * str) {
 }
 
 #endif
+
+#if defined(__GNUC__) && defined(__GLIBC__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
+extern "C" void* __libc_malloc(size_t n)        __attribute__((visibility("default")));
+extern "C" void  __libc_free(void* p)           __attribute__((visibility("default")));
+extern "C" void* __libc_calloc(size_t a,size_t b) __attribute__((visibility("default")));
+extern "C" void* __libc_realloc(void* p,size_t n) __attribute__((visibility("default")));
+extern "C" void* __libc_memalign(size_t a, size_t b) __attribute__((visibility("default")));
+
+extern "C" void* __libc_malloc(size_t n){ return CUSTOM_MALLOC(n); }
+extern "C" void  __libc_free(void* p){     CUSTOM_FREE(p); }
+extern "C" void* __libc_calloc(size_t a,size_t b){ return CUSTOM_CALLOC(a,b); }
+extern "C" void* __libc_realloc(void* p,size_t n){ return CUSTOM_REALLOC(p,n); }
+extern "C" void* __libc_memalign(size_t a, size_t b){ return CUSTOM_MEMALIGN(a,b); }
+
+#endif
+
