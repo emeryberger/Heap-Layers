@@ -79,6 +79,10 @@ extern "C" {
   STRONG_REDEF3(int, posix_memalign, void **, size_t, size_t);
   STRONG_REDEF2(void *, aligned_alloc, size_t, size_t);
   STRONG_REDEF1(size_t, malloc_usable_size, void *);
+  STRONG_REDEF1(char *, strdup, const char *);
+  STRONG_REDEF2(char *, strndup, const char *, size_t);
+  STRONG_REDEF1(void *, valloc, size_t);
+  STRONG_REDEF1(void *, pvalloc, size_t);
 }
 
 #include "wrapper.cpp"
