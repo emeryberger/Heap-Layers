@@ -29,6 +29,10 @@
 #include <new>
 
 
+#ifndef ATTRIBUTE_EXPORT
+#define ATTRIBUTE_EXPORT
+#endif
+
 extern "C" {
 
   void * xxmalloc (size_t);
@@ -423,7 +427,7 @@ extern "C" struct mallinfo CUSTOM_MALLINFO() {
 #ifndef NEW_INCLUDED
 #define NEW_INCLUDED
 
-void * FLATTEN operator new (size_t sz)
+ATTRIBUTE_EXPORT void * FLATTEN operator new (size_t sz)
 #if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
@@ -435,7 +439,7 @@ void * FLATTEN operator new (size_t sz)
   throw std::bad_alloc();
 }
 
-void FLATTEN operator delete (void * ptr)
+ATTRIBUTE_EXPORT void FLATTEN operator delete (void * ptr)
 #if !defined(linux_)
   throw ()
 #endif
@@ -444,11 +448,11 @@ void FLATTEN operator delete (void * ptr)
 }
 
 #if !defined(__SUNPRO_CC) || __SUNPRO_CC > 0x420
-void * FLATTEN operator new (size_t sz, const std::nothrow_t&) throw() {
+ATTRIBUTE_EXPORT void * FLATTEN operator new (size_t sz, const std::nothrow_t&) throw() {
   return xxmalloc(sz);
 }
 
-void * FLATTEN operator new[] (size_t size)
+ATTRIBUTE_EXPORT void * FLATTEN operator new[] (size_t size)
 #if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
@@ -460,13 +464,13 @@ void * FLATTEN operator new[] (size_t size)
   throw std::bad_alloc();
 }
 
-void * FLATTEN operator new[] (size_t sz, const std::nothrow_t&)
+ATTRIBUTE_EXPORT void * FLATTEN operator new[] (size_t sz, const std::nothrow_t&)
   throw()
  {
   return xxmalloc(sz);
 }
 
-void FLATTEN operator delete[] (void * ptr)
+ATTRIBUTE_EXPORT void FLATTEN operator delete[] (void * ptr)
 #if defined(_GLIBCXX_USE_NOEXCEPT)
   _GLIBCXX_USE_NOEXCEPT
 #else
@@ -481,7 +485,7 @@ void FLATTEN operator delete[] (void * ptr)
 
 #if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309
 
-void FLATTEN operator delete(void * ptr, size_t)
+ATTRIBUTE_EXPORT void FLATTEN operator delete(void * ptr, size_t)
 #if !defined(linux_)
   throw ()
 #endif
@@ -489,7 +493,7 @@ void FLATTEN operator delete(void * ptr, size_t)
   CUSTOM_FREE (ptr);
 }
 
-void FLATTEN operator delete[](void * ptr, size_t)
+ATTRIBUTE_EXPORT void FLATTEN operator delete[](void * ptr, size_t)
 #if defined(__GNUC__)
   _GLIBCXX_USE_NOEXCEPT
 #endif
