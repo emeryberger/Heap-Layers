@@ -158,7 +158,9 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute
 
 extern "C" FLATTEN void MYCDECL CUSTOM_FREE (void * ptr)
 {
-  xxfree (ptr);
+  if (ptr) {
+    xxfree (ptr);
+  }
 }
 
 extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
@@ -263,7 +265,9 @@ extern "C" FLATTEN size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
 
 extern "C" void MYCDECL CUSTOM_CFREE (void * ptr)
 {
-  xxfree (ptr);
+  if (ptr) {
+    xxfree(ptr);
+  }
 }
 
 extern "C" size_t MYCDECL CUSTOM_GOODSIZE (size_t sz) {

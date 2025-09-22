@@ -64,6 +64,19 @@
 #define STRONG_ALIAS(target) __attribute__((alias(#target), visibility("default")))
 
 
+#if 0 // def __GLIBC__
+// Export the public names with glibc's default version node.
+__asm__(".symver custommalloc,        malloc@@GLIBC_2.2.5");
+__asm__(".symver customfree,          free@@GLIBC_2.2.5");
+__asm__(".symver customcalloc,        calloc@@GLIBC_2.2.5");
+__asm__(".symver customrealloc,       realloc@@GLIBC_2.2.5");
+__asm__(".symver customposix_memalign,posix_memalign@@GLIBC_2.2.5");
+__asm__(".symver custommemalign,      memalign@@GLIBC_2.2.5");
+__asm__(".symver customaligned_alloc, aligned_alloc@@GLIBC_2.2.5");
+__asm__(".symver customstrdup,        strdup@@GLIBC_2.2.5");
+
+#else
+
 #define STRONG_REDEF1(type,fname,arg1) ATTRIBUTE_EXPORT type fname(arg1) __THROW STRONG_ALIAS(custom##fname)
 #define STRONG_REDEF2(type,fname,arg1,arg2) ATTRIBUTE_EXPORT type fname(arg1,arg2) __THROW STRONG_ALIAS(custom##fname)
 #define STRONG_REDEF3(type,fname,arg1,arg2,arg3) ATTRIBUTE_EXPORT type fname(arg1,arg2,arg3) __THROW STRONG_ALIAS(custom##fname)
@@ -84,5 +97,7 @@ extern "C" {
   STRONG_REDEF1(void *, valloc, size_t);
   STRONG_REDEF1(void *, pvalloc, size_t);
 }
+
+#endif
 
 #include "wrapper.cpp"
