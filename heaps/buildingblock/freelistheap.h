@@ -29,6 +29,7 @@
 
 #include <assert.h>
 #include "utility/freesllist.h"
+#include "utility/cpp23compat.h"
 
 namespace HL {
 
@@ -48,7 +49,7 @@ namespace HL {
     }
 
     inline void free (void * ptr) {
-      if (!ptr) {
+      if (HL_EXPECT_FALSE(!ptr)) HL_UNLIKELY {
         return;
       }
       _freelist.insert (ptr);
