@@ -50,6 +50,7 @@
 #include <assert.h>
 
 #include "utility/gcd.h"
+#include "utility/cpp23compat.h"
 
 namespace HL {
 
@@ -86,7 +87,7 @@ namespace HL {
 
     inline void * malloc (const size_t sz) {
       void * ptr = nullptr;
-      if (sz > _maxObjectSize) {
+      if (HL_EXPECT_FALSE(sz > _maxObjectSize)) HL_UNLIKELY {
         goto GET_MEMORY;
       }
 
@@ -94,6 +95,8 @@ namespace HL {
         const auto sc = getSizeClass(sz);
         assert (sc >= 0);
         assert (sc < NumBins);
+        HL_ASSUME(sc >= 0);
+        HL_ASSUME(sc < NumBins);
         auto idx = sc;
         auto block = idx2block (idx);
         unsigned long map = binmap[block];
@@ -146,12 +149,14 @@ namespace HL {
     inline void free (void * ptr) {
       // printf ("Free: %x (%d bytes)\n", ptr, getSize(ptr));
       const auto objectSize = getSize(ptr); // was bigheap.getSize(ptr)
-      if (objectSize > _maxObjectSize) {
+      if (HL_EXPECT_FALSE(objectSize > _maxObjectSize)) HL_UNLIKELY {
         bigheap.free (ptr);
-      } else {
+      } else HL_LIKELY {
         auto objectSizeClass = getSizeClass(objectSize);
         assert (objectSizeClass >= 0);
         assert (objectSizeClass < NumBins);
+        HL_ASSUME(objectSizeClass >= 0);
+        HL_ASSUME(objectSizeClass < NumBins);
         // Put the freed object into the right sizeclass heap.
         assert (getClassMaxSize(objectSizeClass) >= objectSize);
 #if 1

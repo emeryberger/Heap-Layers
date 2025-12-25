@@ -22,6 +22,7 @@
  */
 
 #include "threads/cpuinfo.h"
+#include "utility/cpp23compat.h"
 
 #include <string.h> // for memcpy and memset
 #include <stdlib.h> // size_t
@@ -158,7 +159,7 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute
 
 extern "C" FLATTEN void MYCDECL CUSTOM_FREE (void * ptr)
 {
-  if (ptr) {
+  if (HL_EXPECT_TRUE(ptr)) HL_LIKELY {
     xxfree (ptr);
   }
 }
@@ -181,23 +182,24 @@ extern "C" __attribute__((noinline)) void * my_dlsym(void * handle, const char *
   return ptr;
 }
 
-extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) 
+extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 {
   // Reject calls from dlsym so it uses its own internal buffer.
-  if (in_dlsym) {
+  if (HL_EXPECT_FALSE(in_dlsym)) HL_UNLIKELY {
     return nullptr;
   }
 
   size_t n = nelem * elsize;
-  
-  if (elsize && (nelem != n / elsize)) {
+
+  // Check for overflow
+  if (HL_EXPECT_FALSE(elsize && (nelem != n / elsize))) HL_UNLIKELY {
     return nullptr;
   }
-  
+
   void * ptr = xxmalloc(n);
 
   // Zero out the malloc'd block.
-  if (ptr) {
+  if (HL_EXPECT_TRUE(ptr)) HL_LIKELY {
     memset (ptr, 0, n);
   }
   return ptr;
@@ -218,16 +220,16 @@ throw()
 #endif
 {
   *memptr = nullptr;
-  if (alignment == 0 ||
+  if (HL_EXPECT_FALSE(alignment == 0 ||
       (alignment % sizeof(void*)) != 0 ||
-      (alignment & (alignment - 1)) != 0)
+      (alignment & (alignment - 1)) != 0)) HL_UNLIKELY
     {
       return EINVAL;
     }
   void * ptr = CUSTOM_MEMALIGN (alignment, size);
-  if (!ptr) {
+  if (HL_EXPECT_FALSE(!ptr)) HL_UNLIKELY {
     return ENOMEM;
-  } else {
+  } else HL_LIKELY {
     *memptr = ptr;
     return 0;
   }
@@ -265,7 +267,7 @@ extern "C" FLATTEN size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
 
 extern "C" void MYCDECL CUSTOM_CFREE (void * ptr)
 {
-  if (ptr) {
+  if (HL_EXPECT_TRUE(ptr)) HL_LIKELY {
     xxfree(ptr);
   }
 }
@@ -280,11 +282,11 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
   void* buf = xxrealloc(ptr, sz);
   return buf;
 #else
-  if (!ptr) {
+  if (HL_EXPECT_FALSE(!ptr)) HL_UNLIKELY {
     ptr = xxmalloc (sz);
     return ptr;
   }
-  if (sz == 0) {
+  if (HL_EXPECT_FALSE(sz == 0)) HL_UNLIKELY {
     CUSTOM_FREE (ptr);
 #if defined(__APPLE__)
     // 0 size = free. We return a small object.  This behavior is
@@ -300,11 +302,11 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
   void * buf = xxmalloc(sz);
 
-  if (!buf) {
+  if (HL_EXPECT_FALSE(!buf)) HL_UNLIKELY {
     // Leave the original ptr intact.
     return nullptr;
   }
-  
+
   if (objSize == CUSTOM_GETSIZE(buf)) {
     // The objects are the same actual size.
     // Free the new object and return the original.
@@ -326,7 +328,7 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
 extern "C" void * MYCDECL CUSTOM_REALLOCARRAY (void * ptr, size_t sz1, size_t sz2)
 {
-  if (sz2 != 0 && sz1 > SIZE_MAX / sz2) { // overflow
+  if (HL_EXPECT_FALSE(sz2 != 0 && sz1 > SIZE_MAX / sz2)) HL_UNLIKELY { // overflow
     errno = ENOMEM;
     return nullptr;
   }
