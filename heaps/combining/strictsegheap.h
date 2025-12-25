@@ -88,13 +88,16 @@ namespace HL {
       const auto realSize = class2size(sizeClass);
 
       assert (realSize >= sz);
+      HL_ASSUME(realSize >= sz);
 
-      if (realSize <= SuperHeap::_maxObjectSize) {
+      if (HL_EXPECT_TRUE(realSize <= SuperHeap::_maxObjectSize)) HL_LIKELY {
         assert (sizeClass >= 0);
         assert (sizeClass < NumBins);
+        HL_ASSUME(sizeClass >= 0);
+        HL_ASSUME(sizeClass < NumBins);
         ptr = SuperHeap::myLittleHeap[sizeClass].malloc (realSize);
       }
-      if (!ptr) {
+      if (HL_EXPECT_FALSE(!ptr)) HL_UNLIKELY {
         ptr = SuperHeap::bigheap.malloc (realSize);
       }
       return ptr;
@@ -106,13 +109,15 @@ namespace HL {
     }
 
     inline void free(void * ptr, size_t objectSize) {
-      if (objectSize > SuperHeap::_maxObjectSize) {
+      if (HL_EXPECT_FALSE(objectSize > SuperHeap::_maxObjectSize)) HL_UNLIKELY {
         SuperHeap::bigheap.free (ptr);
-      } else {
+      } else HL_LIKELY {
         auto objectSizeClass = size2class(objectSize);
         assert (objectSizeClass >= 0);
         assert (objectSizeClass < NumBins);
-	assert (class2size(objectSizeClass) >= objectSize);
+        assert (class2size(objectSizeClass) >= objectSize);
+        HL_ASSUME(objectSizeClass >= 0);
+        HL_ASSUME(objectSizeClass < NumBins);
 
         // Put the freed object into the right sizeclass heap.
 	

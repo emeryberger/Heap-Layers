@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(kingsley LANGUAGES CXX)
 
-# Set C++14 standard
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Set C++23 standard (will fall back to C++20/17 if not available)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED OFF)  # Allow fallback to lower standards
 
 # Enable optimization with debugging symbols
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
