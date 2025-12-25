@@ -20,6 +20,7 @@
 
 #include <mutex>
 #include <cstddef>
+#include "utility/cpp23compat.h"
 
 namespace HL {
 
@@ -69,7 +70,7 @@ namespace HL {
 
   private:
     //    char dummy[128]; // an effort to avoid false sharing.
-    LockType thelock;
+    HL_NO_UNIQUE_ADDRESS LockType thelock;
   };
 
 }

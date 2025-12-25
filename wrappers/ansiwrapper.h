@@ -13,6 +13,8 @@
 #include <stdalign.h>
 #endif
 
+#include "utility/cpp23compat.h"
+
 /*
  * @class ANSIWrapper
  * @brief Provide ANSI C behavior for malloc & free.
@@ -40,13 +42,13 @@ namespace HL {
     inline void * malloc (size_t sz) {
 #if !defined(HL_NO_MALLOC_SIZE_CHECKS)
       static constexpr int alignment = 16; // safe for all platforms
-      if (sz < alignment) {
+      if (HL_EXPECT_FALSE(sz < alignment)) HL_UNLIKELY {
       	sz = alignment;
       }
       // Prevent integer underflows. This maximum should (and
       // currently does) provide more than enough slack to compensate for any
       // rounding below (in the alignment section).
-      if (sz >> (sizeof(size_t) * CHAR_BIT - 1)) {
+      if (HL_EXPECT_FALSE(sz >> (sizeof(size_t) * CHAR_BIT - 1))) HL_UNLIKELY {
 	return 0;
       }
       // Enforce alignment requirements: round up allocation sizes if needed.
@@ -59,30 +61,30 @@ namespace HL {
     }
  
     inline void free (void * ptr) {
-      if (ptr != 0) {
+      if (HL_EXPECT_TRUE(ptr != 0)) HL_LIKELY {
 	SuperHeap::free (ptr);
       }
     }
 
     inline void free_sized (void * ptr, size_t sz) {
-      if (ptr != 0) {
+      if (HL_EXPECT_TRUE(ptr != 0)) HL_LIKELY {
 	SuperHeap::free_sized (ptr, sz);
       }
     }
-    
+
     inline void * calloc (size_t s1, size_t s2) {
       auto * ptr = (char *) malloc (s1 * s2);
-      if (ptr) {
+      if (HL_EXPECT_TRUE(ptr)) HL_LIKELY {
       	memset (ptr, 0, s1 * s2);
       }
       return (void *) ptr;
     }
   
     inline void * realloc (void * ptr, const size_t sz) {
-      if (ptr == 0) {
+      if (HL_EXPECT_FALSE(ptr == 0)) HL_UNLIKELY {
       	return malloc (sz);
       }
-      if (sz == 0) {
+      if (HL_EXPECT_FALSE(sz == 0)) HL_UNLIKELY {
       	free (ptr);
       	return 0;
       }
@@ -99,7 +101,7 @@ namespace HL {
       // up to the size of the new block.
 
       auto minSize = (objSize < sz) ? objSize : sz;
-      if (buf) {
+      if (HL_EXPECT_TRUE(buf)) HL_LIKELY {
 	memcpy (buf, ptr, minSize);
       }
 
@@ -107,9 +109,9 @@ namespace HL {
       free (ptr);
       return buf;
     }
-  
+
     inline size_t getSize (void * ptr) {
-      if (ptr) {
+      if (HL_EXPECT_TRUE(ptr)) HL_LIKELY {
 	return SuperHeap::getSize (ptr);
       } else {
 	return 0;

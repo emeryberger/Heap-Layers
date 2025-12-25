@@ -4,6 +4,7 @@
 #define HL_FREESLLIST_H_
 
 #include <assert.h>
+#include "cpp23compat.h"
 
 /**
  * @class FreeSLList
@@ -43,7 +44,9 @@ public:
   }
   
   inline void insert (void * e) {
-    Entry * entry = reinterpret_cast<Entry *>(e);
+    // Use start_lifetime_as to properly begin the lifetime of the Entry object
+    // in the memory provided by e (which comes from freed allocation)
+    Entry * entry = HL::start_lifetime_as<Entry>(e);
     entry->next = head.next;
     head.next = entry;
   }
