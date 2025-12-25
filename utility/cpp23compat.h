@@ -190,7 +190,7 @@ namespace HL {
     return std::start_lifetime_as<const T>(p);
   }
 
-#else
+#elif defined(__cpp_lib_launder) && __cpp_lib_launder >= 201606L
   // Fallback using std::launder (C++17)
 
   template<typename T>
@@ -201,6 +201,20 @@ namespace HL {
   template<typename T>
   const T* start_lifetime_as(const void* p) noexcept {
     return std::launder(reinterpret_cast<const T*>(p));
+  }
+
+#else
+  // Pre-C++17 fallback using reinterpret_cast directly
+  // Less safe but the only option without std::launder
+
+  template<typename T>
+  T* start_lifetime_as(void* p) noexcept {
+    return reinterpret_cast<T*>(p);
+  }
+
+  template<typename T>
+  const T* start_lifetime_as(const void* p) noexcept {
+    return reinterpret_cast<const T*>(p);
   }
 
 #endif
