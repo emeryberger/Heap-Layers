@@ -41,9 +41,14 @@ namespace HL {
      * Ensure that the super heap gets created,
      * and add a reference for every instance of unique heap.
      */
-    UniqueHeap() 
+    UniqueHeap()
     {
+#if defined(_MSC_VER)
+      volatile SuperHeap * forceCreationOfSuperHeap = getSuperHeap();
+      (void)forceCreationOfSuperHeap;  // Suppress unused variable warning
+#else
       volatile SuperHeap * forceCreationOfSuperHeap __attribute__((unused)) = getSuperHeap();
+#endif
       addRef();
     }
 
