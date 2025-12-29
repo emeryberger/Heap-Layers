@@ -511,12 +511,12 @@ ATTRIBUTE_EXPORT void FLATTEN operator delete[](void * ptr, size_t)
 // --- Aligned new/delete (C++17) ---
 #if defined(__cpp_aligned_new) && __cpp_aligned_new >= 201606
 ATTRIBUTE_EXPORT void* FLATTEN operator new(std::size_t n, std::align_val_t al) {
-  void* p = CUSTOM_MEMALIGN(n, al); 
+  void* p = CUSTOM_MEMALIGN(n, (std::size_t) al); 
   if (!p) throw std::bad_alloc();
   return p;
 }
 ATTRIBUTE_EXPORT void* FLATTEN operator new[](std::size_t n, std::align_val_t al) {
-  void* p = CUSTOM_MEMALIGN(n, al); 
+  void* p = CUSTOM_MEMALIGN(n, (std::size_t) al); 
   if (!p) throw std::bad_alloc();
   return p;
 }
