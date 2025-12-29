@@ -138,9 +138,6 @@ namespace HL {
     
     static void free (void * ptr, size_t sz)
     {
-      if ((long) sz < 0) {
-	abort();
-      }
       munmap (reinterpret_cast<char *>(ptr), sz);
     }
 
