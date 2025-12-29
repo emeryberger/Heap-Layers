@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/CMakeFiles/printf-populate"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/CMakeFiles/printf-populate.rule"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/CMakeFiles/printf-populate-complete.rule"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/printf-populate-prefix/src/printf-populate-stamp/printf-populate-build.rule"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/printf-populate-prefix/src/printf-populate-stamp/printf-populate-configure.rule"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/printf-populate-prefix/src/printf-populate-stamp/printf-populate-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/printf-populate-prefix/src/printf-populate-stamp/printf-populate-install.rule"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/printf-populate-prefix/src/printf-populate-stamp/printf-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/printf-populate-prefix/src/printf-populate-stamp/printf-populate-patch.rule"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/printf-populate-prefix/src/printf-populate-stamp/printf-populate-test.rule"
+		},
+		{
+			"file" : "/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/printf-populate-prefix/src/printf-populate-stamp/printf-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"printf-populate"
+		],
+		"name" : "printf-populate"
+	}
+}

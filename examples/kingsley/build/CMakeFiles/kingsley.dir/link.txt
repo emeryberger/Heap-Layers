@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -O2 -g -DNDEBUG -Wl,--dependency-file=CMakeFiles/kingsley.dir/link.d -shared -Wl,-soname,libkingsley.so.1 -o libkingsley.so.1.0.0 "CMakeFiles/kingsley.dir/home/runner/work/Heap-Layers/Heap-Layers/wrappers/gnuwrapper.cpp.o" CMakeFiles/kingsley.dir/libkingsley.cpp.o "CMakeFiles/kingsley.dir/_deps/printf-src/printf.cpp.o"

@@ -1,0 +1,3 @@
+/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/CMakeFiles/printf-populate.dir
+/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/CMakeFiles/edit_cache.dir
+/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/_deps/printf-subbuild/CMakeFiles/rebuild_cache.dir
