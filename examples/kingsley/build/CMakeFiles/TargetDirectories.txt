@@ -1,3 +1,0 @@
-/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/CMakeFiles/kingsley.dir
-/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/CMakeFiles/edit_cache.dir
-/home/runner/work/Heap-Layers/Heap-Layers/examples/kingsley/build/CMakeFiles/rebuild_cache.dir
