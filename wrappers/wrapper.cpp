@@ -22,6 +22,7 @@
  */
 
 #include "threads/cpuinfo.h"
+#include "utility/cpp23compat.h"
 
 #include <string.h> // for memcpy and memset
 #include <stdlib.h> // size_t
@@ -29,10 +30,16 @@
 #include <new>
 
 
+#ifndef ATTRIBUTE_EXPORT
+#define ATTRIBUTE_EXPORT
+#endif
+
 extern "C" {
 
   void * xxmalloc (size_t);
   void   xxfree (void *);
+  void   xxfree_sized (void *, size_t);
+  void   xxfree_aligned_sized (void *, size_t, size_t);
   void * xxmemalign(size_t, size_t);
   #if HL_USE_XXREALLOC
   void * xxrealloc(void *, size_t);
@@ -85,6 +92,8 @@ extern "C" {
 #define CUSTOM_REALLOC(x,y)  CUSTOM_PREFIX(realloc)(x,y)
 #define CUSTOM_REALLOCARRAY(x,y,z)  CUSTOM_PREFIX(reallocarray)(x,y,z)
 #define CUSTOM_CALLOC(x,y)   CUSTOM_PREFIX(calloc)(x,y)
+#define CUSTOM_FREE_SIZED(x,y) CUSTOM_PREFIX(free_sized)(x,y)
+#define CUSTOM_FREE_ALIGNED_SIZED(x,y,z) CUSTOM_PREFIX(free_aligned_sized)(x,y,z)
 #define CUSTOM_MEMALIGN(x,y) CUSTOM_PREFIX(memalign)(x,y)
 #define CUSTOM_POSIX_MEMALIGN(x,y,z) CUSTOM_PREFIX(posix_memalign)(x,y,z)
 #define CUSTOM_ALIGNED_ALLOC(x,y) CUSTOM_PREFIX(aligned_alloc)(x,y)
@@ -154,7 +163,19 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute
 
 extern "C" FLATTEN void MYCDECL CUSTOM_FREE (void * ptr)
 {
-  xxfree (ptr);
+  if (HL_EXPECT_TRUE(ptr)) HL_LIKELY {
+    xxfree (ptr);
+  }
+}
+
+extern "C" FLATTEN void MYCDECL CUSTOM_FREE_SIZED (void * ptr, size_t sz)
+{
+  xxfree_sized (ptr, sz);
+}
+
+extern "C" FLATTEN void MYCDECL CUSTOM_FREE_ALIGNED_SIZED (void * ptr, size_t alignment, size_t sz)
+{
+  xxfree_aligned_sized (ptr, alignment, sz);
 }
 
 extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
@@ -168,30 +189,31 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
 static __thread int in_dlsym { 0 };
 
 // Wrapper around dlsym that we use in calloc, below.
-extern "C" void * my_dlsym(void * handle, const char * symbol) {
+extern "C" __attribute__((noinline)) void * my_dlsym(void * handle, const char * symbol) {
   ++in_dlsym;
   auto ptr = dlsym(handle, symbol);
   --in_dlsym;
   return ptr;
 }
 
-extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) 
+extern "C" FLATTEN void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize)
 {
   // Reject calls from dlsym so it uses its own internal buffer.
-  if (in_dlsym) {
+  if (HL_EXPECT_FALSE(in_dlsym)) HL_UNLIKELY {
     return nullptr;
   }
 
   size_t n = nelem * elsize;
-  
-  if (elsize && (nelem != n / elsize)) {
+
+  // Check for overflow
+  if (HL_EXPECT_FALSE(elsize && (nelem != n / elsize))) HL_UNLIKELY {
     return nullptr;
   }
-  
+
   void * ptr = xxmalloc(n);
 
   // Zero out the malloc'd block.
-  if (ptr) {
+  if (HL_EXPECT_TRUE(ptr)) HL_LIKELY {
     memset (ptr, 0, n);
   }
   return ptr;
@@ -211,16 +233,17 @@ extern "C" FLATTEN int CUSTOM_POSIX_MEMALIGN (void **memptr, size_t alignment, s
 throw()
 #endif
 {
-  // Check for non power-of-two alignment.
-  if ((alignment == 0) ||
-      (alignment & (alignment - 1)))
+  *memptr = nullptr;
+  if (HL_EXPECT_FALSE(alignment == 0 ||
+      (alignment % sizeof(void*)) != 0 ||
+      (alignment & (alignment - 1)) != 0)) HL_UNLIKELY
     {
       return EINVAL;
     }
   void * ptr = CUSTOM_MEMALIGN (alignment, size);
-  if (!ptr) {
+  if (HL_EXPECT_FALSE(!ptr)) HL_UNLIKELY {
     return ENOMEM;
-  } else {
+  } else HL_LIKELY {
     *memptr = ptr;
     return 0;
   }
@@ -228,7 +251,7 @@ throw()
 #endif
 
 
-extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN (size_t alignment, size_t size)
+extern "C" FLATTEN void * MYCDECL CUSTOM_MEMALIGN(size_t alignment, size_t size)
 #if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__SVR4)
   throw()
 #endif
@@ -243,9 +266,11 @@ extern "C" FLATTEN void * MYCDECL CUSTOM_ALIGNED_ALLOC(size_t alignment, size_t 
 {
   // Per the man page: "The function aligned_alloc() is the same as
   // memalign(), except for the added restriction that size should be
-  // a multiple of alignment." Rather than check and potentially fail,
-  // we just enforce this by rounding up the size, if necessary.
-  size = size + alignment - (size % alignment);
+  // a multiple of alignment."
+  if (alignment == 0 || (size % alignment) != 0) {
+    // C11: return NULL on violation (errno is unspecified).
+    return nullptr;
+  }
   return CUSTOM_MEMALIGN(alignment, size);
 }
 
@@ -256,14 +281,13 @@ extern "C" FLATTEN size_t MYCDECL CUSTOM_GETSIZE (void * ptr)
 
 extern "C" void MYCDECL CUSTOM_CFREE (void * ptr)
 {
-  xxfree (ptr);
+  if (HL_EXPECT_TRUE(ptr)) HL_LIKELY {
+    xxfree(ptr);
+  }
 }
 
 extern "C" size_t MYCDECL CUSTOM_GOODSIZE (size_t sz) {
-  void * ptr = xxmalloc(sz);
-  size_t objSize = CUSTOM_GETSIZE(ptr);
-  CUSTOM_FREE(ptr);
-  return objSize;
+  return sz ? sz : 1;
 }
 
 extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
@@ -272,11 +296,11 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
   void* buf = xxrealloc(ptr, sz);
   return buf;
 #else
-  if (!ptr) {
+  if (HL_EXPECT_FALSE(!ptr)) HL_UNLIKELY {
     ptr = xxmalloc (sz);
     return ptr;
   }
-  if (sz == 0) {
+  if (HL_EXPECT_FALSE(sz == 0)) HL_UNLIKELY {
     CUSTOM_FREE (ptr);
 #if defined(__APPLE__)
     // 0 size = free. We return a small object.  This behavior is
@@ -288,25 +312,28 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 #endif
   }
 
-  size_t objSize = CUSTOM_GETSIZE (ptr);
+  size_t objSize = CUSTOM_GETSIZE(ptr);
 
   void * buf = xxmalloc(sz);
 
-  if (buf) {
-    if (objSize == CUSTOM_GETSIZE(buf)) {
-      // The objects are the same actual size.
-      // Free the new object and return the original.
-      CUSTOM_FREE (buf);
-      return ptr;
-    }
-    // Copy the contents of the original object
-    // up to the size of the new block.
-    size_t minSize = (objSize < sz) ? objSize : sz;
-    memcpy (buf, ptr, minSize);
+  if (HL_EXPECT_FALSE(!buf)) HL_UNLIKELY {
+    // Leave the original ptr intact.
+    return nullptr;
   }
 
+  if (objSize == CUSTOM_GETSIZE(buf)) {
+    // The objects are the same actual size.
+    // Free the new object and return the original.
+    CUSTOM_FREE(buf);
+    return ptr;
+  }
+  // Copy the contents of the original object
+  // up to the size of the new block.
+  size_t minSize = (objSize < sz) ? objSize : sz;
+  memcpy(buf, ptr, minSize);
+
   // Free the old block.
-  CUSTOM_FREE (ptr);
+  CUSTOM_FREE(ptr);
 
   // Return a pointer to the new one.
   return buf;
@@ -315,14 +342,14 @@ extern "C" void * MYCDECL CUSTOM_REALLOC (void * ptr, size_t sz)
 
 extern "C" void * MYCDECL CUSTOM_REALLOCARRAY (void * ptr, size_t sz1, size_t sz2)
 {
-  if ((sz1 * sz2 < sz1) || (sz1 * sz2 < sz2)) { // overflow
+  if (HL_EXPECT_FALSE(sz2 != 0 && sz1 > SIZE_MAX / sz2)) HL_UNLIKELY { // overflow
     errno = ENOMEM;
     return nullptr;
   }
   return CUSTOM_REALLOC(ptr, sz1 * sz2);
 }
 
-#if defined(__linux)
+#if defined(__linux__)
 
 extern "C" char * MYCDECL CUSTOM_STRNDUP(const char * s, size_t sz)
 {
@@ -356,7 +383,7 @@ extern "C"  char * MYCDECL CUSTOM_GETCWD(char * buf, size_t size)
 {
   static getcwdFunction * real_getcwd
     = reinterpret_cast<getcwdFunction *>
-    (reinterpret_cast<uintptr_t>(dlsym (RTLD_NEXT, "getcwd")));
+    (reinterpret_cast<uintptr_t>(my_dlsym (RTLD_NEXT, "getcwd")));
 
   if (!buf) {
     if (size == 0) {
@@ -420,7 +447,7 @@ extern "C" struct mallinfo CUSTOM_MALLINFO() {
 #ifndef NEW_INCLUDED
 #define NEW_INCLUDED
 
-void * FLATTEN operator new (size_t sz)
+ATTRIBUTE_EXPORT void * FLATTEN operator new (size_t sz)
 #if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
@@ -432,7 +459,7 @@ void * FLATTEN operator new (size_t sz)
   throw std::bad_alloc();
 }
 
-void FLATTEN operator delete (void * ptr)
+ATTRIBUTE_EXPORT void FLATTEN operator delete (void * ptr)
 #if !defined(linux_)
   throw ()
 #endif
@@ -441,11 +468,11 @@ void FLATTEN operator delete (void * ptr)
 }
 
 #if !defined(__SUNPRO_CC) || __SUNPRO_CC > 0x420
-void * FLATTEN operator new (size_t sz, const std::nothrow_t&) throw() {
+ATTRIBUTE_EXPORT void * FLATTEN operator new (size_t sz, const std::nothrow_t&) throw() {
   return xxmalloc(sz);
 }
 
-void * FLATTEN operator new[] (size_t size)
+ATTRIBUTE_EXPORT void * FLATTEN operator new[] (size_t size)
 #if defined(_GLIBCXX_THROW)
   _GLIBCXX_THROW (std::bad_alloc)
 #endif
@@ -457,13 +484,13 @@ void * FLATTEN operator new[] (size_t size)
   throw std::bad_alloc();
 }
 
-void * FLATTEN operator new[] (size_t sz, const std::nothrow_t&)
+ATTRIBUTE_EXPORT void * FLATTEN operator new[] (size_t sz, const std::nothrow_t&)
   throw()
  {
   return xxmalloc(sz);
 }
 
-void FLATTEN operator delete[] (void * ptr)
+ATTRIBUTE_EXPORT void FLATTEN operator delete[] (void * ptr)
 #if defined(_GLIBCXX_USE_NOEXCEPT)
   _GLIBCXX_USE_NOEXCEPT
 #else
@@ -478,22 +505,59 @@ void FLATTEN operator delete[] (void * ptr)
 
 #if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309
 
-void FLATTEN operator delete(void * ptr, size_t)
+ATTRIBUTE_EXPORT void FLATTEN operator delete(void * ptr, size_t sz)
 #if !defined(linux_)
   throw ()
 #endif
 {
-  CUSTOM_FREE (ptr);
+  CUSTOM_FREE_SIZED (ptr, sz);
 }
 
-void FLATTEN operator delete[](void * ptr, size_t)
+ATTRIBUTE_EXPORT void FLATTEN operator delete[](void * ptr, size_t sz)
 #if defined(__GNUC__)
   _GLIBCXX_USE_NOEXCEPT
 #endif
 {
-  CUSTOM_FREE (ptr);
+  CUSTOM_FREE_SIZED (ptr, sz);
 }
+#endif // __cpp_sized_deallocation
+
+// --- Aligned new/delete (C++17) ---
+#if defined(__cpp_aligned_new) && __cpp_aligned_new >= 201606
+ATTRIBUTE_EXPORT void* FLATTEN operator new(std::size_t n, std::align_val_t al) {
+  void* p = CUSTOM_MEMALIGN(n, (std::size_t) al); 
+  if (!p) throw std::bad_alloc();
+  return p;
+}
+ATTRIBUTE_EXPORT void* FLATTEN operator new[](std::size_t n, std::align_val_t al) {
+  void* p = CUSTOM_MEMALIGN(n, (std::size_t) al); 
+  if (!p) throw std::bad_alloc();
+  return p;
+}
+ATTRIBUTE_EXPORT void FLATTEN operator delete(void* p, std::align_val_t) noexcept { CUSTOM_FREE(p); }
+ATTRIBUTE_EXPORT void FLATTEN operator delete[](void* p, std::align_val_t) noexcept { CUSTOM_FREE(p); }
+
+// nothrow aligned new/delete
+ATTRIBUTE_EXPORT void* FLATTEN operator new(std::size_t n, std::align_val_t al, const std::nothrow_t&) noexcept {
+  try { return ::operator new(n, al); } catch (...) { return nullptr; }
+}
+ATTRIBUTE_EXPORT void* FLATTEN operator new[](std::size_t n, std::align_val_t al, const std::nothrow_t&) noexcept {
+  try { return ::operator new[](n, al); } catch (...) { return nullptr; }
+}
+ATTRIBUTE_EXPORT void FLATTEN operator delete(void* p, std::align_val_t al, const std::nothrow_t&) noexcept {
+  CUSTOM_FREE(p);
+}
+ATTRIBUTE_EXPORT void FLATTEN operator delete[](void* p, std::align_val_t al, const std::nothrow_t&) noexcept {
+  CUSTOM_FREE(p);
+}
+
+// sized aligned delete (if both features present)
+#if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309
+ATTRIBUTE_EXPORT void FLATTEN operator delete(void* p, std::size_t sz, std::align_val_t al) noexcept { CUSTOM_FREE_ALIGNED_SIZED(p, static_cast<size_t>(al), sz); }
+ATTRIBUTE_EXPORT void FLATTEN operator delete[](void* p, std::size_t sz, std::align_val_t al) noexcept { CUSTOM_FREE_ALIGNED_SIZED(p, static_cast<size_t>(al), sz); }
 #endif
+#endif
+
 
 #endif
 #endif
@@ -569,3 +633,18 @@ int CUSTOM_PUTENV(char * str) {
 }
 
 #endif
+
+#if defined(__GNUC__) && defined(__GLIBC__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
+extern "C" void* __libc_malloc(size_t n)        __attribute__((visibility("default")));
+extern "C" void  __libc_free(void* p)           __attribute__((visibility("default")));
+extern "C" void* __libc_calloc(size_t a,size_t b) __attribute__((visibility("default")));
+extern "C" void* __libc_realloc(void* p,size_t n) __attribute__((visibility("default")));
+extern "C" void* __libc_memalign(size_t m,size_t n) __attribute__((visibility("default")));
+
+extern "C" void* __libc_malloc(size_t n){ return CUSTOM_MALLOC(n); }
+extern "C" void  __libc_free(void* p){     CUSTOM_FREE(p); }
+extern "C" void* __libc_calloc(size_t a,size_t b){ return CUSTOM_CALLOC(a,b); }
+extern "C" void* __libc_realloc(void* p,size_t n){ return CUSTOM_REALLOC(p,n); }
+extern "C" void* __libc_memalign(size_t m,size_t n){ return CUSTOM_MEMALIGN(m,n); }
+#endif
+

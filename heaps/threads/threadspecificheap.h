@@ -93,6 +93,20 @@ namespace HL {
       heap->free(ptr);
     }
 
+    inline void free_sized(void * ptr, size_t sz) {
+      if (heap == nullptr) {
+	heap = new (heapbuf) PerThreadHeap();
+      }
+      heap->free_sized(ptr, sz);
+    }
+
+    inline void free_aligned_sized(void * ptr, size_t alignment, size_t sz) {
+      if (heap == nullptr) {
+	heap = new (heapbuf) PerThreadHeap();
+      }
+      heap->free_aligned_sized(ptr, alignment, sz);
+    }
+
     inline void register_malloc(size_t sz, void * ptr) {
       if (heap == nullptr) {
 	heap = new (heapbuf) PerThreadHeap();
@@ -154,6 +168,14 @@ namespace HL {
 
     inline void free (void * ptr) {
       getHeap()->free (ptr);
+    }
+
+    inline void free_sized (void * ptr, size_t sz) {
+      getHeap()->free_sized (ptr, sz);
+    }
+
+    inline void free_aligned_sized (void * ptr, size_t alignment, size_t sz) {
+      getHeap()->free_aligned_sized (ptr, alignment, sz);
     }
 
     void register_malloc(size_t sz, void * ptr) {

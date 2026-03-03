@@ -41,6 +41,7 @@
 #include "threads/cpuinfo.h"
 #include "wrappers/mmapwrapper.h"
 #include "wrappers/stlallocator.h"
+#include "utility/cpp23compat.h"
 
 #ifndef HL_MMAP_PROTECTION_MASK
 #if HL_EXECUTABLE_HEAP
@@ -137,9 +138,6 @@ namespace HL {
     
     static void free (void * ptr, size_t sz)
     {
-      if ((long) sz < 0) {
-	abort();
-      }
       munmap (reinterpret_cast<char *>(ptr), sz);
     }
 
@@ -177,7 +175,7 @@ namespace HL {
       MyMapLock.lock();
       MyMap[ptr] = sz;
       MyMapLock.unlock();
-      assert (reinterpret_cast<size_t>(ptr) % Alignment == 0);
+      assert (HL::bit_cast<uintptr_t>(ptr) % Alignment == 0);
       return const_cast<void *>(ptr);
     }
 
@@ -195,7 +193,7 @@ namespace HL {
 #endif
 
     inline void free (void * ptr) {
-      assert (reinterpret_cast<size_t>(ptr) % Alignment == 0);
+      assert (HL::bit_cast<uintptr_t>(ptr) % Alignment == 0);
       MyMapLock.lock();
       size_t sz = MyMap[ptr];
       SizedMmapHeap::free (ptr, sz);

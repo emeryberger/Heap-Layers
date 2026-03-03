@@ -1,3 +1,4 @@
+#include "cpp23compat.h"  // C++20/23 compatibility - must be first
 #include "align.h"
 #include "bins.h"
 

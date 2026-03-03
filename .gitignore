@@ -1,2 +1,8 @@
 *~
 /bazel-*
+build/
+*.so
+*.so.*
+*.dylib
+*.o
+*.a
