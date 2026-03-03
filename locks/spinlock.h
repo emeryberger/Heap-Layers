@@ -40,10 +40,13 @@
 #pragma inline_depth(255)
 #define NO_INLINE __declspec(noinline)
 #define INLINE __forceinline
-#define inline __forceinline
+// Note: Do NOT #define inline __forceinline - it breaks MSVC STL headers
 #endif // !defined(NO_INLINE)
 
 #else
+
+#define INLINE inline
+#define NO_INLINE
 
 #endif // defined(_MSC_VER)
 
@@ -101,17 +104,19 @@ namespace HL {
     {}
 
     inline void lock() {
-      if (_mutex.exchange(true)) {
+      // Acquire semantics: operations after lock() cannot be reordered before
+      if (_mutex.exchange(true, std::memory_order_acquire)) {
 	contendedLock();
       }
     }
 
     inline bool didLock() {
-      return !_mutex.exchange(true);
+      return !_mutex.exchange(true, std::memory_order_acquire);
     }
 
     inline void unlock() {
-      _mutex = false;
+      // Release semantics: operations before unlock() cannot be reordered after
+      _mutex.store(false, std::memory_order_release);
     }
 
   private:
@@ -120,11 +125,12 @@ namespace HL {
     void contendedLock() {
       const int MAX_SPIN = 1000;
       while (true) {
-	if (!_mutex.exchange(true)) {
+	if (!_mutex.exchange(true, std::memory_order_acquire)) {
 	  return;
 	}
 	int count = 0;
-	while (_mutex && (count < MAX_SPIN)) {
+	// Relaxed load for spinning - we'll acquire on the exchange
+	while (_mutex.load(std::memory_order_relaxed) && (count < MAX_SPIN)) {
 	  _MM_PAUSE;
 	  count++;
 	}

@@ -106,10 +106,8 @@ extern "C" {
   }
 
   size_t replace_malloc_good_size (size_t sz) {
-    auto * ptr = xxmalloc(sz);
-    auto objSize = xxmalloc_usable_size(ptr);
-    xxfree(ptr);
-    return objSize;
+    // Just trust the size, Luke
+    return sz ? sz : 1;
   }
 
   static void * _extended_realloc (void * ptr, size_t sz, bool isReallocf) 
@@ -247,32 +245,24 @@ extern "C" {
 #endif
   }
 
-#if 0
   void * replace_aligned_alloc (size_t alignment, size_t size) {
     // Per the man page: "The function aligned_alloc() is the same as
     // memalign(), except for the added restriction that size should be
-    // a multiple of alignment." Rather than check and potentially fail,
-    // we just enforce this by rounding up the size, if necessary.
-    size = size + alignment - (size % alignment);
-    return replace_memalign (alignment, size);
-  }
-#endif
-  
-  int replace_posix_memalign(void **memptr, size_t alignment, size_t size)
-  {
-    // Check for non power-of-two alignment.
-    if ((alignment == 0) ||
-	(alignment & (alignment - 1)))
-      {
-	return EINVAL;
-      }
-    auto * ptr = replace_memalign (alignment, size);
-    if (!ptr) {
-      return ENOMEM;
-    } else {
-      *memptr = ptr;
-      return 0;
+    // a multiple of alignment."
+    if (alignment == 0 || (size % alignment) != 0) return nullptr;
+    return replace_memalign(alignment, size);
+  }    
+
+  int replace_posix_memalign(void **memptr, size_t alignment, size_t size) {
+    *memptr = nullptr;
+    if (alignment == 0 || (alignment % sizeof(void*)) != 0 ||
+        (alignment & (alignment - 1)) != 0) {
+      return EINVAL;
     }
+    void* p = replace_memalign(alignment, size);
+    if (!p) return ENOMEM;
+    *memptr = p;
+    return 0;
   }
 
   void * replace_valloc (size_t sz)
@@ -487,7 +477,7 @@ extern "C" int malloc_jumpstart (int);
 MAC_INTERPOSE(replace__malloc_fork_child, _malloc_fork_child);
 MAC_INTERPOSE(replace__malloc_fork_parent, _malloc_fork_parent);
 MAC_INTERPOSE(replace__malloc_fork_prepare, _malloc_fork_prepare);
-//MAC_INTERPOSE(replace_aligned_alloc, aligned_alloc);
+MAC_INTERPOSE(replace_aligned_alloc, aligned_alloc);
 MAC_INTERPOSE(replace_calloc, calloc);
 MAC_INTERPOSE(xxfree, _ZdaPv);
 MAC_INTERPOSE(xxfree, _ZdaPvRKSt9nothrow_t);

@@ -45,7 +45,6 @@
 
 */
 
-#define WEAK(x) __attribute__ ((weak, alias(#x)))
 #ifndef __THROW
 #define __THROW
 #endif
@@ -62,11 +61,8 @@
 #endif
 
 #define ATTRIBUTE_EXPORT __attribute__((visibility("default")))
+#define STRONG_ALIAS(target) __attribute__((alias(#target), visibility("default")))
 
-#define WEAK_REDEF1(type,fname,arg1) ATTRIBUTE_EXPORT type fname(arg1) __THROW WEAK(custom##fname)
-#define WEAK_REDEF2(type,fname,arg1,arg2) ATTRIBUTE_EXPORT type fname(arg1,arg2) __THROW WEAK(custom##fname)
-#define WEAK_REDEF2_NOTHROW(type,fname,arg1,arg2) ATTRIBUTE_EXPORT type fname(arg1,arg2) WEAK(custom##fname)
-#define WEAK_REDEF3(type,fname,arg1,arg2,arg3) ATTRIBUTE_EXPORT type fname(arg1,arg2,arg3) __THROW WEAK(custom##fname)
 
 extern "C" {
   WEAK_REDEF1(void *, malloc, size_t);
@@ -82,10 +78,28 @@ extern "C" {
 #ifdef __USE_XOPEN2K // a work-around for an exception anomaly
   //  WEAK_REDEF2_NOTHROW(void *, aligned_alloc, size_t, size_t);
 #else
-  WEAK_REDEF2(void *, aligned_alloc, size_t, size_t);
-#endif
-  WEAK_REDEF1(size_t, malloc_usable_size, void *);
+
+#define STRONG_REDEF1(type,fname,arg1) ATTRIBUTE_EXPORT type fname(arg1) __THROW STRONG_ALIAS(custom##fname)
+#define STRONG_REDEF2(type,fname,arg1,arg2) ATTRIBUTE_EXPORT type fname(arg1,arg2) __THROW STRONG_ALIAS(custom##fname)
+#define STRONG_REDEF3(type,fname,arg1,arg2,arg3) ATTRIBUTE_EXPORT type fname(arg1,arg2,arg3) __THROW STRONG_ALIAS(custom##fname)
+
+extern "C" {
+  STRONG_REDEF1(void *, malloc, size_t);
+  STRONG_REDEF1(void, free, void *);
+  STRONG_REDEF1(void, cfree, void *);
+  STRONG_REDEF2(void *, calloc, size_t, size_t);
+  STRONG_REDEF2(void *, realloc, void *, size_t);
+  STRONG_REDEF3(void *, reallocarray, void *, size_t, size_t);
+  STRONG_REDEF2(void *, memalign, size_t, size_t);
+  STRONG_REDEF3(int, posix_memalign, void **, size_t, size_t);
+  STRONG_REDEF2(void *, aligned_alloc, size_t, size_t);
+  STRONG_REDEF1(size_t, malloc_usable_size, void *);
+  STRONG_REDEF1(char *, strdup, const char *);
+  STRONG_REDEF2(char *, strndup, const char *, size_t);
+  STRONG_REDEF1(void *, valloc, size_t);
+  STRONG_REDEF1(void *, pvalloc, size_t);
 }
 
+#endif
+
 #include "wrapper.cpp"
-//// #include "gnuwrapper-hooks.cpp"

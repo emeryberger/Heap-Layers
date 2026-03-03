@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include "utility/cpp23compat.h"
 
 /**
  * @class AdaptHeap
@@ -77,7 +78,7 @@ namespace HL {
   private:
 
     /// The dictionary object.
-    Dictionary dict;
+    HL_NO_UNIQUE_ADDRESS Dictionary dict;
 
     class Entry : public Dictionary::Entry {};
   };

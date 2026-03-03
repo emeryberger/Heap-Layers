@@ -28,6 +28,7 @@
 #include "wrappers/mallocinfo.h"
 #include "heaps/objectrep/addheap.h"
 #include "utility/gcd.h"
+#include "utility/cpp23compat.h"
 
 namespace HL {
 
@@ -63,17 +64,17 @@ namespace HL {
     }
 
     inline void free (void * ptr) {
-      if (getHeader(ptr)->_magic == MAGIC_NUMBER) {
+      if (HL_EXPECT_TRUE(getHeader(ptr)->_magic == MAGIC_NUMBER)) HL_LIKELY {
 	// Probably one of our objects.
 	SuperHeap::free (getHeader(ptr));
       }
     }
 
     inline static size_t getSize (const void * ptr) {
-      if (getHeader(ptr)->_magic == MAGIC_NUMBER) {
+      if (HL_EXPECT_TRUE(getHeader(ptr)->_magic == MAGIC_NUMBER)) HL_LIKELY {
 	size_t size = getHeader(ptr)->_sz;
 	return size;
-      } else {
+      } else HL_UNLIKELY {
 	// Probably not one of our objects.
 	return 0;
       }
