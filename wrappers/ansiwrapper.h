@@ -69,6 +69,10 @@ namespace HL {
 	SuperHeap::free_sized (ptr, sz);
       }
     }
+
+    inline void free_aligned_sized (void * ptr, size_t, size_t sz) {
+      free_sized(ptr, sz);
+    }
     
     inline void * calloc (size_t s1, size_t s2) {
       auto * ptr = (char *) malloc (s1 * s2);

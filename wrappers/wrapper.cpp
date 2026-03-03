@@ -33,6 +33,8 @@ extern "C" {
 
   void * xxmalloc (size_t);
   void   xxfree (void *);
+  void   xxfree_sized (void *, size_t);
+  void   xxfree_aligned_sized (void *, size_t, size_t);
   void * xxmemalign(size_t, size_t);
   #if HL_USE_XXREALLOC
   void * xxrealloc(void *, size_t);
@@ -85,6 +87,8 @@ extern "C" {
 #define CUSTOM_REALLOC(x,y)  CUSTOM_PREFIX(realloc)(x,y)
 #define CUSTOM_REALLOCARRAY(x,y,z)  CUSTOM_PREFIX(reallocarray)(x,y,z)
 #define CUSTOM_CALLOC(x,y)   CUSTOM_PREFIX(calloc)(x,y)
+#define CUSTOM_FREE_SIZED(x,y) CUSTOM_PREFIX(free_sized)(x,y)
+#define CUSTOM_FREE_ALIGNED_SIZED(x,y,z) CUSTOM_PREFIX(free_aligned_sized)(x,y,z)
 #define CUSTOM_MEMALIGN(x,y) CUSTOM_PREFIX(memalign)(x,y)
 #define CUSTOM_POSIX_MEMALIGN(x,y,z) CUSTOM_PREFIX(posix_memalign)(x,y,z)
 #define CUSTOM_ALIGNED_ALLOC(x,y) CUSTOM_PREFIX(aligned_alloc)(x,y)
@@ -155,6 +159,16 @@ extern "C" void * MYCDECL CUSTOM_CALLOC(size_t nelem, size_t elsize) __attribute
 extern "C" FLATTEN void MYCDECL CUSTOM_FREE (void * ptr)
 {
   xxfree (ptr);
+}
+
+extern "C" FLATTEN void MYCDECL CUSTOM_FREE_SIZED (void * ptr, size_t sz)
+{
+  xxfree_sized (ptr, sz);
+}
+
+extern "C" FLATTEN void MYCDECL CUSTOM_FREE_ALIGNED_SIZED (void * ptr, size_t alignment, size_t sz)
+{
+  xxfree_aligned_sized (ptr, alignment, sz);
 }
 
 extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
