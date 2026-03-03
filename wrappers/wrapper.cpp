@@ -38,6 +38,8 @@ extern "C" {
 
   void * xxmalloc (size_t);
   void   xxfree (void *);
+  void   xxfree_sized (void *, size_t);
+  void   xxfree_aligned_sized (void *, size_t, size_t);
   void * xxmemalign(size_t, size_t);
   #if HL_USE_XXREALLOC
   void * xxrealloc(void *, size_t);
@@ -90,6 +92,8 @@ extern "C" {
 #define CUSTOM_REALLOC(x,y)  CUSTOM_PREFIX(realloc)(x,y)
 #define CUSTOM_REALLOCARRAY(x,y,z)  CUSTOM_PREFIX(reallocarray)(x,y,z)
 #define CUSTOM_CALLOC(x,y)   CUSTOM_PREFIX(calloc)(x,y)
+#define CUSTOM_FREE_SIZED(x,y) CUSTOM_PREFIX(free_sized)(x,y)
+#define CUSTOM_FREE_ALIGNED_SIZED(x,y,z) CUSTOM_PREFIX(free_aligned_sized)(x,y,z)
 #define CUSTOM_MEMALIGN(x,y) CUSTOM_PREFIX(memalign)(x,y)
 #define CUSTOM_POSIX_MEMALIGN(x,y,z) CUSTOM_PREFIX(posix_memalign)(x,y,z)
 #define CUSTOM_ALIGNED_ALLOC(x,y) CUSTOM_PREFIX(aligned_alloc)(x,y)
@@ -162,6 +166,16 @@ extern "C" FLATTEN void MYCDECL CUSTOM_FREE (void * ptr)
   if (HL_EXPECT_TRUE(ptr)) HL_LIKELY {
     xxfree (ptr);
   }
+}
+
+extern "C" FLATTEN void MYCDECL CUSTOM_FREE_SIZED (void * ptr, size_t sz)
+{
+  xxfree_sized (ptr, sz);
+}
+
+extern "C" FLATTEN void MYCDECL CUSTOM_FREE_ALIGNED_SIZED (void * ptr, size_t alignment, size_t sz)
+{
+  xxfree_aligned_sized (ptr, alignment, sz);
 }
 
 extern "C" FLATTEN void * MYCDECL CUSTOM_MALLOC(size_t sz)
@@ -491,22 +505,22 @@ ATTRIBUTE_EXPORT void FLATTEN operator delete[] (void * ptr)
 
 #if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309
 
-ATTRIBUTE_EXPORT void FLATTEN operator delete(void * ptr, size_t)
+ATTRIBUTE_EXPORT void FLATTEN operator delete(void * ptr, size_t sz)
 #if !defined(linux_)
   throw ()
 #endif
 {
-  CUSTOM_FREE (ptr);
+  CUSTOM_FREE_SIZED (ptr, sz);
 }
 
-ATTRIBUTE_EXPORT void FLATTEN operator delete[](void * ptr, size_t)
+ATTRIBUTE_EXPORT void FLATTEN operator delete[](void * ptr, size_t sz)
 #if defined(__GNUC__)
   _GLIBCXX_USE_NOEXCEPT
 #endif
 {
-  CUSTOM_FREE (ptr);
+  CUSTOM_FREE_SIZED (ptr, sz);
 }
-#endif
+#endif // __cpp_sized_deallocation
 
 // --- Aligned new/delete (C++17) ---
 #if defined(__cpp_aligned_new) && __cpp_aligned_new >= 201606
@@ -539,8 +553,8 @@ ATTRIBUTE_EXPORT void FLATTEN operator delete[](void* p, std::align_val_t al, co
 
 // sized aligned delete (if both features present)
 #if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309
-ATTRIBUTE_EXPORT void FLATTEN operator delete(void* p, std::size_t, std::align_val_t) noexcept { CUSTOM_FREE(p); }
-ATTRIBUTE_EXPORT void FLATTEN operator delete[](void* p, std::size_t, std::align_val_t) noexcept { CUSTOM_FREE(p); }
+ATTRIBUTE_EXPORT void FLATTEN operator delete(void* p, std::size_t sz, std::align_val_t al) noexcept { CUSTOM_FREE_ALIGNED_SIZED(p, static_cast<size_t>(al), sz); }
+ATTRIBUTE_EXPORT void FLATTEN operator delete[](void* p, std::size_t sz, std::align_val_t al) noexcept { CUSTOM_FREE_ALIGNED_SIZED(p, static_cast<size_t>(al), sz); }
 #endif
 #endif
 

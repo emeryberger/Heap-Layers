@@ -64,17 +64,19 @@
 #define STRONG_ALIAS(target) __attribute__((alias(#target), visibility("default")))
 
 
-#if 0 // def __GLIBC__
-// Export the public names with glibc's default version node.
-__asm__(".symver custommalloc,        malloc@@GLIBC_2.2.5");
-__asm__(".symver customfree,          free@@GLIBC_2.2.5");
-__asm__(".symver customcalloc,        calloc@@GLIBC_2.2.5");
-__asm__(".symver customrealloc,       realloc@@GLIBC_2.2.5");
-__asm__(".symver customposix_memalign,posix_memalign@@GLIBC_2.2.5");
-__asm__(".symver custommemalign,      memalign@@GLIBC_2.2.5");
-__asm__(".symver customaligned_alloc, aligned_alloc@@GLIBC_2.2.5");
-__asm__(".symver customstrdup,        strdup@@GLIBC_2.2.5");
-
+extern "C" {
+  WEAK_REDEF1(void *, malloc, size_t);
+  WEAK_REDEF1(void, free, void *);
+  WEAK_REDEF2(void, free_sized, void *, size_t);
+  WEAK_REDEF3(void, free_aligned_sized, void *, size_t, size_t);
+  WEAK_REDEF1(void, cfree, void *);
+  WEAK_REDEF2(void *, calloc, size_t, size_t);
+  WEAK_REDEF2(void *, realloc, void *, size_t);
+  WEAK_REDEF3(void *, reallocarray, void *, size_t, size_t);
+  WEAK_REDEF2(void *, memalign, size_t, size_t);
+  WEAK_REDEF3(int, posix_memalign, void **, size_t, size_t);
+#ifdef __USE_XOPEN2K // a work-around for an exception anomaly
+  //  WEAK_REDEF2_NOTHROW(void *, aligned_alloc, size_t, size_t);
 #else
 
 #define STRONG_REDEF1(type,fname,arg1) ATTRIBUTE_EXPORT type fname(arg1) __THROW STRONG_ALIAS(custom##fname)
