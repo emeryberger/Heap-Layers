@@ -70,8 +70,10 @@ namespace HL {
       }
     }
 
-    inline void free_aligned_sized (void * ptr, size_t, size_t sz) {
-      free_sized(ptr, sz);
+    inline void free_aligned_sized (void * ptr, size_t alignment, size_t sz) {
+      if (ptr != 0) {
+	SuperHeap::free_aligned_sized (ptr, alignment, sz);
+      }
     }
     
     inline void * calloc (size_t s1, size_t s2) {
