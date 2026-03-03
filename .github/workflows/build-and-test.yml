@@ -1,0 +1,143 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  # ── Kingsley example (lives in this repo) ──────────────────────────
+  kingsley:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: |
+          cd examples/kingsley
+          mkdir -p build && cd build
+          cmake ..
+
+      - name: Build
+        run: cmake --build examples/kingsley/build --parallel
+
+      - name: Verify library
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            ls -la examples/kingsley/build/libkingsley.dylib
+          else
+            ls -la examples/kingsley/build/libkingsley.so
+          fi
+
+      - name: Smoke test (Linux)
+        if: runner.os == 'Linux'
+        run: LD_PRELOAD=./examples/kingsley/build/libkingsley.so ls /tmp
+
+  # ── DieHard (external repo, Linux + macOS) ─────────────────────────
+  diehard:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: heap-layers
+
+      - name: Clone DieHard
+        run: git clone --depth 1 https://github.com/emeryberger/DieHard.git
+
+      - name: Configure
+        run: |
+          cd DieHard
+          mkdir -p build && cd build
+          cmake \
+            "-DFETCHCONTENT_SOURCE_DIR_HEAP-LAYERS=${{ github.workspace }}/heap-layers" \
+            -DBUILD_TESTS=ON \
+            ..
+
+      - name: Build
+        run: cmake --build DieHard/build --parallel
+
+      - name: Run tests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cd DieHard
+          ./build/tests/test_globalfreepool
+          LD_PRELOAD=./build/libdiehard.so ./build/tests/test_remote_free
+          LD_PRELOAD=./build/libdiehard.so ./build/tests/test_doublefree
+          LD_PRELOAD=./build/libdiehard.so ./build/tests/test_invalidfree
+          LD_PRELOAD=./build/libdiehard.so ./build/tests/threadtest 2 10 1000 0 8
+
+      - name: Run tests (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cd DieHard
+          ./build/tests/test_globalfreepool
+          DYLD_INSERT_LIBRARIES=./build/libdiehard.dylib ./build/tests/test_remote_free
+          DYLD_INSERT_LIBRARIES=./build/libdiehard.dylib ./build/tests/test_doublefree
+          DYLD_INSERT_LIBRARIES=./build/libdiehard.dylib ./build/tests/test_invalidfree
+          DYLD_INSERT_LIBRARIES=./build/libdiehard.dylib ./build/tests/threadtest 2 10 1000 0 8
+
+  # ── Hoard (external repo, Linux + macOS + Windows) ─────────────────
+  hoard:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: heap-layers
+
+      - name: Clone Hoard
+        run: git clone --depth 1 https://github.com/emeryberger/Hoard.git
+
+      - name: Configure (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd Hoard
+          mkdir -p build && cd build
+          cmake \
+            "-DFETCHCONTENT_SOURCE_DIR_HEAP-LAYERS=${{ github.workspace }}/heap-layers" \
+            ${{ runner.os == 'macOS' && '-DCMAKE_OSX_ARCHITECTURES=arm64' || '' }} \
+            ..
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd Hoard
+          mkdir build
+          cd build
+          cmake "-DFETCHCONTENT_SOURCE_DIR_HEAP-LAYERS=${{ github.workspace }}/heap-layers" ..
+
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
+        run: cmake --build Hoard/build --parallel
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: cmake --build Hoard/build --config Release --parallel
+
+      - name: Verify library (Linux)
+        if: runner.os == 'Linux'
+        run: ls -la Hoard/build/libhoard.so
+
+      - name: Verify library (macOS)
+        if: runner.os == 'macOS'
+        run: ls -la Hoard/build/libhoard.dylib
+
+      - name: Verify library (Windows)
+        if: runner.os == 'Windows'
+        run: dir Hoard\build\Release\hoard.dll
+
+      - name: Smoke test (Linux)
+        if: runner.os == 'Linux'
+        run: LD_PRELOAD=./Hoard/build/libhoard.so ls /tmp
