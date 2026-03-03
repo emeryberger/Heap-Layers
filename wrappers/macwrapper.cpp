@@ -56,8 +56,10 @@ extern "C" {
 
   void * xxmalloc (size_t);
   void   xxfree (void *);
-  void   xxfree_sized (void *, size_t);
-  void   xxfree_aligned_sized (void *, size_t, size_t);
+  // Weak defaults so downstream projects that haven't added these yet
+  // (e.g. DieHard, Hoard) still link.  A strong definition wins.
+  __attribute__((weak)) void xxfree_sized (void * ptr, size_t) { xxfree(ptr); }
+  __attribute__((weak)) void xxfree_aligned_sized (void * ptr, size_t, size_t) { xxfree(ptr); }
   void * xxmemalign(size_t, size_t);
 
   // Takes a pointer and returns how much space it holds.
