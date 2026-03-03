@@ -505,22 +505,22 @@ ATTRIBUTE_EXPORT void FLATTEN operator delete[] (void * ptr)
 
 #if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309
 
-ATTRIBUTE_EXPORT void FLATTEN operator delete(void * ptr, size_t)
+ATTRIBUTE_EXPORT void FLATTEN operator delete(void * ptr, size_t sz)
 #if !defined(linux_)
   throw ()
 #endif
 {
-  CUSTOM_FREE (ptr);
+  CUSTOM_FREE_SIZED (ptr, sz);
 }
 
-ATTRIBUTE_EXPORT void FLATTEN operator delete[](void * ptr, size_t)
+ATTRIBUTE_EXPORT void FLATTEN operator delete[](void * ptr, size_t sz)
 #if defined(__GNUC__)
   _GLIBCXX_USE_NOEXCEPT
 #endif
 {
-  CUSTOM_FREE (ptr);
+  CUSTOM_FREE_SIZED (ptr, sz);
 }
-#endif
+#endif // __cpp_sized_deallocation
 
 // --- Aligned new/delete (C++17) ---
 #if defined(__cpp_aligned_new) && __cpp_aligned_new >= 201606
@@ -553,8 +553,8 @@ ATTRIBUTE_EXPORT void FLATTEN operator delete[](void* p, std::align_val_t al, co
 
 // sized aligned delete (if both features present)
 #if defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309
-ATTRIBUTE_EXPORT void FLATTEN operator delete(void* p, std::size_t, std::align_val_t) noexcept { CUSTOM_FREE(p); }
-ATTRIBUTE_EXPORT void FLATTEN operator delete[](void* p, std::size_t, std::align_val_t) noexcept { CUSTOM_FREE(p); }
+ATTRIBUTE_EXPORT void FLATTEN operator delete(void* p, std::size_t sz, std::align_val_t al) noexcept { CUSTOM_FREE_ALIGNED_SIZED(p, static_cast<size_t>(al), sz); }
+ATTRIBUTE_EXPORT void FLATTEN operator delete[](void* p, std::size_t sz, std::align_val_t al) noexcept { CUSTOM_FREE_ALIGNED_SIZED(p, static_cast<size_t>(al), sz); }
 #endif
 #endif
 
