@@ -5,15 +5,16 @@
 
 // Beware -- this is for one "size class" only!!
 
+#include <cassert>
 #include <cstdlib>
+#include "utility/freesllist.h"
 
 template <int numObjects, class Super>
 class BoundedFreeListHeap : public Super {
 public:
 
   BoundedFreeListHeap()
-    : nObjects (0),
-    myFreeList (NULL)
+    : nObjects (0)
   {}
 
   ~BoundedFreeListHeap()
@@ -23,11 +24,11 @@ public:
 
   inline void * malloc (size_t sz) {
     // Check the free list first.
-    void * ptr = myFreeList;
-    if (ptr == NULL) {
+    void * ptr = _freelist.get();
+    if (!ptr) {
       ptr = Super::malloc (sz);
     } else {
-      myFreeList = myFreeList->next;
+      nObjects--;
     }
     return ptr;
   }
@@ -35,36 +36,26 @@ public:
   inline void free (void * ptr) {
     if (nObjects < numObjects) {
       // Add this object to the free list.
-      ((freeObject *) ptr)->next = myFreeList;
-      myFreeList = (freeObject *) ptr;
+      _freelist.insert(ptr);
       nObjects++;
     } else {
       clear();
-      //      Super::free (ptr);
     }
   }
 
   inline void clear (void) {
     // Delete everything on the free list.
-    void * ptr = myFreeList;
-    while (ptr != NULL) {
-      void * oldptr = ptr;
-      ptr = (void *) ((freeObject *) ptr)->next;
-      Super::free (oldptr);
+    void * ptr;
+    while ((ptr = _freelist.get()) != nullptr) {
+      Super::free(ptr);
+      assert(nObjects-- > 0);
     }
-    myFreeList = NULL;
-    nObjects = 0;
   }
 
 private:
 
-  class freeObject {
-  public:
-    freeObject * next;
-  };
-
   int nObjects;
-  freeObject * myFreeList;
+  FreeSLList _freelist;
 };
 
 #endif

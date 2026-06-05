@@ -40,10 +40,13 @@
 #pragma inline_depth(255)
 #define NO_INLINE __declspec(noinline)
 #define INLINE __forceinline
-#define inline __forceinline
+// Note: Do NOT #define inline __forceinline - it breaks MSVC STL headers
 #endif // !defined(NO_INLINE)
 
 #else
+
+#define INLINE inline
+#define NO_INLINE
 
 #endif // defined(_MSC_VER)
 

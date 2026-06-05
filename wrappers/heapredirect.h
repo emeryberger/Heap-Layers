@@ -180,6 +180,18 @@ class HeapWrapper {
     }
   }
 
+  static inline void free_sized(void* ptr, size_t sz) {
+    if (ptr) {
+      getHeap<CustomHeapType>()->free_sized(ptr, sz);
+    }
+  }
+
+  static inline void free_aligned_sized(void* ptr, size_t alignment, size_t sz) {
+    if (ptr) {
+      getHeap<CustomHeapType>()->free_aligned_sized(ptr, alignment, sz);
+    }
+  }
+
   static inline size_t getSize(void *ptr) {
     if (ptr) {
       // if (isValid(ptr)) {
@@ -241,6 +253,12 @@ class HeapWrapper {
     ATTRIBUTE_EXPORT void* xxrealloc(void * ptr, size_t sz) {\
       return TheHeapWrapper::realloc(ptr, sz); \
     }\
+    ATTRIBUTE_EXPORT void xxfree_sized(void *ptr, size_t sz) {\
+      TheHeapWrapper::free_sized(ptr, sz);\
+    }\
+    ATTRIBUTE_EXPORT void xxfree_aligned_sized(void *ptr, size_t alignment, size_t sz) {\
+      TheHeapWrapper::free_aligned_sized(ptr, alignment, sz);\
+    }\
   }
 #else
 #define HEAP_REDIRECT(CustomHeap, staticSize)\
@@ -268,6 +286,12 @@ class HeapWrapper {
     \
     ATTRIBUTE_EXPORT void xxmalloc_unlock() {\
       TheHeapWrapper::xxmalloc_unlock();\
+    }\
+    ATTRIBUTE_EXPORT void xxfree_sized(void *ptr, size_t sz) {\
+      TheHeapWrapper::free_sized(ptr, sz);\
+    }\
+    ATTRIBUTE_EXPORT void xxfree_aligned_sized(void *ptr, size_t alignment, size_t sz) {\
+      TheHeapWrapper::free_aligned_sized(ptr, alignment, sz);\
     }\
   }
 

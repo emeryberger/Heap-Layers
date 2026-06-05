@@ -67,6 +67,14 @@ extern "C" {
     getCustomHeap()->free (ptr);
   }
 
+  void xxfree_sized (void * ptr, size_t) {
+    getCustomHeap()->free (ptr);
+  }
+
+  void xxfree_aligned_sized (void * ptr, size_t, size_t) {
+    getCustomHeap()->free (ptr);
+  }
+
   void * xxmemalign(size_t alignment, size_t sz) {
     return generic_xxmemalign(alignment, sz);
   }
