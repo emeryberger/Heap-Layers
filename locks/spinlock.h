@@ -59,35 +59,19 @@
 
 #endif
 
-#define _MM_PAUSE
-
-// The use of the PAUSE instruction has now been disabled, as it can be insanely costly.
-// See https://aloiskraus.wordpress.com/2018/06/16/why-skylakex-cpus-are-sometimes-50-slower-how-intel-has-broken-existing-code/amp
-
-/*
-
-#if defined(_WIN32) // includes WIN64
-
-// NOTE: Below is the new "pause" instruction, which is inocuous for
-// previous architectures, but crucial for Intel chips with
-// hyperthreading.  See
-// http://www.usenix.org/events/wiess02/tech/full_papers/nakajima/nakajima.pdf
-// for discussion.
-
-#define _MM_PAUSE YieldProcessor() // {__asm{_emit 0xf3};__asm {_emit 0x90}}
-#include <windows.h>
-
-#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-
-#define _MM_PAUSE  { asm (".byte 0xf3; .byte 0x90" : : : "memory"); }
-
+// Re-enabled PAUSE/YIELD hints for spin loops.
+// Short PAUSE sequences are beneficial on modern x86 (the Skylake-X issue
+// was with long PAUSE loops; a single PAUSE per spin iteration is fine).
+// On ARM64, YIELD serves the same purpose.
+#if defined(_WIN32)
+#define _MM_PAUSE YieldProcessor()
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+#define _MM_PAUSE  { __asm__ __volatile__("pause" ::: "memory"); }
+#elif defined(__GNUC__) && (defined(__aarch64__) || defined(__arm__))
+#define _MM_PAUSE  { __asm__ __volatile__("yield" ::: "memory"); }
 #else
-
 #define _MM_PAUSE
-
 #endif
-
-*/
 
 namespace HL {
 
@@ -123,19 +107,28 @@ namespace HL {
 
     NO_INLINE
     void contendedLock() {
-      const int MAX_SPIN = 1000;
+      // Exponential backoff: spin 1, 2, 4, 8, ... up to MAX_BACKOFF
+      // iterations before yielding. Reduces cache-line bouncing under
+      // contention while keeping uncontended latency low.
+      enum { MAX_BACKOFF = 64 };
+      int backoff = 1;
       while (true) {
+	// Try to acquire.
 	if (!_mutex.exchange(true, std::memory_order_acquire)) {
 	  return;
 	}
-	int count = 0;
-	// Relaxed load for spinning - we'll acquire on the exchange
-	while (_mutex.load(std::memory_order_relaxed) && (count < MAX_SPIN)) {
+	// Spin with PAUSE, exponentially increasing spin count.
+	for (int i = 0; i < backoff; i++) {
 	  _MM_PAUSE;
-	  count++;
+	  if (!_mutex.load(std::memory_order_relaxed)) {
+	    break;  // Lock might be available, try exchange again.
+	  }
 	}
-	if (count == MAX_SPIN) {
+	if (backoff < MAX_BACKOFF) {
+	  backoff *= 2;
+	} else {
 	  yieldProcessor();
+	  backoff = 1;  // Reset after yield.
 	}
       }
     }
