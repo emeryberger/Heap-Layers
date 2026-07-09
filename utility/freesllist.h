@@ -18,6 +18,10 @@
 class FreeSLList {
 public:
 
+  FreeSLList() {
+    clear();
+  }
+
   inline void clear() {
     head.next = nullptr;
   }
@@ -51,11 +55,15 @@ public:
     head.next = entry;
   }
 
+  // Entry must be an implicit-lifetime type: insert() materializes it
+  // over freed object memory via std::start_lifetime_as, which requires
+  // (and MSVC 14.51+ statically asserts) implicit lifetime. That means
+  // a trivial default constructor: no user-provided constructor and no
+  // default member initializer. Zero-initialization of the list head
+  // happens in FreeSLList's constructor instead.
   class Entry {
   public:
-    Entry()
-      : next (nullptr)
-    {}
+    Entry() = default;
     Entry * next;
   private:
     Entry (const Entry&);
