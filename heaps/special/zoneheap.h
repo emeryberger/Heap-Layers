@@ -122,17 +122,21 @@ namespace HL {
       return ptr;
     }
   
-    class Arena {
+    // The arena header precedes the bump space, so its size must keep
+    // that space aligned. Three pointer-sized fields are 24 bytes on LP64,
+    // which made every object only 8-byte aligned (an ABI violation that
+    // crashes code using aligned SSE/AVX accesses on malloc'd memory).
+    // alignas pads it to a multiple of the malloc alignment. (The check
+    // used to live in a constructor that never runs: arenas are cast from
+    // raw memory, so it was never instantiated.)
+    class alignas(HL::MallocInfo::Alignment) Arena {
     public:
-      Arena() {
-	static_assert((sizeof(Arena) % HL::MallocInfo::Alignment == 0),
-		      "Alignment must match Arena size.");
-      }
-
       Arena * nextArena;
       char * arenaSpace;
       size_t arenaSize;
     };
+    static_assert(sizeof(Arena) % HL::MallocInfo::Alignment == 0,
+		  "Arena size must preserve malloc alignment.");
     
     /// Space left in the current arena.
     size_t _sizeRemaining;
