@@ -27,8 +27,18 @@ using namespace HL;
 
 class TopHeap : public SizeHeap<UniqueHeap<ZoneHeap<MmapHeap, 65536> > > {};
 
+// One heap shared by every thread, so it must be locked: even simple
+// tools are multithreaded (e.g., uutils du and sort spawn worker threads).
+//
+// A pthread mutex everywhere, including macOS: the heap lock is held across
+// fork() and released in the child (see xxmalloc_lock/unlock below), and an
+// os_unfair_lock (MacLockType) cannot be unlocked there -- the child's thread
+// is not its owner, and macOS kills the child.
+typedef PosixLockType TheLockType;
+
 class TheCustomHeapType :
-  public ANSIWrapper<KingsleyHeap<AdaptHeap<DLList, TopHeap>, TopHeap> > {};
+  public ANSIWrapper<LockedHeap<TheLockType,
+				KingsleyHeap<AdaptHeap<DLList, TopHeap>, TopHeap> > > {};
 
 inline static TheCustomHeapType * getCustomHeap() {
   static char thBuf[sizeof(TheCustomHeapType)];
@@ -83,13 +93,27 @@ extern "C" {
     return getCustomHeap()->getSize (ptr);
   }
 
+  // Held across fork() so the child never inherits the heap lock in a
+  // locked state (macwrapper.cpp calls these from the _malloc_fork_* hooks).
   void xxmalloc_lock() {
-    // getCustomHeap()->lock();
+    getCustomHeap()->lock();
   }
 
   void xxmalloc_unlock() {
-    // getCustomHeap()->unlock();
+    getCustomHeap()->unlock();
   }
   
 }
+
+#if !defined(__APPLE__) && !defined(_WIN32)
+#include <pthread.h>
+
+// The GNU wrapper has no fork hooks, so register them here. This runs from
+// a constructor rather than on first allocation because pthread_atfork can
+// itself allocate.
+__attribute__((constructor))
+static void kingsleyRegisterForkHandlers() {
+  pthread_atfork(xxmalloc_lock, xxmalloc_unlock, xxmalloc_unlock);
+}
+#endif
 
