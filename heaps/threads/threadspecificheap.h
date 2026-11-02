@@ -26,6 +26,7 @@
 #include <pthread.h>
 
 #include "wrappers/mmapwrapper.h"
+#include "threads/fasttls.h"
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -199,12 +200,13 @@ namespace HL {
   private:
 
     static void initializeHeap() {
-      getHeap();
+      getKey().create(deleteHeap);
     }
 
-    static pthread_key_t& getHeapKey() {
-      static pthread_key_t heapKey;
-      static int r = pthread_key_create (&heapKey, deleteHeap);
+    // Constant-initialized (FastThreadKey has a constexpr constructor and a
+    // trivial destructor), so there is no guard variable on the hot path.
+    static HL::FastThreadKey& getKey() {
+      static HL::FastThreadKey heapKey;
       return heapKey;
     }
 
@@ -218,16 +220,31 @@ namespace HL {
       HL::MmapWrapper::unmap (heap, sizeof(PerThreadHeap));
     }
 
-    // Access the given heap.
-    static PerThreadHeap * getHeap() {
-      PerThreadHeap * heap =
-	(PerThreadHeap *) pthread_getspecific (getHeapKey());
+    // Access the given heap. On Darwin the common case is an inline read of
+    // this thread's TSD slot (no pthread_getspecific call); see fasttls.h.
+    static inline PerThreadHeap * getHeap() {
+      auto * heap = (PerThreadHeap *) getKey().getIfDirect();
+      if (__builtin_expect(heap != nullptr, 1)) {
+        return heap;
+      }
+      return getHeapSlow();
+    }
+
+#if HL_FAST_TSD
+    __attribute__((noinline))
+#endif
+    static PerThreadHeap * getHeapSlow() {
+      // Also covers use before any constructor has run.
+      if (__builtin_expect(!getKey().isCreated(), 0)) {
+        pthread_once (&(getOnce()), initializeHeap);
+      }
+      PerThreadHeap * heap = (PerThreadHeap *) getKey().get();
       if (heap == nullptr)  {
 	// Grab some memory from a source, initialize the heap inside,
 	// and store it in the thread-local area.
 	void * buf = HL::MmapWrapper::map (sizeof(PerThreadHeap));
 	heap = new (buf) PerThreadHeap;
-	pthread_setspecific (getHeapKey(), (void *) heap);
+	getKey().set (heap);
       }
       return heap;
     }

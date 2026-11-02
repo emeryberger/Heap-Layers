@@ -18,7 +18,21 @@
 #ifndef HL_MMAPWRAPPER_H
 #define HL_MMAPWRAPPER_H
 
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+
 #include "utility/arch.h"
+#include "utility/tprintf.h"
+
+// Defaults (normally set in heaplayers.h), so this header stands alone.
+#if !defined(HL_EXECUTABLE_HEAP)
+#define HL_EXECUTABLE_HEAP 0
+#endif
+#if !defined(HL_HEAP_NAME)
+#define HL_HEAP_NAME "Heap Layers"
+#endif
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -37,6 +51,11 @@
 #endif
 #endif
 #include <map>
+#endif
+
+#if defined(HL_APPLE_SILICON)
+// Must be at global scope: it declares extern "C" Mach types and globals.
+#include <mach/vm_page_size.h>
 #endif
 
 #if defined(__SVR4)
@@ -183,7 +202,6 @@ namespace HL {
 
       ptr = mmap(startAddress, sz, HL_MMAP_PROTECTION_MASK, mapFlag, fd, 0);
       #ifdef HL_APPLE_SILICON
-        #include <mach/vm_page_size.h>
         assert(sz % vm_page_size == 0);
         assert((reinterpret_cast<uintptr_t>(ptr) % vm_page_size) == 0);
       #endif
