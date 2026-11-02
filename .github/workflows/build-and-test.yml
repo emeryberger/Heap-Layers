@@ -38,6 +38,16 @@ jobs:
         if: runner.os == 'Linux'
         run: LD_PRELOAD=./examples/kingsley/build/libkingsley.so ls /tmp
 
+      - name: Backtrace (probe)
+        if: failure() && runner.os == 'Linux'
+        run: |
+          cat /etc/os-release | head -2; g++ --version | head -1; ls --version | head -1; readlink -f "$(which ls)"
+          grep -m1 "model name" /proc/cpuinfo; grep -o -m1 -w -E "avx512f|avx2" /proc/cpuinfo | sort -u
+          echo "--- cat:"; LD_PRELOAD=$PWD/examples/kingsley/build/libkingsley.so cat /etc/hostname || echo "cat exit $?"
+          sudo apt-get install -y -qq gdb >/dev/null
+          gdb -q -batch -ex "set environment LD_PRELOAD=$PWD/examples/kingsley/build/libkingsley.so" \
+              -ex run -ex bt -ex "info registers rip" -ex "x/6i \$pc" --args "$(readlink -f "$(which ls)")" /tmp
+
   # ── DieHard (external repo, Linux + macOS) ─────────────────────────
   diehard:
     strategy:
