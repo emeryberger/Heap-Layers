@@ -37,6 +37,7 @@
 
 #include <windows.h>
 #include <errno.h>
+#include <stdint.h>
 #include <psapi.h>
 #include <stdio.h>
 #include <tchar.h>
@@ -163,23 +164,45 @@ extern "C" {
     return buf;
   }
 
+  // _recalloc must zero the bytes it ADDS. (This previously zeroed
+  // [requested, usable) -- the slack PAST the request -- so _recalloc(NULL,
+  // n, size), or any growth, returned the newly requested bytes holding
+  // recycled heap contents.)
+  //
+  // realloc keeps the first min(oldUsable, requested) bytes; zeroing from
+  // there to the new usable extent clears every byte _recalloc adds (relative
+  // to the old _msize, i.e. the usable size), and also the tail after an
+  // in-place shrink. Known limit: calloc zeroes only num * size, so slack it
+  // left unzeroed can resurface if _recalloc grows in place into it.
   static void * WINWRAPPER_PREFIX(_recalloc)(void * memblock, size_t num, size_t size) {
-    const auto requestedSize = num * size;
+    if (size != 0 && num > SIZE_MAX / size) {
+      errno = ENOMEM;
+      return nullptr;
+    }
+    const size_t requestedSize = num * size;
+    const size_t oldSize = (memblock != nullptr) ? xxmalloc_usable_size(memblock) : 0;
     auto * ptr = WINWRAPPER_PREFIX(realloc)(memblock, requestedSize);
     if (ptr != nullptr) {
-      const auto actualSize = xxmalloc_usable_size(ptr);
-      if (actualSize > requestedSize) {
-	// Clear out any memory after the end of the requested chunk.
-	memset (static_cast<char *>(ptr) + requestedSize, 0, actualSize - requestedSize);
+      const size_t keep = (oldSize < requestedSize) ? oldSize : requestedSize;
+      const size_t actualSize = xxmalloc_usable_size(ptr);
+      if (actualSize > keep) {
+	memset (static_cast<char *>(ptr) + keep, 0, actualSize - keep);
       }
     }
     return ptr;
   }
 
   static void * WINWRAPPER_PREFIX(calloc)(size_t num, size_t size) {
-    auto * ptr = xxmalloc (num * size);
+    // Reject a wrapped num * size: it would hand back a small block the
+    // caller indexes as num elements.
+    if (size != 0 && num > SIZE_MAX / size) {
+      errno = ENOMEM;
+      return nullptr;
+    }
+    const size_t total = num * size;
+    auto * ptr = xxmalloc (total);
     if (ptr) {
-      memset (ptr, 0, num * size);
+      memset (ptr, 0, total);
     }
     return ptr;
   }
