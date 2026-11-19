@@ -45,8 +45,23 @@
 
 #else
 
-#define INLINE inline
+// Respect existing definitions, exactly as the MSVC branch above does.
+// heaplayers.h defines NO_INLINE as __attribute__((noinline)) on GCC/Clang
+// and includes this header afterwards; an unconditional `#define NO_INLINE`
+// here silently redefined it to NOTHING for every later use, turning every
+// NO_INLINE in Heap-Layers and its clients into a no-op. (Hoard: its TLAB
+// slow paths were inlined into malloc, giving the fast path a 712-byte stack
+// frame with spills; honouring NO_INLINE makes it 24 bytes and larson +3-5%.)
+#if !defined(NO_INLINE)
+#if defined(__GNUC__)
+#define NO_INLINE __attribute__ ((noinline))
+#else
 #define NO_INLINE
+#endif
+#endif
+#if !defined(INLINE)
+#define INLINE inline
+#endif
 
 #endif // defined(_MSC_VER)
 
